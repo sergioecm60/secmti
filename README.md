@@ -1,6 +1,6 @@
 # Portal de Servicios PHP  
 **Creado por Sergio Cabrera**  
-📧 sergiomiers@gmail.com | 📞 +54 11 6759-8452  
+📧 sergiomiers@gmail.com 
 Asistencia técnica: IAS Gemini, ChatGPT y Qwen
 
 ---
