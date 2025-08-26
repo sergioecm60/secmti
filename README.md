@@ -1,7 +1,7 @@
 # Portal de Servicios PHP  
 **Creado por Sergio Cabrera**  
 📧 sergiomiers@gmail.com | 📞 +54 11 6759-8452  
-Asistencia técnica: IAS Gemini, ChatGPT y Qwen (chequeo de vulnerabilidades)
+Asistencia técnica: IAS Gemini, ChatGPT y Qwen
 
 ---
 
@@ -14,7 +14,7 @@ Este portal permite centralizar el acceso a herramientas internas (como Proxmox,
 ---
 
 ## 🚀 Versión
-**1.0.1**
+**0.0.30**
 
 ---
 
@@ -72,3 +72,6 @@ Este portal permite centralizar el acceso a herramientas internas (como Proxmox,
 1. Clona o descarga este repositorio en la raíz de tu servidor web:
    ```bash
    git clone https://github.com/sergioecm60/secmti.git
+
+   ## 📄 Licencia
+Este proyecto está bajo la Licencia GNU GPL v3. Consulta el archivo license.php para más detalles.
