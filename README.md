@@ -1,48 +1,74 @@
-# Portal de Servicios PHP Creado Por Sergio Cabrera, contacto sergiomiers@gmail.com +541167598452 con asistencia de IAS Gemini y Chagtp, y chequeo de vulneravilidades con Qwen.
+# Portal de Servicios PHP  
+**Creado por Sergio Cabrera**  
+📧 sergiomiers@gmail.com | 📞 +54 11 6759-8452  
+Asistencia técnica: IAS Gemini, ChatGPT y Qwen (chequeo de vulnerabilidades)
 
-Un portal de servicios simple, seguro y personalizable, escrito en PHP puro. Diseñado para ser ligero, fácil de instalar y administrar.
+---
 
-## Versión
+## 📄 Descripción
 
-1.0.1
+Un **portal de servicios simple, seguro y personalizable**, escrito en **PHP puro**, sin frameworks. Diseñado para ser **ligero, seguro y fácil de instalar y administrar**, ideal para entornos corporativos o de administración interna.
 
-## Características
+Este portal permite centralizar el acceso a herramientas internas (como Proxmox, Webmin, mytop, info.php, etc.) tras una capa de autenticación robusta, con monitoreo de seguridad y gestión web completa.
 
-- **Página de Aterrizaje (index.php):** Página de presentación pública y personalizable.
-- **Portal de Servicios (index2.php):** Acceso a enlaces y aplicaciones internas.
-- **Sistema de Login Seguro:**
-  - Protección contra ataques de fuerza bruta con bloqueo de cuenta.
-  - Captcha matemático para prevenir bots.
-  - Contraseñas hasheadas de forma segura (password_hash).
-- **Panel de Administración (`manage.php`):**
-  - Edita todo el contenido del sitio desde una interfaz web.
-  - Gestión dinámica de redes sociales.
-  - Gestiona los botones de servicios (crear, editar, eliminar).
-  - Gestiona los usuarios administradores (crear, editar, eliminar).
-- **Páginas Protegidas:**
-  - `info.php`: Muestra información detallada del servidor y PHP.
-  - `mytop.php`: Un monitor de procesos de la base de datos en tiempo real.
-- **Configuración Centralizada:** Todo se gestiona desde un único archivo `config.php`.
-- **Instalador Web:** Asistente de instalación fácil de usar.
+---
 
-## Requisitos
+## 🚀 Versión
+**1.0.1**
 
-- Servidor web (Apache, Nginx, etc.)
-- PHP 8.0 o superior
-- Extensión PHP `pdo_mysql`
-- Base de datos MySQL o MariaDB
+---
 
-## Instalación
+## ✅ Características Principales
 
-1.  Clona o descarga este repositorio en la raíz de tu servidor web.
-2.  Asegúrate de que tienes un **usuario de MySQL con privilegios para crear bases de datos** (permiso `CREATE`). Además, el servidor web debe tener permisos de escritura en el directorio del proyecto para poder crear el archivo `config.php`.
-3.  Abre tu navegador y navega a `http://<tu-servidor>/install.php`.
-4.  Sigue las instrucciones en pantalla:
-    -   Introduce las credenciales de tu base de datos.
-    -   Crea tu primer usuario administrador.
-5.  **¡MUY IMPORTANTE!** Después de una instalación exitosa, **elimina el archivo `install.php`** de tu servidor por razones de seguridad.
-6.  ¡Listo! Ya puedes acceder a tu portal en `index.php` o `index2.php`.
+### 🌐 Página de Aterrizaje (`index.php`)
+- Página pública de presentación.
+- Información de contacto y sucursales.
+- Totalmente personalizable desde el panel de administración.
 
-## Licencia
+### 🔐 Portal de Servicios (`index2.php`)
+- Acceso a aplicaciones y servicios internos.
+- Muestra la IP del visitante como advertencia de rastreo.
+- Redirección segura tras autenticación.
 
-Este proyecto está bajo la Licencia GNU GPL v3. Consulta el archivo `license.php` para más detalles.
+### 🔒 Sistema de Login Seguro
+- **Bloqueo de cuentas** tras intentos fallidos (protección contra fuerza bruta).
+- **Captcha matemático** para prevenir bots.
+- **Contraseñas hasheadas** con `password_hash()` (seguridad moderna).
+- Autenticación basada en sesión segura.
+
+### 🛠️ Panel de Administración (`manage.php`)
+- Interfaz web para gestionar todo el portal.
+- Edita contenido, redes sociales, botones y usuarios.
+- Gestión dinámica de servicios (crear, editar, eliminar).
+- Administración de usuarios administradores.
+
+### 📊 Páginas Protegidas
+- `info.php`: Información detallada del entorno PHP y servidor.
+- `mytop.php`: Monitor en tiempo real de procesos de MySQL/MariaDB.
+
+### ⚙️ Configuración Centralizada
+- Todo se gestiona desde un único archivo: `config.php`.
+- Fácil de mantener y auditar.
+
+### 🧩 Instalador Web
+- Asistente de instalación automática (`install.php`).
+- Configuración guiada de base de datos y usuario admin.
+- **Elimina `install.php` automáticamente tras instalación** (seguridad reforzada).
+
+---
+
+## 📋 Requisitos del Sistema
+
+- Servidor web: **Apache, Nginx o similar**
+- **PHP 8.0 o superior**
+- Extensión PHP: `pdo_mysql`
+- Base de datos: **MySQL o MariaDB**
+- Permisos de escritura en el directorio del proyecto (para creación de `config.php`)
+
+---
+
+## 📦 Instalación
+
+1. Clona o descarga este repositorio en la raíz de tu servidor web:
+   ```bash
+   git clone https://github.com/sergioecm60/secmti.git
