@@ -1,0 +1,29 @@
+# Configuración local (datos sensibles)
+config.php
+.env
+
+# Archivos de backup
+*.bak
+
+# Archivos de log
+*.log
+error_log
+logs/
+
+# Dependencias PHP (si usas Composer en el futuro)
+vendor/
+
+# Dependencias Node (si usas npm/yarn en el futuro)
+node_modules/
+
+# Cache
+*.cache
+cache/
+
+# Archivos temporales del sistema
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/

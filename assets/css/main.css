@@ -1,0 +1,505 @@
+/* ==========================================================================
+   1. Global & Reset Styles
+   ========================================================================== */
+:root {
+    /* Non-color variables for consistency */
+    --main-radius: 12px;
+    --main-transition: all 0.25s ease;
+    --main-shadow: 0 8px 32px rgba(255, 0, 0, 0.65); /* sombra roja */
+
+    /* Fallback colors (will be overridden by theme_style.php) */
+    --page-background: #0b2fb1;      /* Fondo general de páginas como 'manage.php'. */
+    --container-background: #ffffff; /* Fondo de cajas de contenido, secciones y tarjetas. */
+    --text-color-on-dark: #ffffff; /* Texto para fondos oscuros (body, etc.) */
+    --text-color-on-light: #212529; /* Texto para fondos claros (contenedores, inputs, etc.) */
+    --primary-color: #0b2fb1;        /* Color principal: fondos de página (index, info), encabezados y botones. */
+    --primary-text-color: #fdfdfd;   /* Color del texto sobre elementos con el color primario. */
+    --border-color: #0d0d0d;         /* Color para bordes de contenedores, tablas e inputs. */
+    --success-color: #088826bc;      /* Color para mensajes de éxito y el botón 'Guardar'. */
+    --success-text-color: #ffffff;   /* Color del texto sobre elementos de éxito. */
+    --danger-color: #dc3545;         /* Color para mensajes de error y botones de 'Eliminar'. */
+    --danger-text-color: #ffffff;    /* Color del texto sobre elementos de peligro. */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.7;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ==========================================================================
+   2. Global Layout & Theme Rules (from theme_style.php)
+   ========================================================================== */
+
+/* Fondo y texto base para páginas de administración (fondo claro por defecto) */
+body.page-manage {
+    background-color: var(--page-background);
+    color: var(--text-color-on-dark);
+}
+
+/* Fondo y texto base para páginas de portal (fondo de color primario) */
+body.page-info-theme, body.page-info, body.page-mytop {
+    background-color: var(--primary-color);
+    color: var(--text-color-on-dark);
+}
+
+/* index2.php tiene un gradiente, usando el color primario como base */
+body.page-index2 {
+    background: linear-gradient(135deg, var(--page-background) 0%, var(--primary-color) 100%);
+}
+
+/* Contenedores y secciones globales */
+.container, .info-section, .section, .content, #loginModal > div {
+    background-color: var(--container-background); /* Fondo claro por defecto */
+    color: var(--text-color-on-light); /* Texto oscuro por defecto para contenedores */
+}
+
+/* Los contenedores y secciones en páginas con fondo oscuro deben ser transparentes */
+body.page-info-theme .container, 
+body.page-info-theme .info-section, 
+body.page-info .container, 
+body.page-info .section, 
+body.page-mytop .container {
+    background-color: transparent; /* Hacemos transparente el contenedor para que se vea el fondo del body. */
+}
+
+/* Encabezados globales */
+header.admin-header, .page-manage .section-header, .page-info .section-header {
+    background-color: var(--primary-color);
+    color: var(--primary-text-color);
+}
+.container h1, .container h2, .container h3, #loginModal h3 {
+    color: var(--primary-color); /* Títulos dentro de contenedores claros */
+}
+body.page-info-theme h1, body.page-info-theme h2, body.page-mytop h1 {
+    color: var(--primary-text-color); /* Títulos en páginas oscuras */
+}
+/* Asegura que los H1 dentro de los encabezados de admin sean legibles sobre el fondo primario. */
+header.admin-header h1 {
+    color: var(--primary-text-color);
+}
+
+/* Botones y enlaces globales */
+.back-btn, .back-to-home-btn {
+    background-color: var(--primary-color);
+    color: var(--primary-text-color);
+    border: 1px solid var(--primary-color);
+}
+
+.footer a {
+    color: var(--primary-color);
+}
+body.page-info-theme .footer a, body.page-info .footer a, body.page-mytop .footer a {
+    color: var(--primary-text-color);
+}
+
+/* ==========================================================================
+   3. Page-Specific Styles
+   ========================================================================== */
+
+/* --- Styles for index.php (.page-info-theme) --- */
+body.page-info-theme {
+    font-family: 'Roboto', sans-serif;
+    text-align: center; /* Restaurar centrado de texto */
+}
+.page-info-theme main.container {
+    width: 90%;
+    max-width: 800px;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+.page-info-theme .info-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+}
+.page-info-theme .info-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+.page-info-theme h1, .page-info-theme h2 {
+    margin-bottom: 1rem;
+}
+.page-info-theme h1 {
+    font-size: 2.5rem;
+}
+.page-info-theme h2 {
+    font-size: 1.5rem;
+    padding-bottom: 0.5rem;
+}
+.page-info-theme .icon-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+.page-info-theme .icon-wrapper a {
+    color: var(--primary-text-color); /* Color de íconos en esta página */
+    transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+}
+.page-info-theme .icon-wrapper a:hover {
+    transform: scale(1.15);
+    opacity: 0.8;
+}
+.page-info-theme .icon {
+    width: 32px;
+    height: 32px;
+    fill: currentColor;
+}
+
+/* --- Styles for index2.php (.page-index2) --- */
+.page-index2 .container {
+    width: 90%;
+    max-width: 600px;
+    margin: 2rem auto;
+    border-radius: 16px;
+    box-shadow: var(--main-shadow);
+    padding: 2.5rem;
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--border-color);
+}
+.page-index2 .main-title { text-align: center; font-size: 1.2rem; margin-bottom: 1.5rem; font-weight: 500; }
+.page-index2 .main-title a { text-decoration: none; font-weight: 600; transition: color 0.2s; border-bottom: 1px dashed var(--primary-color); }
+.page-index2 .main-title a:hover { opacity: 0.8; }
+.page-index2 .ip { text-align: center; font-weight: 500; font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--primary-text-color); background: var(--primary-color); padding: 0.5rem; border-radius: 6px; word-break: break-all; }
+.page-index2 .logo { display: block; margin: 1rem auto 2rem; width: 100%; max-width: 320px; height: auto; border: 3px solid var(--primary-color); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.3s ease; }
+.page-index2 .logo:hover { transform: scale(1.03); }
+.page-index2 .menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.8rem; margin-bottom: 1.8rem; }
+.page-index2 .menu button, .page-index2 .menu a { text-decoration: none; padding: 0.75rem 1rem; border-radius: 8px; transition: var(--main-transition); font-size: 0.95rem; text-align: center; font-weight: 600; border: 2px solid var(--primary-color); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; background-color: var(--container-background); color: var(--primary-color); }
+.page-index2 .menu button:hover, .page-index2 .menu a:hover { transform: translateY(-2px); background: var(--primary-color); color: var(--primary-text-color); border: 2px solid var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.page-index2 .contact-bar { background: var(--container-background); border-radius: 8px; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--primary-color); gap: 10px; font-weight: 600; color: var(--primary-color); font-size: 0.95rem; flex-wrap: wrap; }
+.page-index2 .contact-bar a { color: var(--primary-color); padding: 2px; transition: transform 0.2s; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background-color: var(--primary-text-color); }
+.page-index2 .contact-bar a:hover { transform: scale(1.1); }
+
+/* --- Styles for admin pages (.page-manage, .page-info, .page-mytop) --- */
+body.page-manage, body.page-info, body.page-mytop {
+    font-family: 'Inter', 'Helvetica Neue', sans-serif;
+}
+.admin-container { /* Usaremos una clase específica para evitar conflictos */
+    width: 95%;
+    max-width: 1000px;
+    margin: 2rem auto;
+    border-radius: var(--main-radius);
+    background-color: var(--container-background);
+    box-shadow: var(--main-shadow);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+header.admin-header {
+    padding: 1.5rem 2rem;
+    text-align: center;
+}
+header.admin-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+header.admin-header p {
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
+.content {
+    padding: 2rem;
+}
+
+/* --- Styles for manage.php (.page-manage) --- */
+.page-manage .section { 
+    margin-bottom: 1.5rem; 
+    background-color: transparent; /* El fondo lo da el admin-container */
+    border: 1px solid var(--border-color); 
+    border-radius: var(--main-radius); 
+    overflow: hidden; 
+    transition: box-shadow 0.2s ease;
+}
+.page-manage .section:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+}
+.page-manage .section-header {
+    cursor: pointer;
+    position: relative;
+    padding-right: 40px;
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+.page-manage .section-header:hover {
+    background-color: color-mix(in srgb, var(--primary-color) 90%, black);
+}
+.page-manage .section-body { padding: 1.5rem; }
+.page-manage .form-group { margin-bottom: 1rem; }
+.page-manage .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; }
+.page-manage .form-group input[type="text"],
+.page-manage .form-group input[type="url"],
+.page-manage .form-group textarea {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: color-mix(in srgb, var(--container-background) 95%, black);
+    color: var(--text-color-on-light); /* Texto oscuro */
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.page-manage .form-group input[type="text"]:focus,
+.page-manage .form-group input[type="url"]:focus,
+.page-manage .form-group input[type="password"]:focus,
+.page-manage .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent);
+}
+.page-manage .table-container { overflow-x: auto; }
+.page-manage table { width: 100%; border-collapse: collapse; }
+.page-manage th, .page-manage td { padding: 0.75rem; border: 1px solid var(--border-color); text-align: left; vertical-align: middle; }
+.page-manage th { background-color: rgba(0,0,0,0.03); font-weight: 600; }
+.page-manage tr:nth-child(even) {
+    background-color: rgba(0,0,0,0.02);
+}
+.page-manage td.checkbox-cell { text-align: center; }
+.page-manage td input[type="checkbox"] { width: 18px; height: 18px; border: 1px solid var(--border-color); }
+.page-manage .readonly-id { background-color: rgba(0,0,0,0.05); border: 1px solid var(--border-color); cursor: not-allowed; }
+.page-manage .form-actions { text-align: right; margin-top: 2rem; }
+.page-manage .save-btn { background: var(--success-color); color: var(--success-text-color); padding: 0.8rem 2rem; font-size: 1.1rem; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; transition: opacity 0.2s; }
+.page-manage .save-btn:hover { opacity: 0.9; }
+.page-manage .add-btn { background: var(--primary-color); color: var(--primary-text-color); margin-top: 1rem; border: none; padding: 0.5rem 0.8rem; border-radius: 6px; cursor: pointer; font-weight: 500; transition: opacity 0.2s; }
+.page-manage .add-btn:hover { opacity: 0.9; }
+.page-manage .status-message { padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px; font-weight: 500; }
+.page-manage .status-message.success { background-color: var(--success-color); color: var(--success-text-color); border: 1px solid var(--success-color); opacity: 0.9; }
+.page-manage .status-message.error { background-color: var(--danger-color); color: var(--danger-text-color); border: 1px solid var(--danger-color); opacity: 0.9; }
+.page-manage .repeatable-list .repeatable-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+.page-manage .repeatable-list .repeatable-item input { flex-grow: 1; }
+.page-manage .delete-item-btn,
+.page-manage .delete-service-btn {
+    background: var(--danger-color);
+    color: var(--danger-text-color);
+    border: none;
+    padding: 0.5rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    font-size: 0.9rem;
+    line-height: 1.2;
+}
+.page-manage .delete-item-btn:hover,
+.page-manage .delete-service-btn:hover {
+    background-color: color-mix(in srgb, var(--danger-color) 85%, black);
+}
+.page-manage .add-item-btn { 
+    background: var(--primary-color); 
+    color: var(--primary-text-color); 
+    border: none; 
+    padding: 0.5rem 0.8rem; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    font-weight: 500; 
+    transition: background-color 0.2s; 
+    margin-top: 5px; 
+}
+.page-manage .add-item-btn:hover { background: color-mix(in srgb, var(--primary-color) 85%, black); }
+.page-manage .form-group-inline { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
+.page-manage .form-group-inline label { flex-basis: 200px; flex-shrink: 0; margin-bottom: 0; text-align: right; }
+.page-manage .form-group-inline input { flex-grow: 1; }
+
+/* --- Styles for info.php (.page-info) --- */
+.page-info .section { margin-bottom: 2rem; border-radius: var(--main-radius); overflow: hidden; }
+.page-info .section-body { padding: 1rem; font-size: 0.95rem; max-height: 400px; overflow-y: auto; }
+.page-info .section-body pre { margin: 0; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; font-family: 'Courier New', monospace; font-size: 0.9em; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
+.page-info .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.page-info .info-card { padding: 1rem; border-radius: var(--main-radius); box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+.page-info .info-card strong { color: var(--primary-color); display: block; font-size: 0.95rem; margin-bottom: 0.3rem; }
+.page-info .progress-bar { background-color: var(--border-color); border-radius: 6px; height: 22px; width: 100%; overflow: hidden; margin-top: 5px; }
+.page-info .progress-bar-inner { background-color: var(--primary-color); height: 100%; color: var(--primary-text-color); text-align: center; line-height: 22px; font-size: 0.8em; font-weight: bold; transition: width 0.5s ease; }
+.page-info .not-found { opacity: 0.7; font-style: italic; }
+
+/* --- Accordion Styles --- */
+.section-header::after {
+    content: '';
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border-style: solid;
+    border-color: var(--primary-text-color);
+    border-width: 0 2px 2px 0;
+    transform: translateY(-70%) rotate(45deg);
+    transition: transform 0.3s ease;
+}
+.section-header.active::after {
+    transform: translateY(-30%) rotate(-135deg);
+}
+.section-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out;
+}
+.section-body-inner {
+    padding: 1.5rem;
+}
+/* --- Styles for mytop.php (.page-mytop) --- */
+.page-mytop .container { box-shadow: none; border: none; backdrop-filter: none; }
+.page-mytop header.admin-header { background: transparent; }
+.page-mytop .help { margin-bottom: 20px; font-size: 0.9em; text-align: center; }
+.page-mytop .filter-container { margin-bottom: 20px; text-align: center; }
+.page-mytop #filterInput { padding: 8px 12px; width: 60%; max-width: 500px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 1em; transition: border-color 0.2s; background-color: var(--container-background); color: var(--text-color); }
+.page-mytop #filterInput:focus { outline: none; border-color: var(--primary-color); }
+.page-mytop .table-container { width: 100%; overflow-x: auto; overflow-y: auto; max-height: 70vh; border-radius: 6px; }
+.page-mytop table { width: 100%; border-collapse: collapse; margin: 0 auto; max-width: 95vw; background-color: var(--container-background); }
+.page-mytop th { background-color: var(--primary-color); color: var(--primary-text-color); position: sticky; top: 0; z-index: 1; }
+.page-mytop th, .page-mytop td { padding: 8px 12px; border: 1px solid var(--border-color); text-align: left; }
+.page-mytop td[data-label="Consulta"], .page-mytop td[data-label="Estado"] { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.page-mytop tr:nth-child(even) { background-color: rgba(0,0,0,0.03); }
+
+/* ==========================================================================
+   4. Component Styles
+   ========================================================================== */
+
+/* --- Login Modal (for index2.php) --- */
+#loginModal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.4); z-index: 9999; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+#loginModal.active { display: flex; opacity: 1; pointer-events: all; }
+#loginModal > div { padding: 2rem 1.5rem; border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25); min-width: 280px; max-width: 90vw; text-align: center; transform: scale(0.95); transition: transform 0.3s ease; }
+#loginModal.active > div { transform: scale(1); }
+.login-modal input[type="text"], .login-modal input[type="password"] { width: 90%; margin-bottom: 0.7rem; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); font-size: 1rem; background: var(--container-background); color: var(--text-color-on-light); }
+.login-modal button { padding: 0.5rem 1.2rem; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: var(--main-transition); background: var(--primary-color); color: var(--primary-text-color); }
+.login-modal button:hover { opacity: 0.9; }
+.login-modal .error-message { color: var(--danger-color); margin-top: 0.7rem; font-size: 0.95rem; display: none; }
+
+/* --- Footer (Global) --- */
+.footer {
+    width: 100%;
+    max-width: 1000px;
+    text-align: center;
+    font-size: 0.9rem;
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+.footer strong {
+    font-size: 1.05rem;
+}
+.footer-contact-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 0.5rem 0;
+}
+.footer-whatsapp-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+.footer-whatsapp-link .icon {
+    width: 20px;
+    height: 20px;
+    fill: #25D366; /* WhatsApp green is a brand color, so it's kept fixed */
+    transition: transform 0.2s ease;
+}
+.footer-whatsapp-link:hover .icon {
+    transform: scale(1.2);
+}
+.footer-whatsapp-link span {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--text-color);
+    color: var(--container-background);
+    padding: 5px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    z-index: 10;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+.footer-whatsapp-link:hover span {
+    visibility: visible;
+    opacity: 1;
+}
+.footer-whatsapp-link span::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--text-color) transparent transparent transparent;
+}
+
+/* --- Back Button (Global) --- */
+.back-btn, .back-to-home-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 1rem;
+    padding: 0.75rem 1.25rem;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: var(--main-transition);
+}
+.back-btn:hover, .back-to-home-btn:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+/* Estilo especial para el botón de volver en páginas con fondo oscuro */
+body.page-info .back-btn,
+body.page-mytop .back-btn,
+body.page-manage .back-btn {
+    background-color: var(--container-background);
+    color: var(--primary-color);
+    border-color: var(--container-background);
+}
+
+/* ==========================================================================
+   5. Media Queries
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .content { padding: 1.5rem; }
+    header.admin-header h1 { font-size: 1.3rem; }
+
+    /* Responsive Table for MyTop */
+    .page-mytop table, .page-mytop thead, .page-mytop tbody, .page-mytop th, .page-mytop td, .page-mytop tr {
+        display: block;
+    }
+    .page-mytop thead tr { position: absolute; top: -9999px; left: -9999px; }
+    .page-mytop tr { margin-bottom: 10px; border: 1px solid var(--border-color); }
+    .page-mytop td {
+        border: none; position: relative; padding-left: 50%; text-align: right;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .page-mytop td:last-child { border-bottom: none; }
+    .page-mytop td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        font-weight: bold;
+        text-align: left;
+        color: var(--primary-color);
+    }
+}
+
+@media (max-width: 480px) {
+    .page-index2 .container { padding: 1.5rem; width: 95%; }
+    .page-index2 .main-title { font-size: 1.1rem; }
+    .page-index2 .menu { grid-template-columns: 1fr; }
+    .page-index2 .contact-bar { flex-wrap: wrap; gap: 8px; }
+}
