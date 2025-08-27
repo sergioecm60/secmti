@@ -232,4 +232,4 @@ Consulta los archivos:
 * [`license.txt`](license.txt) (texto completo)
 
 ✅ Puedes usar, modificar y distribuir este software libremente, siempre que mantengas la misma licencia y el crédito al autor.
-🚫 No se otorga ninguna garantía. El uso es bajo tu responsabilidad.
+🚫 No se otorga ninguna garantía. El uso es bajo tu responsabilidad..
