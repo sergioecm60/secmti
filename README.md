@@ -6,7 +6,10 @@ Asistencia técnica: IAS Gemini, ChatGPT y Qwen
 📄 Descripción
 
 Un portal de servicios simple, seguro y personalizable, escrito en PHP puro, sin frameworks. Diseñado para ser ligero, seguro y fácil de instalar y administrar, ideal para entornos corporativos o de administración interna.
-
+[![PHP Version](https://img.shields.io/badge/PHP-%3E%3D8.0-8892BF.svg?style=for-the-badge)](https://php.net)
+[![License](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](license.txt)
+[![Version](https://img.shields.io/badge/Version-0.0.31-green.svg?style=for-the-badge)](https://github.com/sergioecm60/secmti/releases)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/sergioecm60/secmti)
 Este portal permite centralizar el acceso a herramientas internas (como Proxmox, Webmin, mytop, info, etc.) tras una capa de autenticación robusta, con monitoreo de seguridad y gestión web completa.
 
 🚀 Versión
