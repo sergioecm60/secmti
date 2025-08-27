@@ -17,6 +17,7 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-sr
     <meta name="description" content="Servidor Intranet Grupo Pedraza - Soluciones Linux personalizadas" />
     <meta name="robots" content="noindex, nofollow" />
     <title>Servidor Intranet Grupo Pedraza</title>
+    <base href="/secmti/">
     <link rel="stylesheet" href="assets/css/main.css">
 </head>
 <body class="page-index2">

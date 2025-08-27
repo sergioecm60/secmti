@@ -22,6 +22,7 @@ header("Content-Security-Policy: default-src 'self'; style-src 'self' https://fo
     <meta name="robots" content="index, follow">
     <meta name="description" content="Página de contacto y sucursales de <?= htmlspecialchars($config['landing_page']['company_name']) ?>">
     <title><?= htmlspecialchars($config['landing_page']['company_name']) ?></title>
+    <base href="/secmti/">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">

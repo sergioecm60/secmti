@@ -1,7 +1,7 @@
 # Portal de Servicios PHP  
 **Creado por Sergio Cabrera**  
-📧 sergiomiers@gmail.com | 📞 +54 11 6759-8452  
-Asistencia técnica: IAS Gemini, ChatGPT y Qwen (chequeo de vulnerabilidades)
+📧 sergiomiers@gmail.com 
+Asistencia técnica: IAS Gemini, ChatGPT y Qwen
 
 ---
 
@@ -9,7 +9,7 @@ Asistencia técnica: IAS Gemini, ChatGPT y Qwen (chequeo de vulnerabilidades)
 
 Un **portal de servicios simple, seguro y personalizable**, escrito en **PHP puro**, sin frameworks. Diseñado para ser **ligero, seguro y fácil de instalar y administrar**, ideal para entornos corporativos o de administración interna.
 
-Este portal permite centralizar el acceso a herramientas internas (como Proxmox, Webmin, mytop, info.php, etc.) tras una capa de autenticación robusta, con monitoreo de seguridad y gestión web completa.
+Este portal permite centralizar el acceso a herramientas internas (como Proxmox, Webmin, mytop, info, etc.) tras una capa de autenticación robusta, con monitoreo de seguridad y gestión web completa.
 
 ---
 
@@ -69,6 +69,44 @@ Este portal permite centralizar el acceso a herramientas internas (como Proxmox,
 
 ## 📦 Instalación
 
-1. Clona o descarga este repositorio en la raíz de tu servidor web:
-   ```bash
-   git clone https://github.com/sergioecm60/secmti.git
+Este proyecto está diseñado para funcionar en el **directorio raíz del servidor web** (por ejemplo: `/var/www/html/` en Apache).
+
+### 1. Clonar y mover los archivos
+
+```bash
+# Clona el repositorio
+git clone https://github.com/sergioecm60/secmti.git
+
+# Mueve todos los archivos al directorio raíz
+mv secmti/* secmti/.* . 2>/dev/null || true
+
+# Elimina la carpeta temporal
+rm -rf secmti
+
+### 2. Accede al instalador
+Abre tu navegador en:
+http://tu-ip-o-dominio/install.php
+🔐 Ejemplo: http://localhost/install.php o http://192.168.1.100/install.php
+### 3. Configuración de la base de datos
+Durante la instalación necesitas:
+Un usuario de MySQL/MariaDB con permisos para crear bases de datos (puede ser root temporalmente).
+El instalador te permite crear tu propia base de datos.
+Valores por defecto (opcional):
+Base de datos: portal_db
+Usuario: secmti
+Contraseña: secmti2025
+✅ Puedes definir tus propios valores durante el proceso. 
+
+### 4. ✅ ¡Importante! Elimina el instalador tras la instalación
+Por seguridad, elimina install.php después de instalar:
+#!bash
+rm install.php
+⚠️ Dejar este archivo podría permitir accesos no autorizados. 
+
+📄 Licencia
+Este proyecto está bajo la Licencia GNU GPL v3.
+Consulta los archivos:
+license.php (versión web)
+license.txt (texto completo)
+✅ Puedes usar, modificar y distribuir este software libremente, siempre que mantengas la misma licencia y el crédito al autor.
+🚫 No se otorga ninguna garantía. El uso es bajo tu responsabilidad.
