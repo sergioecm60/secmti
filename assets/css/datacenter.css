@@ -1,0 +1,846 @@
+/* datacenter.css - Estilos específicos para gestión de infraestructura */
+
+.server-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.server-card {
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--container-background);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.server-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.server-card .server-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.server-card.collapsed .server-body {
+    display: none;
+}
+
+.server-header {
+    background: var(--primary-color);
+    color: var(--primary-text-color);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.server-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.server-icon {
+    font-size: 1.5rem;
+}
+
+.server-title input {
+    flex: 1;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    background: rgba(255,255,255,0.95);
+    color: var(--text-color-on-light);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+}
+
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+    color: var(--text-color-on-light);
+}
+
+.action-btn {
+    background: rgba(255,255,255,0.2);
+    color: var(--primary-text-color);
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+.action-btn.edit-btn:hover { background: #ffc107; color: #000; }
+.action-btn.delete-btn:hover { background: var(--danger-color); }
+
+.server-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.server-type {
+    padding: 0.4rem 0.6rem;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.95);
+    color: var(--text-color-on-light);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.toggle-server-btn,
+.delete-server-btn {
+    background: rgba(255,255,255,0.2);
+    color: var(--primary-text-color);
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.toggle-server-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.delete-server-btn:hover {
+    background: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+.info-section {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem;
+}
+
+.info-section h3 {
+    color: var(--primary-color);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.form-grid input {
+    padding: 0.6rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background: var(--container-background);
+    color: var(--text-color-on-light);
+    transition: all 0.2s ease;
+}
+
+.form-grid input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(11, 47, 177, 0.1);
+}
+
+/* DNS List */
+.dns-list {
+    margin-top: 1rem;
+}
+
+.dns-list label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-color-on-light);
+}
+
+.dns-item {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.dns-item input {
+    flex: 1;
+    padding: 0.6rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.delete-dns-btn {
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.add-dns-btn {
+    background: var(--primary-color);
+    color: var(--primary-text-color);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+/* Services */
+.services-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.service-item {
+    background: var(--container-background);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.service-header {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    align-items: center;
+}
+
+.service-header input {
+    flex: 1;
+    padding: 0.6rem;
+    border: 2px solid var(--primary-color);
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.delete-service-btn {
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.service-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.service-details input,
+.service-details select {
+    padding: 0.6rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.inline-fields {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.inline-fields select {
+    flex: 0 0 120px;
+}
+
+.inline-fields input {
+    flex: 1;
+}
+
+/* Credentials */
+.credentials-list {
+    background: rgba(0,0,0,0.03);
+    border: 1px dashed var(--border-color);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+}
+
+.credentials-list label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text-color-on-light);
+}
+
+.credential-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto auto;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    align-items: center;
+}
+
+.credential-item input {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.credential-item input[type="password"] {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+}
+
+.toggle-pass-btn {
+    background: var(--container-background);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.toggle-pass-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.delete-cred-btn {
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.add-credential-btn {
+    background: var(--success-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+.add-service-btn {
+    background: var(--primary-color);
+    color: var(--primary-text-color);
+    border: none;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    align-self: flex-start;
+}
+
+.add-service-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+/* Notes */
+.info-section textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.info-section textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(11, 47, 177, 0.1);
+}
+
+/* Logout button en header */
+.logout-btn {
+    position: absolute;
+    top: 1.5rem;
+    right: 2rem;
+    background: rgba(255,255,255,0.2);
+    color: var(--primary-text-color);
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .server-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .server-title {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .server-actions {
+        justify-content: space-between;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .credential-item {
+        grid-template-columns: 1fr;
+    }
+    
+    .credential-item input {
+        width: 100%;
+    }
+    
+    .toggle-pass-btn,
+    .delete-cred-btn {
+        width: 100%;
+    }
+    
+    .inline-fields {
+        flex-direction: column;
+    }
+    
+    .inline-fields select {
+        flex: 1;
+    }
+    
+    .logout-btn {
+        position: static;
+        margin-top: 1rem;
+        text-align: center;
+    }
+}
+
+/* ==========================================================================
+   Modal Styles
+   ========================================================================== */
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+    align-items: center;
+    justify-content: center;
+}
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background-color: var(--container-background);
+    margin: auto;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close:hover { color: #000; }
+
+.hidden {
+    display: none !important;
+}
+
+/* ==========================================================================
+   Modal Form Styles
+   ========================================================================== */
+
+.form-group {
+    margin-bottom: 1rem;
+}
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+.cancel-btn {
+    background: #6c757d;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.modal-content hr {
+    margin: 2rem 0;
+    border: 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* ==========================================================================
+   Other Component Styles from Manager
+   ========================================================================== */
+
+.badge {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.service-item .service-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.service-details p {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+}
+
+.cred-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.cred-row:last-child {
+    border-bottom: none;
+}
+
+.edit-server-btn {
+    background: #ffc107;
+    color: #000;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   Estilos para datacenter_view.php
+   ========================================================================== */
+
+.admin-container-full-width {
+    max-width: 1400px;
+}
+
+.search-box {
+    margin: 2rem auto;
+    max-width: 600px;
+    text-align: center;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid var(--primary-color);
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.servers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.server-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.server-type-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+}
+
+.server-body {
+    padding: 1.25rem;
+}
+
+.info-row {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.network-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.network-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.network-label {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 0.8rem;
+}
+
+.network-value {
+    font-family: 'Courier New', monospace;
+}
+
+.service-card {
+    background: rgba(11, 47, 177, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.service-title {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.port-number {
+    opacity: 0.8;
+}
+
+.quick-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+}
+
+.quick-link {
+    background: var(--primary-color);
+    color: var(--primary-text-color);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.quick-link:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.quick-link-standalone {
+    display: inline-flex;
+    margin-top: 1rem;
+}
+
+.quick-link#go-to-management-link {
+    display: inline-flex;
+    margin-top: 1rem;
+}
+
+.credentials-box {
+    background: rgba(220, 53, 69, 0.05);
+    border: 1px dashed var(--danger-color);
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.cred-pass-container {
+    text-align: right;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cred-pass {
+    font-family: 'Courier New', monospace;
+    background: var(--container-background);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    cursor: default;
+    user-select: none;
+}
+
+.copy-cred-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-cred-btn:hover {
+    background: var(--primary-color);
+    color: var(--primary-text-color);
+}
+
+.role-badge {
+    opacity: 0.7;
+}
+
+.server-notes {
+    font-style: italic;
+}
+
+.stats-bar {
+    background: var(--container-background);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+
+.stat-item {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.no-data {
+    text-align: center;
+    padding: 3rem;
+}
+
+@media (max-width: 768px) {
+    .network-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.server-card.collapsed .server-body {
+    display: none;
+}
+
+.view-toggle-btn {
+    background: rgba(255,255,255,0.2);
+    color: var(--primary-text-color);
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    margin-left: auto; /* Empuja el botón a la derecha */
+    text-decoration: none;
+}
+
+.server-header-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.view-toggle-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.view-toggle-btn.delete-btn:hover {
+    background: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+.server-type-badge-body {
+    background: var(--primary-color);
+    color: var(--primary-text-color);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    display: inline-block;
+    margin-bottom: 1rem;
+}

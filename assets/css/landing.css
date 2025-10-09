@@ -1,0 +1,444 @@
+/* ============================================================================
+   Landing Page Moderna - index.php
+   Sistema de Gestión de Infraestructura TI para PYMEs
+   ============================================================================ */
+
+.page-info-theme {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.page-info-theme .container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ============================================================================
+   Header Principal - Hero Section
+   ============================================================================ */
+.page-info-theme .header {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%);
+    padding: 3rem 2rem;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    text-align: center;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.5);
+}
+
+.page-info-theme .header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #3e4c9b; /* Color sólido y legible */
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* ============================================================================
+   Secciones de Información - Cards Modernas
+   ============================================================================ */
+.info-section {
+    background: rgba(255,255,255,0.95);
+    padding: 2rem;
+    border-radius: 20px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.5);
+}
+
+.info-section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+}
+
+.info-section h2 {
+    color: #667eea;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid #667eea;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.info-section h2::before {
+    content: "▶";
+    font-size: 1.2rem;
+    color: #667eea;
+}
+
+/* ============================================================================
+   Contacto y Ubicaciones
+   ============================================================================ */
+.contact p,
+.locations p {
+    font-size: 1.1rem;
+    color: #333;
+    margin: 0.75rem 0;
+    padding: 0.75rem 1rem;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+    transition: all 0.2s ease;
+}
+
+.contact p:hover,
+.locations p:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateX(5px);
+}
+
+.locations address {
+    font-style: normal;
+}
+
+/* ============================================================================
+   Iconos Sociales y Sites - Grid Moderno
+   ============================================================================ */
+.icon-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    justify-items: center;
+}
+
+.icon-wrapper a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efecto de brillo */
+.icon-wrapper a::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.icon-wrapper a:hover::before {
+    left: 100%;
+}
+
+.icon-wrapper a:hover {
+    transform: translateY(-8px) scale(1.1);
+    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.6);
+}
+
+.icon-wrapper a:active {
+    transform: translateY(-4px) scale(1.05);
+}
+
+.icon-wrapper .icon {
+    width: 40px;
+    height: 40px;
+    fill: white;
+    transition: all 0.3s ease;
+}
+
+.icon-wrapper a:hover .icon {
+    transform: scale(1.1);
+}
+
+/* Colores específicos para redes sociales */
+.social-icons .icon-wrapper a:nth-child(1) { /* Facebook */
+    background: linear-gradient(135deg, #1877f2 0%, #0c63d4 100%);
+}
+
+.social-icons .icon-wrapper a:nth-child(2) { /* Instagram */
+    background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+.social-icons .icon-wrapper a:nth-child(3) { /* Twitter */
+    background: linear-gradient(135deg, #1da1f2 0%, #0c85d0 100%);
+}
+
+.social-icons .icon-wrapper a:nth-child(4) { /* YouTube */
+    background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+}
+
+.social-icons .icon-wrapper a:nth-child(5) { /* Email */
+    background: linear-gradient(135deg, #ea4335 0%, #c5221f 100%);
+}
+
+/* ============================================================================
+   Sitios Principales - Destacados
+   ============================================================================ */
+.main-sites .icon-wrapper {
+    justify-content: center; /* Centra los botones en el contenedor */
+}
+
+.main-sites .icon-wrapper a {
+    border-radius: 16px;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+}
+/* Ajuste para que los botones de "Sites" sean más pequeños */
+.main-sites .icon-wrapper a {
+    width: 120px; /* Ancho fijo más pequeño */
+}
+
+/* Efecto de partículas en el fondo */
+.main-sites .icon-wrapper a::after {
+    content: "";
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    animation: particlesMove 20s linear infinite;
+    opacity: 0.5;
+}
+
+@keyframes particlesMove {
+    from { transform: translate(0, 0); }
+    to { transform: translate(50px, 50px); }
+}
+
+.main-sites .icon-wrapper .icon {
+    width: 48px;
+    height: 48px;
+    z-index: 1;
+}
+
+/* ============================================================================
+   Footer - Profesional y Centrado
+   ============================================================================ */
+.page-info-theme .footer {
+    background: rgba(255,255,255,0.95);
+    padding: 2rem;
+    border-radius: 20px;
+    text-align: center;
+    margin-top: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.5);
+}
+
+.page-info-theme .footer strong {
+    display: block;
+    font-size: 1.3rem;
+    color: #667eea;
+    margin-bottom: 0.75rem;
+}
+
+.footer-contact-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+    color: #555;
+}
+
+.footer-whatsapp-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #25D366;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    background: rgba(37, 211, 102, 0.1);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.footer-whatsapp-link:hover {
+    background: rgba(37, 211, 102, 0.2);
+    border-color: #25D366;
+    transform: scale(1.05);
+}
+
+.footer-whatsapp-link .icon {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.page-info-theme .footer a[rel="license"] {
+    display: inline-block;
+    color: #667eea;
+    text-decoration: none;
+    margin-top: 1rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border: 2px solid #667eea;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.page-info-theme .footer a[rel="license"]:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* ============================================================================
+   Grid Layout para Desktop
+   ============================================================================ */
+@media (min-width: 768px) {
+    .page-info-theme .container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .page-info-theme .header {
+        grid-column: 1 / -1; /* Asegura que el header ocupe todo el ancho */
+    }
+
+    .page-info-theme .footer {
+        grid-column: 1 / -1;
+    }
+
+    .main-sites {
+        grid-column: 1 / -1;
+    }
+
+    .parallel-sections {
+        grid-column: 1 / -1; /* Ocupa todo el ancho del grid principal */
+    }
+}
+
+/* ============================================================================
+   Responsive - Mobile
+   ============================================================================ */
+@media (max-width: 767px) {
+    .page-info-theme {
+        padding: 1rem 0.5rem;
+    }
+
+    .page-info-theme .header {
+        padding: 2rem 1rem;
+    }
+
+    .page-info-theme .header h1 {
+        font-size: 2rem;
+    }
+
+    .info-section {
+        padding: 1.5rem;
+    }
+
+    .info-section h2 {
+        font-size: 1.5rem;
+    }
+
+    .icon-wrapper {
+        grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+        gap: 1rem;
+    }
+
+    .icon-wrapper a {
+        width: 70px;
+        height: 70px;
+    }
+
+    .main-sites .icon-wrapper {
+        grid-template-columns: 1fr;
+    }
+
+    .contact p,
+    .locations p {
+        font-size: 1rem;
+    }
+
+    .parallel-sections {
+        grid-template-columns: 1fr; /* En móvil, una sección debajo de la otra */
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================================================
+   Animaciones de Entrada
+   ============================================================================ */
+.page-info-theme .header, .info-section {
+    animation: fadeInUp 0.6s ease-out;
+    opacity: 0;
+    animation-fill-mode: forwards;
+}
+
+.info-section:nth-child(2) { animation-delay: 0.1s; }
+.info-section:nth-child(3) { animation-delay: 0.2s; }
+.info-section:nth-child(4) { animation-delay: 0.3s; }
+.info-section:nth-child(5) { animation-delay: 0.4s; }
+.info-section:nth-child(6) { animation-delay: 0.5s; }
+
+.page-info-theme .footer {
+    animation: fadeInUp 0.6s ease-out 0.6s;
+    animation-fill-mode: forwards;
+    opacity: 0;
+}
+
+/* ============================================================================
+   Accesibilidad
+   ============================================================================ */
+.icon-wrapper a:focus {
+    outline: 3px solid #667eea;
+    outline-offset: 4px;
+}
+
+/* Reducir animaciones para usuarios sensibles */
+@media (prefers-reduced-motion: reduce) {
+    .page-info-theme .header,
+    .info-section,
+    .page-info-theme .footer,
+    .icon-wrapper a,
+    .contact p,
+    .locations p {
+        animation: none;
+        transition: none;
+    }
+
+    .icon-wrapper a:hover,
+    .info-section:hover {
+        transform: none;
+    }
+}
+
+/* Alto contraste */
+@media (prefers-contrast: high) {
+    .info-section {
+        border: 2px solid #000;
+    }
+
+    .icon-wrapper a {
+        border: 2px solid #fff;
+    }
+}

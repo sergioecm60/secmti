@@ -8,197 +8,121 @@ $config_file = 'config.php';
 $nonce = base64_encode(random_bytes(16));
 header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self' 'nonce-{$nonce}';");
 
-// Verificar autenticación.
-if (!isset($_SESSION['acceso_info']) || $_SESSION['acceso_info'] !== true) {
-    header('Location: index2.php');
+// Verificar autenticación y rol de administrador.
+if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+    // Si no es admin, redirigir a la página de login (o a index2.php si prefieres)
+    header('Location: login.php');
     exit;
 }
 
 $status_message = '';
 
-// --- Carga de datos para el formulario ---
-require_once 'database.php';
-$pdo = get_database_connection($config, false);
-$all_users = [];
-$user_count = 0;
-if ($pdo) {
-    $stmt = $pdo->query("SELECT id, username FROM user ORDER BY username");
-    $all_users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $user_count = count($all_users);
-}
-
 // --- MANEJO DEL GUARDADO DE LA CONFIGURACIÓN ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $can_save = true;
+    // Validar token CSRF primero
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        $status_message = '<div class="status-message error">Error de validación de seguridad. Por favor, intente guardar de nuevo.</div>';
+    } else {
+        $can_save = true;
 
-    // 1. Actualizar el nombre de la compañía
-    $lp_config =& $config['landing_page'];
-    $lp_config['company_name'] = trim($_POST['company_name'] ?? $lp_config['company_name']);
+        $lp_config =& $config['landing_page'];
+        $lp_config['company_name'] = trim($_POST['company_name'] ?? $lp_config['company_name']);
 
-    // --- Contenido de la Página Principal ---
-    $lp_config['sales_title'] = trim($_POST['sales_title'] ?? $lp_config['sales_title']);
-    $lp_config['locations_title'] = trim($_POST['locations_title'] ?? $lp_config['locations_title']);
-    $lp_config['social_title'] = trim($_POST['social_title'] ?? $lp_config['social_title']);
-    $lp_config['main_sites_title'] = trim($_POST['main_sites_title'] ?? $lp_config['main_sites_title']);
+        // --- Contenido de la Página Principal ---
+        $lp_config['sales_title'] = trim($_POST['sales_title'] ?? $lp_config['sales_title']);
+        $lp_config['locations_title'] = trim($_POST['locations_title'] ?? $lp_config['locations_title']);
+        $lp_config['social_title'] = trim($_POST['social_title'] ?? $lp_config['social_title']);
+        $lp_config['main_sites_title'] = trim($_POST['main_sites_title'] ?? $lp_config['main_sites_title']);
 
-    // Teléfonos
-    $lp_config['phone_numbers'] = [];
-    if (isset($_POST['phone_numbers']) && is_array($_POST['phone_numbers'])) {
-        foreach (array_map('trim', $_POST['phone_numbers']) as $phone) {
-            if (!empty($phone)) $lp_config['phone_numbers'][] = $phone;
-        }
-    }
-
-    // Sucursales
-    $lp_config['branches'] = [];
-    if (isset($_POST['branches']) && is_array($_POST['branches'])) {
-        foreach (array_map('trim', $_POST['branches']) as $branch) {
-            if (!empty($branch)) $lp_config['branches'][] = $branch;
-        }
-    }
-
-    // Redes Sociales (dinámico)
-    $lp_config['social_links'] = [];
-    if (isset($_POST['social_links']) && is_array($_POST['social_links'])) {
-        foreach ($_POST['social_links'] as $link_data) {
-            $id = trim($link_data['id'] ?? '');
-            if (empty($id)) continue;
-            $lp_config['social_links'][$id] = [
-                'label' => trim($link_data['label'] ?? 'Sin Etiqueta'),
-                'url' => trim($link_data['url'] ?? '#'),
-                'svg_path' => trim($link_data['svg_path'] ?? ''),
-            ];
-        }
-    }
-
-    // Sitios Principales (se mantiene estático por ahora)
-    if (isset($_POST['main_sites']) && is_array($_POST['main_sites'])) {
-        foreach ($_POST['main_sites'] as $key => $url) {
-            if (isset($lp_config['main_sites'][$key])) $lp_config['main_sites'][$key]['url'] = trim($url);
-        }
-    }
-
-    // 2. Gestión de usuarios (Crear, Editar, Eliminar)
-    if ($can_save && $pdo) {
-        $submitted_users_data = $_POST['users'] ?? [];
-
-        // --- Pre-validación: No se puede eliminar el último usuario ---
-        $db_user_ids = array_column($all_users, 'id');
-        $submitted_ids = [];
-        foreach ($submitted_users_data as $data) {
-            if (is_numeric($data['id'])) {
-                $submitted_ids[] = (int)$data['id'];
+        // Teléfonos
+        $lp_config['phone_numbers'] = [];
+        if (isset($_POST['phone_numbers']) && is_array($_POST['phone_numbers'])) {
+            foreach (array_map('trim', $_POST['phone_numbers']) as $phone) {
+                if (!empty($phone)) $lp_config['phone_numbers'][] = $phone;
             }
         }
-        $deleted_ids = array_diff($db_user_ids, $submitted_ids);
 
-        if (count($db_user_ids) - count($deleted_ids) < 1) {
-            $status_message = '<div class="status-message error">Error: No se puede eliminar el último usuario. Debe existir al menos un administrador.</div>';
-            $can_save = false;
+        // Sucursales
+        $lp_config['branches'] = [];
+        if (isset($_POST['branches']) && is_array($_POST['branches'])) {
+            foreach (array_map('trim', $_POST['branches']) as $branch) {
+                if (!empty($branch)) $lp_config['branches'][] = $branch;
+            }
         }
 
-        // --- Procesar si la validación pasa ---
+        // Redes Sociales (dinámico)
+        $lp_config['social_links'] = [];
+        if (isset($_POST['social_links']) && is_array($_POST['social_links'])) {
+            foreach ($_POST['social_links'] as $link_data) {
+                $id = trim($link_data['id'] ?? '');
+                if (empty($id)) continue;
+                $lp_config['social_links'][$id] = [
+                    'label' => trim($link_data['label'] ?? 'Sin Etiqueta'),
+                    'url' => trim($link_data['url'] ?? '#'),
+                    'svg_path' => trim($link_data['svg_path'] ?? ''),
+                ];
+            }
+        }
+
+        // Sitios Principales (se mantiene estático por ahora)
+        if (isset($_POST['main_sites']) && is_array($_POST['main_sites'])) {
+            foreach ($_POST['main_sites'] as $key => $url) {
+                if (isset($lp_config['main_sites'][$key])) $lp_config['main_sites'][$key]['url'] = trim($url);
+            }
+        }
+
+        // Actualizar configuración del pie de página
+        $footer_config =& $config['footer'];
+        $footer_config['line1'] = trim($_POST['footer_line1'] ?? $footer_config['line1'] ?? '');
+        $footer_config['line2'] = trim($_POST['footer_line2'] ?? $footer_config['line2'] ?? '');
+        $footer_config['whatsapp_number'] = trim($_POST['footer_whatsapp_number'] ?? $footer_config['whatsapp_number'] ?? '');
+        $footer_config['license_url'] = trim($_POST['footer_license_url'] ?? $footer_config['license_url'] ?? '');
+        $footer_config['whatsapp_svg_path'] = trim($_POST['footer_whatsapp_svg_path'] ?? $footer_config['whatsapp_svg_path'] ?? '');
+
+        // 3. Actualizar la lista de servicios
+        $config['services'] = []; // Limpiar para reconstruir desde el POST
+        if (isset($_POST['services']) && is_array($_POST['services'])) {
+            foreach ($_POST['services'] as $key => $service_data) {
+                // Para servicios existentes, la clave ($key) y el id del campo son iguales.
+                // Para servicios nuevos, la clave es 'nuevo_...' y el id lo define el usuario en el campo de texto.
+                $service_id = trim($service_data['id'] ?? $key);
+
+                if (empty($service_id)) {
+                    continue; // Ignorar servicios sin un ID válido
+                }
+
+                // Usamos el ID (del campo de texto para los nuevos, o la clave para los existentes)
+                // como la clave final en el array de configuración.
+                $config['services'][$service_id] = [
+                    'label'          => trim($service_data['label'] ?? 'Sin Etiqueta'),
+                    'url'            => trim($service_data['url'] ?? '#'),
+                    // Se añade la categoría, con 'Otros Servicios' como valor por defecto si está vacío.
+                    'category'       => trim($service_data['category'] ?? 'Otros Servicios'),
+                    'requires_login' => isset($service_data['requires_login']), // checkbox value is '1' if checked
+                    'redirect'       => isset($service_data['redirect']),       // checkbox value is '1' if checked
+                ];
+            }
+        }
+
+        // Ya no necesitamos la sección 'login' en el archivo de configuración.
+        unset($config['login']);
+
+        // 4. Escribir la nueva configuración de vuelta al archivo
+        $new_config_content = "<?php\n" .
+            "/**\n * /config.php - Archivo de Configuración Central\n * Este archivo debe devolver un array con toda la configuración de la aplicación.\n * No debe ejecutar lógica, solo definir datos.\n */\n\n" .
+            "return " . var_export($config, true) . ";\n";
+
         if ($can_save) {
-            try {
-                // Eliminar usuarios marcados para borrado
-                if (!empty($deleted_ids)) {
-                    $placeholders = implode(',', array_fill(0, count($deleted_ids), '?'));
-                    $stmt = $pdo->prepare("DELETE FROM user WHERE id IN ($placeholders)");
-                    $stmt->execute(array_values($deleted_ids));
-                }
-
-                // Actualizar e insertar usuarios
-                foreach ($submitted_users_data as $key => $user_data) {
-                    $id = $user_data['id'];
-                    $username = trim($user_data['username'] ?? '');
-                    $password = $user_data['password'] ?? '';
-
-                    if (empty($username)) throw new Exception('El nombre de usuario no puede estar vacío.');
-
-                    if (strpos($id, 'nuevo_') === 0) { // INSERT
-                        if (empty($password) || strlen($password) < 8) {
-                            throw new Exception('La contraseña para el nuevo usuario "' . htmlspecialchars($username) . '" es obligatoria y debe tener al menos 8 caracteres.');
-                        }
-                        $sql = "INSERT INTO user (username, pass_hash) VALUES (?, ?)";
-                        $stmt = $pdo->prepare($sql);
-                        $stmt->execute([$username, password_hash($password, PASSWORD_DEFAULT)]);
-                    } else { // UPDATE
-                        $sql = "UPDATE user SET username = ?";
-                        $params = [$username];
-                        if (!empty($password)) {
-                            if (strlen($password) < 8) throw new Exception('La nueva contraseña para el usuario "' . htmlspecialchars($username) . '" debe tener al menos 8 caracteres.');
-                            $sql .= ", pass_hash = ?";
-                            $params[] = password_hash($password, PASSWORD_DEFAULT);
-                        }
-                        $sql .= " WHERE id = ?";
-                        $params[] = (int)$id;
-                        $stmt = $pdo->prepare($sql);
-                        $stmt->execute($params);
-                    }
-                }
-            } catch (PDOException $e) {
-                $status_message = '<div class="status-message error">' . ($e->getCode() == 23000 ? 'Error: El nombre de usuario ya existe.' : 'Error de base de datos al gestionar usuarios.') . '</div>';
-                error_log('Manage.php User PDOException: ' . $e->getMessage());
-                $can_save = false;
-            } catch (Exception $e) {
-                $status_message = '<div class="status-message error">Error: ' . $e->getMessage() . '</div>';
-                $can_save = false;
-            }
-        }
-    }
-
-    // Actualizar configuración del pie de página
-    $footer_config =& $config['footer'];
-    $footer_config['line1'] = trim($_POST['footer_line1'] ?? $footer_config['line1'] ?? '');
-    $footer_config['line2'] = trim($_POST['footer_line2'] ?? $footer_config['line2'] ?? '');
-    $footer_config['whatsapp_number'] = trim($_POST['footer_whatsapp_number'] ?? $footer_config['whatsapp_number'] ?? '');
-    $footer_config['license_url'] = trim($_POST['footer_license_url'] ?? $footer_config['license_url'] ?? '');
-    $footer_config['whatsapp_svg_path'] = trim($_POST['footer_whatsapp_svg_path'] ?? $footer_config['whatsapp_svg_path'] ?? '');
-
-    // 3. Actualizar la lista de servicios
-    $config['services'] = []; // Limpiar para reconstruir desde el POST
-    if (isset($_POST['services']) && is_array($_POST['services'])) {
-        foreach ($_POST['services'] as $service_data) {
-            // El ID del botón viene del campo de texto 'id' que el usuario puede editar (para nuevos) o es readonly (para existentes)
-            $service_id = trim($service_data['id'] ?? '');
-            if (empty($service_id)) {
-                continue; // Ignorar servicios sin un ID válido
+            if (file_exists($config_file)) {
+                copy($config_file, $config_file . '.bak');
             }
 
-            // Usamos el 'service_id' del campo de texto como la clave final en el array de configuración.
-            $config['services'][$service_id] = [
-                'label'          => trim($service_data['label'] ?? 'Sin Etiqueta'),
-                'url'            => trim($service_data['url'] ?? '#'),
-                'requires_login' => isset($service_data['requires_login']), // checkbox value is '1' if checked
-                'redirect'       => isset($service_data['redirect']),       // checkbox value is '1' if checked
-            ];
-        }
-    }
-
-    // Ya no necesitamos la sección 'login' en el archivo de configuración.
-    unset($config['login']);
-
-    // 4. Escribir la nueva configuración de vuelta al archivo
-    $new_config_content = "<?php\n" .
-        "/**\n * /config.php - Archivo de Configuración Central\n * Este archivo debe devolver un array con toda la configuración de la aplicación.\n * No debe ejecutar lógica, solo definir datos.\n */\n\n" .
-        "return " . var_export($config, true) . ";\n";
-
-    if ($can_save) {
-        // Crear un backup antes de sobreescribir
-        // Recargar la lista de usuarios para mostrar los cambios inmediatamente
-        $stmt = $pdo->query("SELECT id, username FROM user ORDER BY username");
-        $all_users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $user_count = count($all_users);
-
-        if (file_exists($config_file)) {
-            copy($config_file, $config_file . '.bak');
-        }
-
-        // Escribir el nuevo contenido
-        if (file_put_contents($config_file, $new_config_content)) {
-            $status_message = '<div class="status-message success">¡Configuración guardada con éxito!</div>';
-        } else {
-            $status_message = '<div class="status-message error">Error: No se pudo escribir en el archivo de configuración. Verifique los permisos.</div>';
+            // Escribir el nuevo contenido
+            if (file_put_contents($config_file, $new_config_content)) {
+                $status_message = '<div class="status-message success">¡Configuración guardada con éxito!</div>';
+            } else {
+                $status_message = '<div class="status-message error">Error: No se pudo escribir en el archivo de configuración. Verifique los permisos.</div>';
+            }
         }
     }
 }
@@ -217,7 +141,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <header class="admin-header">
             <h1>⚙️ Administrar Configuración</h1>
             <p>Edita los parámetros principales de tu portal.</p>
-            <a href="logout.php" class="logout-btn">Cerrar Sesión</a>
         </header>
 
         <div class="content">
@@ -226,6 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form method="POST" action="manage.php">
                 <!-- Sección de Ajustes Generales -->
                 <div class="section">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                     <div class="section-header">Ajustes Generales</div>
                     <div class="section-body">
                         <div class="section-body-inner">
@@ -249,6 +173,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="form-group">
                                 <label for="locations_title">Título de Sucursales</label>
                                 <input type="text" id="locations_title" name="locations_title" value="<?= htmlspecialchars($config['landing_page']['locations_title'] ?? '') ?>">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="social_title">Título de Redes Sociales</label>
+                                <input type="text" id="social_title" name="social_title" value="<?= htmlspecialchars($config['landing_page']['social_title'] ?? '') ?>">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="main_sites_title">Título de Sitios Principales</label>
+                                <input type="text" id="main_sites_title" name="main_sites_title" value="<?= htmlspecialchars($config['landing_page']['main_sites_title'] ?? '') ?>">
                             </div>
 
                             <!-- Teléfonos (lista dinámica) -->
@@ -348,43 +282,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <!-- Sección de Credenciales de Acceso -->
-                <div class="section">
-                    <div class="section-header">Gestión de Usuarios del Portal</div>
-                    <div class="section-body">
-                        <div class="section-body-inner">
-                            <div class="table-container">
-                                <table id="users-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Usuario</th>
-                                            <th>Nueva Contraseña (dejar en blanco para no cambiar)</th>
-                                            <th>Acción</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if (empty($all_users)): ?>
-                                            <tr><td colspan="3" style="text-align: center;">No hay usuarios. Añada uno para poder iniciar sesión.</td></tr>
-                                        <?php else: ?>
-                                            <?php foreach ($all_users as $user): ?>
-                                            <tr>
-                                                <td>
-                                                    <input type="hidden" name="users[<?= $user['id'] ?>][id]" value="<?= $user['id'] ?>">
-                                                    <input type="text" name="users[<?= $user['id'] ?>][username]" value="<?= htmlspecialchars($user['username']) ?>" required>
-                                                </td>
-                                                <td><input type="password" name="users[<?= $user['id'] ?>][password]" placeholder="Mín. 8 caracteres" autocomplete="new-password"></td>
-                                                <td><button type="button" class="delete-user-btn" <?= $user_count <= 1 ? 'disabled' : '' ?>>Eliminar</button></td>
-                                            </tr>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <button type="button" id="add-user-btn" class="add-btn">Añadir Nuevo Usuario</button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Sección de Botones de Servicio -->
                 <div class="section">
                     <div class="section-header">Botones de Servicios, Agregue sitios locales o remotos (Portal)</div>
@@ -397,6 +294,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <th>ID del Botón</th>
                                             <th>Etiqueta (Texto)</th>
                                             <th>URL de Destino</th>
+                                            <th>Categoría</th>
                                             <th>Login?</th>
                                             <th>Redir?</th>
                                             <th>Acción</th>
@@ -408,6 +306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <td><input type="text" name="services[<?= $id ?>][id]" value="<?= htmlspecialchars($id) ?>" readonly class="readonly-id"></td>
                                             <td><input type="text" name="services[<?= $id ?>][label]" value="<?= htmlspecialchars($service['label']) ?>" required></td>
                                             <td><input type="text" name="services[<?= $id ?>][url]" value="<?= htmlspecialchars($service['url']) ?>" required></td>
+                                            <td><input type="text" name="services[<?= $id ?>][category]" value="<?= htmlspecialchars($service['category'] ?? '') ?>" placeholder="Ej: Accesos LAN"></td>
                                             <td class="checkbox-cell"><input type="checkbox" name="services[<?= $id ?>][requires_login]" value="1" <?= !empty($service['requires_login']) ? 'checked' : '' ?>></td>
                                             <td class="checkbox-cell"><input type="checkbox" name="services[<?= $id ?>][redirect]" value="1" <?= !empty($service['redirect']) ? 'checked' : '' ?>></td>
                                             <td><button type="button" class="delete-service-btn">Eliminar</button></td>
@@ -509,6 +408,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <td><input type="text" name="services[${newId}][id]" placeholder="ej: miBoton" required></td>
                 <td><input type="text" name="services[${newId}][label]" placeholder="ej: Mi Botón" required></td>
                 <td><input type="text" name="services[${newId}][url]" placeholder="https://... o info.php" required></td>
+                <td><input type="text" name="services[${newId}][category]" placeholder="Ej: Accesos WAN" required></td>
                 <td class="checkbox-cell"><input type="checkbox" name="services[${newId}][requires_login]" value="1" checked></td>
                 <td class="checkbox-cell"><input type="checkbox" name="services[${newId}][redirect]" value="1"></td>
                 <td><button type="button" class="delete-service-btn">Eliminar</button></td>
@@ -544,42 +444,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
     });
-
-    // --- Lógica para la tabla de usuarios ---
-    const usersTableBody = document.querySelector('#users-table tbody');
-    if (usersTableBody) {
-        usersTableBody.addEventListener('click', function(e) {
-            if (e.target && e.target.classList.contains('delete-user-btn')) {
-                e.preventDefault();
-                e.target.closest('tr').remove();
-                
-                // Re-evaluar si los botones de eliminar deben estar deshabilitados
-                const allDeleteButtons = usersTableBody.querySelectorAll('.delete-user-btn');
-                const disable = allDeleteButtons.length <= 1;
-                
-                allDeleteButtons.forEach(btn => {
-                    btn.disabled = disable;
-                });
-            }
-        });
-    }
-
-    const addUserBtn = document.getElementById('add-user-btn');
-    if (addUserBtn) {
-        addUserBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const newId = 'nuevo_' + Date.now();
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td><input type="hidden" name="users[${newId}][id]" value="${newId}"><input type="text" name="users[${newId}][username]" placeholder="Nuevo usuario" required></td>
-                <td><input type="password" name="users[${newId}][password]" placeholder="Contraseña (obligatoria)" required minlength="8"></td>
-                <td><button type="button" class="delete-user-btn">Eliminar</button></td>
-            `;
-            usersTableBody.appendChild(newRow);
-            newRow.querySelector('input[type="text"]').focus();
-            usersTableBody.querySelectorAll('.delete-user-btn').forEach(btn => btn.disabled = false);
-        });
-    }
     </script>
 </body>
 </html>

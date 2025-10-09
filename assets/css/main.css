@@ -162,27 +162,124 @@ body.page-info-theme {
 
 /* --- Styles for index2.php (.page-index2) --- */
 .page-index2 .container {
-    width: 90%;
-    max-width: 600px;
+    width: 95%;
+    max-width: 1200px; /* Aumentamos el ancho máximo */
     margin: 2rem auto;
     border-radius: 16px;
-    box-shadow: var(--main-shadow);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1); /* Sombra más sutil */
     padding: 2.5rem;
-    backdrop-filter: blur(4px);
+    background-color: var(--container-background); /* Fondo sólido */
+    border: 1px solid var(--border-color);
+    /* Eliminamos backdrop-filter para un look más limpio */
+}
+
+.main-navbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem;
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    justify-content: center;
+}
+
+.navbar-button {
+    background-color: var(--primary-color);
+    color: var(--primary-text-color);
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+.navbar-button:hover {
+    background-color: color-mix(in srgb, var(--primary-color) 85%, black);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.sections-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.service-section {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1.5rem;
+    border-radius: 12px;
     border: 1px solid var(--border-color);
 }
-.page-index2 .main-title { text-align: center; font-size: 1.2rem; margin-bottom: 1.5rem; font-weight: 500; }
-.page-index2 .main-title a { text-decoration: none; font-weight: 600; transition: color 0.2s; border-bottom: 1px dashed var(--primary-color); }
-.page-index2 .main-title a:hover { opacity: 0.8; }
-.page-index2 .ip { text-align: center; font-weight: 500; font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--primary-text-color); background: var(--primary-color); padding: 0.5rem; border-radius: 6px; word-break: break-all; }
-.page-index2 .logo { display: block; margin: 1rem auto 2rem; width: 100%; max-width: 320px; height: auto; border: 3px solid var(--primary-color); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.3s ease; }
-.page-index2 .logo:hover { transform: scale(1.03); }
-.page-index2 .menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.8rem; margin-bottom: 1.8rem; }
-.page-index2 .menu button, .page-index2 .menu a { text-decoration: none; padding: 0.75rem 1rem; border-radius: 8px; transition: var(--main-transition); font-size: 0.95rem; text-align: center; font-weight: 600; border: 2px solid var(--primary-color); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; background-color: var(--container-background); color: var(--primary-color); }
-.page-index2 .menu button:hover, .page-index2 .menu a:hover { transform: translateY(-2px); background: var(--primary-color); color: var(--primary-text-color); border: 2px solid var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.page-index2 .contact-bar { background: var(--container-background); border-radius: 8px; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--primary-color); gap: 10px; font-weight: 600; color: var(--primary-color); font-size: 0.95rem; flex-wrap: wrap; }
-.page-index2 .contact-bar a { color: var(--primary-color); padding: 2px; transition: transform 0.2s; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background-color: var(--primary-text-color); }
-.page-index2 .contact-bar a:hover { transform: scale(1.1); }
+
+.section-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.back-link-container {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.footer-no-border {
+    border-top: none;
+    padding-top: 2rem;
+}
+
+/* Estilos para el header del portal en index2.php */
+.portal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem 1rem;
+    background-color: rgba(0,0,0,0.03);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.portal-header span {
+    font-weight: 500;
+}
+
+.logout-btn {
+    background-color: var(--danger-color);
+    color: var(--danger-text-color);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: opacity 0.2s;
+}
+.logout-btn:hover {
+    opacity: 0.85;
+}
+
+/* --- Estilos para el modo de edición Drag & Drop --- */
+.edit-mode-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.edit-mode-active .section-title {
+    cursor: move; /* Cambia el cursor para indicar que se puede arrastrar */
+}
+
+.edit-mode-active .menu-button {
+    cursor: grab;
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+    background: #c8ebfb;
+}
 
 /* --- Styles for admin pages (.page-manage, .page-info, .page-mytop) --- */
 body.page-manage, body.page-info, body.page-mytop {
@@ -313,6 +410,315 @@ header.admin-header p {
 .page-manage .form-group-inline label { flex-basis: 200px; flex-shrink: 0; margin-bottom: 0; text-align: right; }
 .page-manage .form-group-inline input { flex-grow: 1; }
 
+.page-manage .form-group small {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* --- Estilos para el Modal de Usuarios --- */
+.modal {
+    display: none; /* Oculto por defecto */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex; /* Visible cuando tiene la clase 'active' */
+}
+
+.modal-content {
+    background-color: var(--container-background);
+    margin: auto;
+    color: var(--text-color-on-light); /* Asegura texto oscuro sobre fondo claro */
+    padding: 2rem;
+    border-radius: var(--main-radius);
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal .close {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.modal .cancel-btn {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem; /* Mismo padding que el botón de guardar */
+    font-size: 1.1rem;    /* Mismo tamaño de fuente */
+    font-weight: 600;     /* Mismo peso de fuente */
+    border-radius: 8px;   /* Añadimos los bordes redondeados */
+    cursor: pointer;
+}
+
+/* --- Styles for login.php (.page-login) --- */
+.page-login {
+    background: linear-gradient(135deg, var(--page-background) 0%, var(--primary-color) 100%);
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    min-height: 100vh;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    background-color: var(--container-background);
+    color: var(--text-color-on-light);
+    border-radius: var(--main-radius);
+    box-shadow: var(--main-shadow);
+    border: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.login-logo {
+    max-width: 150px;
+    margin-bottom: 1rem;
+}
+
+.login-container h2 {
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+}
+
+.login-form .form-group {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.login-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+.login-button {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--primary-color);
+    color: var(--primary-text-color);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    margin-top: 1rem;
+}
+
+.login-button:hover {
+    opacity: 0.9;
+}
+
+/* --- Styles for Modern Login (login.php) --- */
+.modern-login-body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1d2b64 0%, #2c3e50 100%);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    color: #f0f6fc;
+    padding: 0; /* Reset padding for this specific body */
+}
+
+.login-main-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modern-login-body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(circle at 20% 50%, rgba(255,255,255,0.05) 2px, transparent 2px),
+        radial-gradient(circle at 80% 50%, rgba(255,255,255,0.05) 2px, transparent 2px);
+    background-size: 100px 100px, 120px 120px;
+    animation: float 20s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(20px, -20px); }
+}
+
+.modern-login-body .login-container {
+    background: rgba(22, 27, 34, 0.85);
+    backdrop-filter: blur(15px);
+    border-radius: 16px;
+    padding: 30px 25px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.modern-login-body .login-header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.modern-login-body .login-header .login-logo {
+    width: 70px;
+    height: auto;
+    margin: 0 auto 15px auto;
+    border-radius: 15px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
+.modern-login-body .login-header p {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #a8b2ff, #f0f6fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 5px;
+}
+
+.modern-login-body .login-header small {
+    color: #8b949e;
+    font-weight: 500;
+}
+
+.modern-login-body .form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.modern-login-body .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #8b949e;
+    font-size: 0.9rem;
+}
+
+.modern-login-body .form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: #0d1117;
+    color: #f0f6fc;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.modern-login-body .form-group input:focus {
+    border-color: #4c6ef5;
+    box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.3);
+}
+
+.modern-login-body .login-error {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #f8d7da;
+    border: 1px solid rgba(220, 53, 69, 0.5);
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+.modern-login-body .login-error {
+    display: none;
+}
+.modern-login-body .login-error.active {
+    display: block;
+}
+.login-logo.hidden {
+    display: none;
+}
+.modern-login-body .captcha-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #0d1117;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #30363d;
+}
+
+.modern-login-body .captcha-container .captcha-question {
+    flex-shrink: 0;
+    font-weight: 600;
+    color: #8b949e;
+    padding-left: 5px;
+    user-select: none;
+}
+
+.modern-login-body .captcha-container .captcha-input {
+    flex-grow: 1;
+    text-align: center;
+    border: none !important;
+    background: transparent !important;
+    padding: 5px !important;
+    font-size: 1.1rem !important;
+}
+.modern-login-body .captcha-container .captcha-input:focus {
+    box-shadow: none !important;
+}
+
+.modern-login-body .btn-login {
+    background: linear-gradient(135deg, #4c6ef5 0%, #339af0 100%);
+    box-shadow: 0 4px 15px rgba(76, 110, 245, 0.3);
+    padding: 12px 20px;
+    font-size: 1rem;
+    border-radius: 8px;
+    display: block;
+    margin-top: 20px;
+    width: 100%;
+    border: none;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.modern-login-body .btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(76, 110, 245, 0.4);
+}
+
 /* --- Styles for info.php (.page-info) --- */
 .page-info .section { margin-bottom: 2rem; border-radius: var(--main-radius); overflow: hidden; }
 .page-info .section-body { padding: 1rem; font-size: 0.95rem; max-height: 400px; overflow-y: auto; }
@@ -320,8 +726,11 @@ header.admin-header p {
 .page-info .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
 .page-info .info-card { padding: 1rem; border-radius: var(--main-radius); box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
 .page-info .info-card strong { color: var(--primary-color); display: block; font-size: 0.95rem; margin-bottom: 0.3rem; }
+.page-info .section-body > .info-card {
+    margin-bottom: 1rem;
+}
 .page-info .progress-bar { background-color: var(--border-color); border-radius: 6px; height: 22px; width: 100%; overflow: hidden; margin-top: 5px; }
-.page-info .progress-bar-inner { background-color: var(--primary-color); height: 100%; color: var(--primary-text-color); text-align: center; line-height: 22px; font-size: 0.8em; font-weight: bold; transition: width 0.5s ease; }
+.page-info .progress-bar-inner { background-color: var(--primary-color); height: 100%; color: var(--primary-text-color); text-align: center; line-height: 22px; font-size: 0.8em; font-weight: bold; transition: width 0.5s ease; width: var(--progress-width, 0%); }
 .page-info .not-found { opacity: 0.7; font-style: italic; }
 
 /* --- Accordion Styles --- */

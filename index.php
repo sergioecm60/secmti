@@ -1,8 +1,8 @@
 <?php
 // index.php - Página de presentación de la empresa
 
-// Cargar la configuración unificada desde la raíz.
-$config = require_once 'config.php';
+// Incluir el archivo de inicialización central.
+require_once 'bootstrap.php';
 
 // Establecer cabeceras de seguridad y de contenido.
 header('Content-Type: text/html; charset=utf-8');
@@ -27,6 +27,7 @@ header("Content-Security-Policy: default-src 'self'; style-src 'self' https://fo
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/landing.css">
     <?php if (file_exists('templates/theme_style.php')) require_once 'templates/theme_style.php'; ?>
 </head>
 <body class="page-info-theme">
@@ -34,13 +35,6 @@ header("Content-Security-Policy: default-src 'self'; style-src 'self' https://fo
         <header class="header info-section">
             <h1><?= htmlspecialchars($config['landing_page']['company_name']) ?></h1>
         </header>
-
-        <section class="contact info-section">
-            <h2><?= htmlspecialchars($config['landing_page']['sales_title']) ?></h2>
-            <?php foreach ($config['landing_page']['phone_numbers'] as $phone): ?>
-                <p>📞 <?= htmlspecialchars($phone) ?></p>
-            <?php endforeach; ?>
-        </section>
 
         <section class="locations info-section">
             <h2><?= htmlspecialchars($config['landing_page']['locations_title']) ?></h2>
@@ -51,35 +45,45 @@ header("Content-Security-Policy: default-src 'self'; style-src 'self' https://fo
             </address>
         </section>
 
-        <section class="social-icons info-section">
-            <h2><?= htmlspecialchars($config['landing_page']['social_title']) ?></h2>
-            <div class="icon-wrapper">
-                <?php foreach ($config['landing_page']['social_links'] as $name => $link): ?>
-                    <a href="<?= htmlspecialchars($link['url']) ?>" 
-                       aria-label="<?= htmlspecialchars($link['label']) ?>" 
-                       <?php if ($name !== 'email'): ?>target="_blank" rel="noopener noreferrer"<?php endif; ?>>
-                        <svg class="icon" role="img" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="<?= $link['svg_path'] ?>"/>
-                        </svg>
-                    </a>
-                <?php endforeach; ?>
-            </div>
+        <section class="contact info-section">
+            <h2><?= htmlspecialchars($config['landing_page']['sales_title']) ?></h2>
+            <?php foreach ($config['landing_page']['phone_numbers'] as $phone): ?>
+                <p>📞 <?= htmlspecialchars($phone) ?></p>
+            <?php endforeach; ?>
         </section>
 
-        <section class="main-sites info-section">
-            <h2><?= htmlspecialchars($config['landing_page']['main_sites_title'] ?? 'Sitios Principales') ?></h2>
-            <div class="icon-wrapper">
-                <?php foreach ($config['landing_page']['main_sites'] as $name => $site): ?>
-                    <a href="<?= htmlspecialchars($site['url']) ?>" 
-                       aria-label="<?= htmlspecialchars($site['label']) ?>" 
-                       <?php if ($name !== 'intranet'): ?>target="_blank" rel="noopener noreferrer"<?php endif; ?>>
-                        <svg class="icon" role="img" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="<?= $site['svg_path'] ?>"/>
-                        </svg>
-                    </a>
-                <?php endforeach; ?>
-            </div>
-        </section>
+        <!-- Contenedor para las secciones en paralelo -->
+        <div class="parallel-sections">
+            <section class="social-icons info-section">
+                <h2><?= htmlspecialchars($config['landing_page']['social_title']) ?></h2>
+                <div class="icon-wrapper">
+                    <?php foreach ($config['landing_page']['social_links'] as $name => $link): ?>
+                        <a href="<?= htmlspecialchars($link['url']) ?>" 
+                           aria-label="<?= htmlspecialchars($link['label']) ?>" 
+                           <?php if ($name !== 'email'): ?>target="_blank" rel="noopener noreferrer"<?php endif; ?>>
+                            <svg class="icon" role="img" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="<?= $link['svg_path'] ?>"/>
+                            </svg>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+
+            <section class="main-sites info-section">
+                <h2><?= htmlspecialchars($config['landing_page']['main_sites_title'] ?? 'Sitios Principales') ?></h2>
+                <div class="icon-wrapper">
+                    <?php foreach ($config['landing_page']['main_sites'] as $name => $site): ?>
+                        <a href="<?= htmlspecialchars($site['url']) ?>" 
+                           aria-label="<?= htmlspecialchars($site['label']) ?>" 
+                           <?php if ($name !== 'intranet'): ?>target="_blank" rel="noopener noreferrer"<?php endif; ?>>
+                            <svg class="icon" role="img" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="<?= $site['svg_path'] ?>"/>
+                            </svg>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+        </div>
     </main>
     <footer class="footer">
         <strong><?= htmlspecialchars($config['footer']['line1'] ?? '') ?></strong><br>

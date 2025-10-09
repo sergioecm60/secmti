@@ -1,29 +1,174 @@
-# Configuración local (datos sensibles)
+# ============================================================================
+# .gitignore - Portal SECMTI
+# ============================================================================
+# Este archivo previene que datos sensibles se suban accidentalmente a Git
+# ============================================================================
+
+# ============================================================================
+# ARCHIVOS DE CONFIGURACIÓN CON DATOS SENSIBLES
+# ============================================================================
 config.php
+!config.example.php
+*.local.php
 .env
+.env.local
 
-# Archivos de backup
+# ============================================================================
+# BACKUPS DE CONFIGURACIÓN
+# ============================================================================
+config.php.bak
+config.*.php
 *.bak
+*.backup
 
-# Archivos de log
+# ============================================================================
+# BASES DE DATOS Y BACKUPS
+# ============================================================================
+*.sql
+*.sqlite
+*.db
+database/backups/
+database/dumps/
+backups/
+dumps/
+
+# EXCEPCIONES: Permitir scripts de instalación
+!db/install.sql
+!db/seed_data.sql
+!db/fix_dashboard_stats.sql
+!db/verify_dashboard.sql
+
+# ============================================================================
+# LOGS Y ARCHIVOS TEMPORALES
+# ============================================================================
 *.log
-error_log
 logs/
-
-# Dependencias PHP (si usas Composer en el futuro)
-vendor/
-
-# Dependencias Node (si usas npm/yarn en el futuro)
-node_modules/
-
-# Cache
-*.cache
+*.tmp
+*.temp
+temp/
 cache/
 
-# Archivos temporales del sistema
+# ============================================================================
+# ARCHIVOS DEL SISTEMA OPERATIVO
+# ============================================================================
+# macOS
 .DS_Store
-Thumbs.db
+.AppleDouble
+.LSOverride
+._*
 
-# IDE / Editor
-.vscode/
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================================================
+# IDEs Y EDITORES
+# ============================================================================
+# PhpStorm / IntelliJ
 .idea/
+*.iml
+*.iws
+*.ipr
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# NetBeans
+nbproject/
+build/
+nbbuild/
+dist/
+nbdist/
+
+# Eclipse
+.project
+.buildpath
+.settings/
+
+# Vim
+*.swp
+*.swo
+*~
+
+# ============================================================================
+# DEPENDENCIAS Y PAQUETES
+# ============================================================================
+vendor/
+node_modules/
+composer.lock
+package-lock.json
+
+# ============================================================================
+# UPLOADS Y CONTENIDO DE USUARIOS
+# ============================================================================
+uploads/*
+!uploads/.gitkeep
+assets/uploads/
+files/
+
+# ============================================================================
+# INSTALADOR (Borrar después de instalar)
+# ============================================================================
+install.php
+install.lock
+
+# ============================================================================
+# INFORMACIÓN DE DEPURACIÓN
+# ============================================================================
+error_log
+debug.log
+*.debug
+xdebug.log
+
+# ============================================================================
+# ARCHIVOS DE SESIÓN PHP
+# ============================================================================
+sessions/
+tmp/sessions/
+
+# ============================================================================
+# CERTIFICADOS Y CLAVES
+# ============================================================================
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+ssl/
+certs/
+
+# ============================================================================
+# NOTAS PERSONALES Y DOCUMENTACIÓN PRIVADA
+# ============================================================================
+TODO.txt
+NOTES.md
+.notes/
+private/
+
+# ============================================================================
+# OTROS ARCHIVOS SENSIBLES
+# ============================================================================
+.htpasswd
+.git-credentials
+secrets.json
+credentials.json
+
+# ============================================================================
+# MANTENER CARPETAS VACÍAS
+# ============================================================================
+# Si necesitas mantener carpetas vacías en Git, crea un archivo .gitkeep
+# dentro de ellas y agrégalo con: git add -f carpeta/.gitkeep
+# ============================================================================

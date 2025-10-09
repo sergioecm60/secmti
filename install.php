@@ -5,6 +5,7 @@ session_start();
 
 $config_file = 'config.php';
 $config_template_file = 'config.example.php';
+$sql_install_file = 'db/install.sql'; // Ruta al script SQL maestro
 $message = '';
 $step = 1;
 
@@ -17,6 +18,11 @@ if (file_exists($config_file)) {
 // Verificar que la plantilla de config exista.
 if (!file_exists($config_template_file)) {
     die("Error Crítico: El archivo <code>{$config_template_file}</code> no se encuentra. No se puede continuar con la instalación.");
+}
+
+// Verificar que el script SQL de instalación exista.
+if (!file_exists($sql_install_file)) {
+    die("Error Crítico: El archivo de instalación de la base de datos <code>{$sql_install_file}</code> no se encuentra. No se puede continuar.");
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -51,23 +57,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$db_name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
             $pdo->exec("USE `{$db_name}`;");
 
-            // 3. Crear la tabla de usuarios
-            $sql_create_table = "
-            CREATE TABLE IF NOT EXISTS `user` (
-              `id` int NOT NULL AUTO_INCREMENT,
-              `username` varchar(50) NOT NULL,
-              `pass_hash` varchar(255) NOT NULL,
-              `failed_login_attempts` int NOT NULL DEFAULT '0',
-              `lockout_until` datetime DEFAULT NULL,
-              PRIMARY KEY (`id`),
-              UNIQUE KEY `username` (`username`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-            $pdo->exec($sql_create_table);
+            // 3. Ejecutar el script SQL maestro (db/install.sql)
+            $sql_script = file_get_contents($sql_install_file);
+            if ($sql_script === false) {
+                throw new Exception("No se pudo leer el archivo de instalación SQL.");
+            }
+            // Eliminar la creación de la base de datos y el USE del script, ya que los manejamos dinámicamente.
+            $sql_script = preg_replace('/CREATE DATABASE IF NOT EXISTS `.*?`;/is', '', $sql_script);
+            $sql_script = preg_replace('/USE `.*?`;/is', '', $sql_script);
+            
+            // Ejecutar el script completo. PDO::exec puede manejar múltiples sentencias.
+            $pdo->exec($sql_script);
 
-            // 4. Insertar el usuario administrador
+            // 4. Insertar/reemplazar el usuario administrador con la contraseña segura (bcrypt) del formulario.
+            // Esto asegura que el usuario del formulario sea el que funcione, sobreescribiendo
+            // cualquier usuario por defecto que el script SQL pudiera haber creado.
             $pass_hash = password_hash($admin_pass, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("INSERT INTO `user` (username, pass_hash) VALUES (?, ?)");
-            $stmt->execute([$admin_user, $pass_hash]);
+            $admin_email = 'admin@' . preg_replace('/[^a-zA-Z0-9.-]/', '', strtolower($company_name)) . '.local';
+            $stmt = $pdo->prepare("REPLACE INTO `users` (id, username, pass_hash, role, full_name, email, is_active) VALUES (1, ?, ?, 'admin', 'Administrador Principal', ?, 1)");
+            $stmt->execute([$admin_user, $pass_hash, $admin_email]);
 
             // 5. Crear el archivo config.php
             $config_template = require $config_template_file;

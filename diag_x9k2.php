@@ -8,8 +8,8 @@ require_once 'bootstrap.php';
 header("Content-Security-Policy: default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;");
 
 // Verificar autenticación
-if (!isset($_SESSION['acceso_info']) || $_SESSION['acceso_info'] !== true) {
-    header('Location: index2.php');
+if (empty($_SESSION['user_id'])) {
+    header('Location: login.php');
     exit;
 }
 
@@ -167,15 +167,15 @@ try {
             <div class="section">
                 <div class="section-header">📊 Estado del Sistema</div>
                 <div class="section-body">
-                    <div class="info-card" style="margin-bottom: 1rem;">
+                    <div class="info-card">
                         <strong>CPU</strong>
                         <span><?= htmlspecialchars($cpu_info) ?></span>
                     </div>
-                    <div class="info-card" style="margin-bottom: 1rem;">
+                    <div class="info-card">
                         <strong>Uso de Disco (/)</strong>
                         <span><?= format_bytes($disk_used) ?> / <?= format_bytes($disk_total) ?></span>
                         <div class="progress-bar">
-                            <div class="progress-bar-inner" style="width: <?= round($disk_percent) ?>%;"><?= round($disk_percent) ?>%</div>
+                            <div class="progress-bar-inner" style="--progress-width: <?= round($disk_percent) ?>%;"><?= round($disk_percent) ?>%</div>
                         </div>
                     </div>
                     <?php if ($ram_usage): ?>
@@ -183,7 +183,7 @@ try {
                         <strong>Uso de RAM</strong>
                         <span><?= format_bytes($ram_usage['used'] * 1024) ?> / <?= format_bytes($ram_usage['total'] * 1024) ?></span>
                         <div class="progress-bar">
-                            <div class="progress-bar-inner" style="width: <?= $ram_usage['percent'] ?>%;"><?= $ram_usage['percent'] ?>%</div>
+                            <div class="progress-bar-inner" style="--progress-width: <?= $ram_usage['percent'] ?>%;"><?= $ram_usage['percent'] ?>%</div>
                         </div>
                     </div>
                     <?php endif; ?>

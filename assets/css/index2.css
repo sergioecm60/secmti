@@ -1,0 +1,760 @@
+/* ============================================================================
+   Vista Organizada de Servicios - Con Categorías y Drag & Drop
+   ============================================================================ */
+
+/* ============================================================================
+   Secciones de Servicios - Layout Mejorado
+   ============================================================================ */
+.sections-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.service-section {
+    background: var(--container-background);
+    border-radius: 16px;
+    padding: 0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    border: 2px solid var(--border-color);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.service-section:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border-color: var(--primary-color);
+}
+
+/* --- Estilos para Secciones Colapsables y Títulos --- */
+.section-title {
+    margin: 0;
+    padding: 0;
+    position: relative;
+    transition: border-radius 0.3s ease;
+}
+
+.section-toggle-btn {
+    /* Estilos del título que ahora están en el botón */
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1e5cb3 100%);
+    color: var(--primary-text-color);
+    font-size: 1.3rem;
+    font-weight: 700;
+    padding: 1rem 1.5rem;
+    
+    /* Propiedades para el funcionamiento del colapso */
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    text-align: left;
+    cursor: pointer; /* El cursor de puntero debe estar en el botón */
+}
+
+.section-toggle-btn .section-title-text {
+    margin-right: auto;
+}
+
+.section-toggle-btn::after { /* Este es el ícono de flecha */
+    content: '▲';
+    font-size: 0.8em;
+    margin-left: 1rem;
+    transition: transform 0.3s ease;
+    transform-origin: center;
+    display: block; /* Asegurarse de que sea visible */
+}
+
+.service-section.collapsed .section-toggle-btn::after {
+    transform: rotate(180deg);
+}
+
+.service-section.collapsed .section-title {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.section-body {
+    overflow: hidden;
+    transition: max-height 0.4s ease-out, padding 0.4s ease-out;
+    max-height: 2000px; /* Un valor alto para permitir la expansión */
+}
+
+.service-section.collapsed .section-body {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* Estilos para la nueva sección de actividad reciente */
+#recent-activity-section .section-title {
+    background: linear-gradient(135deg, #434343, #000000);
+}
+
+/* Estilos para la lista de actividad (movidos desde .recent-activity) */
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    background: rgba(0,0,0,0.02);
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--container-background);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color);
+}
+
+.activity-item:hover {
+    background: rgba(11, 47, 177, 0.05);
+    transform: translateX(4px);
+}
+
+.activity-action {
+    font-weight: 600;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 120px;
+}
+
+.activity-entity {
+    color: #666;
+    flex: 1;
+}
+
+.activity-time {
+    color: #999;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .activity-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+/* ============================================================================
+   Menú de Botones - Grid Responsive y Moderno
+   ============================================================================ */
+.menu {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 1.5rem;
+    background: rgba(0,0,0,0.02);
+    min-height: 100px;
+}
+
+/* Cuando está vacío, mostrar placeholder */
+.menu:empty::after {
+    content: "Arrastra botones aquí";
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 2rem;
+}
+
+.menu-button {
+    background: linear-gradient(135deg, #0b2fb1 0%, #1e5cb3 100%);
+    color: var(--primary-text-color);
+    padding: 1.25rem 1rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    box-shadow: 0 4px 12px rgba(11, 47, 177, 0.2);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 80px;
+    cursor: pointer;
+}
+
+/* Efecto de brillo al hover */
+.menu-button::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.menu-button:hover::before {
+    left: 100%;
+}
+
+.menu-button:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 12px 32px rgba(11, 47, 177, 0.3);
+}
+
+.menu-button:active {
+    transform: translateY(-3px) scale(1);
+}
+
+/* ============================================================================
+   Modo de Edición - Estilos para Drag & Drop
+   ============================================================================ */
+.edit-mode-active .section-title {
+    cursor: move;
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    padding-left: 3rem;
+    position: relative;
+}
+
+.edit-mode-active .section-toggle-btn::before {
+    content: "⋮⋮";
+}
+
+.edit-mode-active .section-title::before {
+    content: "⋮⋮";
+    position: absolute;
+    left: 1rem;
+    font-size: 1.5rem;
+    letter-spacing: -5px;
+    opacity: 0.7;
+}
+
+.edit-mode-active .menu-button {
+    cursor: move;
+    border: 2px dashed rgba(255,255,255,0.3);
+}
+
+.edit-mode-active .menu {
+    border: 2px dashed var(--primary-color);
+    background: rgba(11, 47, 177, 0.05);
+    min-height: 150px;
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+    background: var(--primary-color);
+    border: 2px dashed #fff;
+}
+
+.sortable-drag {
+    opacity: 0.8;
+    transform: rotate(2deg);
+}
+
+/* ============================================================================
+   Categorías Especiales por Tipo
+   ============================================================================ */
+
+/* LAN - Verde */
+.service-section[data-category="lan"] .section-title,
+.service-section[id*="lan"] .section-title {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.service-section[data-category="lan"] .menu-button,
+.service-section[id*="lan"] .menu-button {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+/* WAN - Azul Oscuro */
+.service-section[data-category="wan"] .section-title,
+.service-section[id*="wan"] .section-title {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.service-section[data-category="wan"] .menu-button,
+.service-section[id*="wan"] .menu-button {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+/* Sucursales - Naranja */
+.service-section[data-category*="sucursal"] .section-title,
+.service-section[data-category*="hotel"] .section-title {
+    background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%);
+}
+
+.service-section[data-category*="sucursal"] .menu-button,
+.service-section[data-category*="hotel"] .menu-button {
+    background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%);
+}
+
+/* ============================================================================
+   Botón de Volver - Mejorado
+   ============================================================================ */
+.back-link-container {
+    text-align: center;
+    margin: 3rem 0 2rem 0;
+}
+
+.back-to-home-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--container-background);
+    color: var(--primary-color);
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    border: 2px solid var(--primary-color);
+    transition: all 0.3s ease;
+}
+
+.back-to-home-btn:hover {
+    background: var(--primary-color);
+    color: var(--primary-text-color);
+    transform: translateX(-4px);
+}
+
+/* ============================================================================
+   Footer - Estilo Mejorado
+   ============================================================================ */
+.footer,
+.footer-no-border {
+    text-align: center;
+    border-top: none;
+    margin-top: 3rem;
+    background: var(--container-background);
+    border-radius: 12px;
+    padding: 2rem;
+}
+
+.footer strong {
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+
+.footer-contact-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin: 0.75rem 0;
+    flex-wrap: wrap;
+}
+
+.footer-whatsapp-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #25D366;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.footer-whatsapp-link:hover {
+    transform: scale(1.05);
+    color: #128C7E;
+}
+
+.footer-whatsapp-link .icon {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+/* ============================================================================
+   Badges de Información
+   ============================================================================ */
+.section-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    color: var(--primary-text-color);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-left: auto;
+}
+
+/* ============================================================================
+   Grid de Sucursales - Layout Especial
+   ============================================================================ */
+.sucursales-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.sucursal-card {
+    background: var(--container-background);
+    border-radius: 16px;
+    border: 2px solid var(--border-color);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.sucursal-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border-color: #fd7e14;
+}
+
+.sucursal-header {
+    background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+}
+
+.sucursal-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem 0;
+}
+
+.sucursal-address {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.sucursal-services {
+    padding: 1rem;
+}
+
+.sucursal-services .menu {
+    background: transparent;
+    padding: 0;
+}
+
+/* ============================================================================
+   Responsive Design
+   ============================================================================ */
+@media (max-width: 1024px) {
+    .main-navbar {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+    
+    .menu {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-index2 .container {
+        padding: 1rem;
+    }
+    
+    .portal-header {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.25rem;
+    }
+    
+    .edit-mode-controls {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .main-navbar {
+        grid-template-columns: 1fr;
+    }
+    
+    .navbar-button {
+        padding: 1rem;
+    }
+    
+    .menu {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    
+    .menu-button {
+        padding: 1rem 0.75rem;
+        min-height: 70px;
+        font-size: 0.9rem;
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+        padding: 0.875rem 1rem;
+    }
+
+    .sucursales-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-contact-line {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .menu {
+        grid-template-columns: 1fr;
+    }
+    
+    .main-navbar {
+        gap: 0.75rem;
+    }
+    
+    .portal-header span {
+        font-size: 1rem;
+    }
+}
+
+/* ============================================================================
+   Animaciones de Entrada
+   ============================================================================ */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.service-section {
+    animation: fadeInUp 0.5s ease-out forwards;
+    opacity: 0;
+}
+
+.service-section:nth-child(1) { animation-delay: 0.1s; }
+.service-section:nth-child(2) { animation-delay: 0.2s; }
+.service-section:nth-child(3) { animation-delay: 0.3s; }
+.service-section:nth-child(4) { animation-delay: 0.4s; }
+.service-section:nth-child(5) { animation-delay: 0.5s; }
+.service-section:nth-child(6) { animation-delay: 0.6s; }
+
+.service-section,
+.menu-button {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* ============================================================================
+   Clases de Utilidad
+   ============================================================================ */
+.hidden {
+    display: none !important;
+}
+
+/* ============================================================================
+   Dashboard de Estadísticas
+   ============================================================================ */
+
+.dashboard-stats {
+    margin-bottom: 2.5rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--container-background);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    animation: fadeInUp 0.5s ease-out;
+    opacity: 1;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    opacity: 0.8;
+    font-weight: 500;
+}
+
+/* Colores por tipo */
+.stat-card-success {
+    border-color: #28a745;
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+}
+.stat-card-success .stat-number { color: #28a745; }
+
+.stat-card-warning {
+    border-color: #ffc107;
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+}
+.stat-card-warning .stat-number { color: #ffc107; }
+
+.stat-card-info {
+    border-color: #17a2b8;
+    background: linear-gradient(135deg, rgba(23, 162, 184, 0.1) 0%, rgba(23, 162, 184, 0.05) 100%);
+}
+.stat-card-info .stat-number { color: #17a2b8; }
+
+.stat-card-primary {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, rgba(11, 47, 177, 0.1) 0%, rgba(11, 47, 177, 0.05) 100%);
+}
+.stat-card-primary .stat-number { color: var(--primary-color); }
+
+.stat-card-purple {
+    border-color: #6f42c1;
+    background: linear-gradient(135deg, rgba(111, 66, 193, 0.1) 0%, rgba(111, 66, 193, 0.05) 100%);
+}
+.stat-card-purple .stat-number { color: #6f42c1; }
+
+.stat-card-orange {
+    border-color: #fd7e14;
+    background: linear-gradient(135deg, rgba(253, 126, 20, 0.1) 0%, rgba(253, 126, 20, 0.05) 100%);
+}
+.stat-card-orange .stat-number { color: #fd7e14; }
+
+.stat-card-cyan {
+    border-color: #20c997;
+    background: linear-gradient(135deg, rgba(32, 201, 151, 0.1) 0%, rgba(32, 201, 151, 0.05) 100%);
+}
+.stat-card-cyan .stat-number { color: #20c997; }
+
+.stat-card-danger {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
+}
+.stat-card-danger .stat-number { color: #dc3545; }
+
+/* Actividad Reciente */
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+    }
+    
+    .dashboard-warning {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+/* Animación escalonada para las tarjetas */
+.stat-card:nth-child(1) { animation-delay: 0.05s; }
+.stat-card:nth-child(2) { animation-delay: 0.1s; }
+.stat-card:nth-child(3) { animation-delay: 0.15s; }
+.stat-card:nth-child(4) { animation-delay: 0.2s; }
+.stat-card:nth-child(5) { animation-delay: 0.25s; }
+.stat-card:nth-child(6) { animation-delay: 0.3s; }
+.stat-card:nth-child(7) { animation-delay: 0.35s; }
+.stat-card:nth-child(8) { animation-delay: 0.4s; }
+
+/* Mensaje de advertencia */
+.dashboard-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border: 2px solid #ffc107;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.warning-icon {
+    font-size: 3rem;
+}
+
+.warning-content h3 {
+    color: #ffc107;
+    margin: 0 0 0.5rem 0;
+}
+
+.warning-content p {
+    color: #666;
+    margin: 0;
+}
+
+/* ============================================================================
+   Mejoras de Accesibilidad
+   ============================================================================ */
+.menu-button:focus,
+.navbar-button:focus {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 3px;
+}
+
+/* Modo de alto contraste */
+@media (prefers-contrast: high) {
+    .menu-button,
+    .navbar-button {
+        border: 2px solid currentColor;
+    }
+}
+
+/* Reducir movimiento para usuarios sensibles */
+@media (prefers-reduced-motion: reduce) {
+    .menu-button,
+    .navbar-button,
+    .service-section {
+        animation: none;
+        transition: none;
+    }
+    
+    .menu-button:hover,
+    .navbar-button:hover {
+        transform: none;
+    }
+}

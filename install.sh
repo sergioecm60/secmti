@@ -4,6 +4,12 @@
 
 set -e  # Salir si hay errores
 
+# Verificar si se ejecuta como root
+if [ "$EUID" -ne 0 ]; then
+  echo "❌ Por favor, ejecuta este script con sudo: sudo ./install.sh"
+  exit 1
+fi
+
 WEB_ROOT="/var/www/html"
 REPO_URL="https://github.com/sergioecm60/secmti.git"
 PROJECT_DIR="$WEB_ROOT/secmti"
@@ -28,7 +34,6 @@ fi
 echo "🔧 Asignando permisos..."
 chown -R www-data:www-data "$PROJECT_DIR"
 chmod -R 755 "$PROJECT_DIR"
-chmod 600 "$PROJECT_DIR/config.php" 2>/dev/null || true
 
 # Mostrar siguiente paso
 echo ""

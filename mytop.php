@@ -9,8 +9,8 @@ $nonce = base64_encode(random_bytes(16));
 header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self';");
 
 // Verificar autenticación. Si no está logueado, redirigir a la página de acceso.
-if (!isset($_SESSION['acceso_info']) || $_SESSION['acceso_info'] !== true) {
-    header('Location: index2.php');
+if (empty($_SESSION['user_id'])) {
+    header('Location: login.php');
     exit;
 }
 
