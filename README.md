@@ -1,17 +1,7 @@
 # Portal de Servicios SECMTI
 
-**Creado por Sergio Cabrera**
-<br>
-📧 [sergiomiers@gmail.com](mailto:sergiomiers@gmail.com)
-<<<<<<< HEAD
-🔧 Asistencia técnica: IAS Gemini, ChatGPT y Qwen
-
-[![PHP Version](https://img.shields.io/badge/PHP-%3E%3D8.0-8892BF.svg?style=for-the-badge)](https://php.net)
-[![License](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](license.txt)
-[![Version](https://img.shields.io/badge/Version-0.0.31-green.svg?style=for-the-badge)](https://github.com/sergioecm60/secmti/releases)
-[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge\&logo=github)](https://github.com/sergioecm60/secmti)
-=======
-<br>
+**Creado por Sergio Cabrera**  
+📧 [sergiomiers@gmail.com](mailto:sergiomiers@gmail.com)  
 🤖 Asistencia técnica: **Claude (Anthropic)**, Gemini (Google), ChatGPT (OpenAI) y Qwen (Alibaba)
 
 [![PHP Version](https://img.shields.io/badge/PHP-%3E%3D8.0-8892BF.svg?style=for-the-badge)](https://php.net)
@@ -19,28 +9,20 @@
 [![Version](https://img.shields.io/badge/Version-1.0.0-green.svg?style=for-the-badge)](https://github.com/sergioecm60/secmti/releases)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/sergioecm60/secmti)
 [![Database](https://img.shields.io/badge/Database-MySQL%2FMariaDB-4479A1.svg?style=for-the-badge&logo=mysql)](https://www.mysql.com)
->>>>>>> a8418d4 (feat: Refactor project structure and add new features)
 
 ---
 
 ## 📄 Descripción
 
-<<<<<<< HEAD
-Un **portal de servicios simple, seguro y personalizable**, escrito en **PHP puro**, sin frameworks.
-Diseñado para ser **ligero, seguro y fácil de instalar y administrar**, ideal para entornos corporativos o de administración interna.
-
-Este portal permite centralizar el acceso a herramientas internas (como Proxmox, Webmin, mytop, info, etc.)
-tras una capa de autenticación robusta, con monitoreo de seguridad y gestión web completa.
-=======
 Un **portal de servicios profesional y completo** para **gestión de infraestructura TI**, escrito en **PHP puro** sin frameworks. Diseñado para ser **ligero, seguro y fácil de administrar**, ideal para empresas que necesitan centralizar el acceso a servicios internos y gestionar su datacenter de forma eficiente.
 
-Este portal permite:
-- 🖥️ **Gestionar servidores físicos y virtuales** (Proxmox, VMs, containers, cloud)
-- 🔑 **Administrar credenciales** de forma segura y centralizada
-- 🌐 **Organizar servicios** por categorías (LAN, WAN, Sucursales)
-- 📊 **Monitorear infraestructura** con dashboard de estadísticas en tiempo real
-- 🏢 **Gestionar hosting** (cPanel, emails, FTP, dominios)
->>>>>>> a8418d4 (feat: Refactor project structure and add new features)
+### Características Principales
+
+- 🖥️ **Gestión de servidores** físicos y virtuales (Proxmox, VMs, containers, cloud)
+- 🔑 **Administración de credenciales** segura y centralizada
+- 🌐 **Organización de servicios** por categorías (LAN, WAN, Sucursales)
+- 📊 **Dashboard** con estadísticas en tiempo real
+- 🏢 **Gestión de hosting** (cPanel, emails, FTP, dominios)
 
 ---
 
@@ -50,7 +32,7 @@ Este portal permite:
 
 ---
 
-## ✨ Características Principales
+## ✨ Funcionalidades
 
 ### 🌐 Página de Aterrizaje (`index.php`)
 - Página pública de presentación profesional
@@ -104,55 +86,14 @@ Este portal permite:
 - **Dashboard**: Estadísticas de infraestructura actualizadas
 
 ### 🗄️ Base de Datos Completa
-- **10 tablas** para gestión integral:
-  - `users`: Usuarios del sistema
-  - `dc_servers`: Servidores físicos/virtuales
-  - `dc_services`: Servicios por servidor
-  - `dc_credentials`: Credenciales seguras
-  - `dc_locations`: Ubicaciones físicas (datacenters, sucursales)
-  - `dc_hosting_servers`: Servidores de hosting
-  - `dc_hosting_accounts`: Cuentas cPanel
-  - `dc_hosting_emails`: Cuentas de email
-  - `dc_hosting_ftp_accounts`: Cuentas FTP
-  - `dc_access_log`: Auditoría de accesos
+- **10 tablas** para gestión integral
 - **Vistas SQL** para consultas optimizadas
 - **Stored Procedures** para estadísticas
 - **Triggers** para auditoría automática
 
-<<<<<<< HEAD
-* `diag_x9k2.php`: Información detallada del entorno PHP y servidor.
-* `mytop.php`: Monitor en tiempo real de procesos de MySQL/MariaDB.
-
-### ⚙️ Configuración Centralizada
-
-* Todo se gestiona desde un único archivo: `config.php`.
-* Fácil de mantener y auditar.
-
-### 🧩 Instalador Web
-
-* Asistente de instalación automática (`install.php`).
-* Configuración guiada de base de datos y usuario admin.
-* **Requiere borrar `install.php` manualmente después de la instalación** por seguridad.
-
 ---
 
 ## 📋 Requisitos del Sistema
-
-* Servidor web: **Apache, Nginx o similar**
-* **PHP 8.0 o superior**
-* Extensión PHP requerida: `pdo_mysql`
-* Base de datos: **MySQL o MariaDB**
-* Permisos de escritura en el directorio del proyecto (para creación de `config.php`)
-=======
-### ⚙️ Configuración
-- `config.php`: Configuración centralizada
-- `bootstrap.php`: Inicialización segura del sistema
-- Zona horaria: **America/Argentina/Buenos_Aires (UTC-3)**
-- Charset: **utf8mb4_spanish_ci** (soporte completo de español)
-
----
-
-##  Requisitos del Sistema
 
 - **Servidor web**: Apache, Nginx o similar
 - **PHP**: 8.0 o superior
@@ -163,172 +104,338 @@ Este portal permite:
 - **Base de datos**: MySQL 5.7+ o MariaDB 10.3+
 - **Permisos**: Escritura en directorio del proyecto
 - **Espacio**: ~50MB (código + base de datos inicial)
->>>>>>> a8418d4 (feat: Refactor project structure and add new features)
 
 ---
 
 ## 📦 Instalación
 
-<<<<<<< HEAD
-Este proyecto funciona dentro de una **carpeta dedicada** en el servidor web,
-llamada `secmti` (por ejemplo: `/var/www/html/secmti/`).
-=======
 ### Opción 1: Instalación Rápida con Scripts SQL
->>>>>>> a8418d4 (feat: Refactor project structure and add new features)
-
-Este proyecto incluye **scripts SQL listos para usar** en la carpeta `/database/`:
 
 #### 1. Clonar el repositorio
 
 ```bash
 cd /var/www/html
-<<<<<<< HEAD
-git clone https://github.com/sergioecm60/secmti.git secmti
-=======
 git clone https://github.com/sergioecm60/secmti.git
 cd secmti
->>>>>>> a8418d4 (feat: Refactor project structure and add new features)
 ```
 
-> ⚠️ Asegúrate de que el servidor web tenga permisos de lectura/escritura.
+#### 2. Configurar credenciales
 
-### 2. Accede al instalador
+Copiar y editar el archivo de configuración:
 
-Abre tu navegador en:
+```bash
+cp config.example.php config.php
+nano config.php
+```
+
+Editar la sección de base de datos:
+
+```php
+'database' => [
+    'host' => 'localhost',
+    'name' => 'portal_db',
+    'user' => 'tu_usuario',
+    'pass' => 'tu_password',
+]
+```
+
+#### 3. Crear la base de datos
+
+Ejecutar los scripts en orden desde phpMyAdmin o línea de comandos:
+
+```bash
+# 1. Crear estructura completa
+mysql -u root -p < database/install.sql
+
+# 2. (Opcional) Cargar datos de ejemplo
+mysql -u root -p < database/seed_data.sql
+```
+
+#### 4. Acceder al portal
 
 ```
-http://tu-ip-o-dominio/secmti/install.php
+http://tu-servidor/secmti/
 ```
 
-🔐 Ejemplos:
+**Usuarios de prueba** (si usaste `seed_data.sql`):
+- Usuario: `admin` / Password: `password`
 
-* `http://localhost/secmti/install.php`
-* `http://192.168.1.100/secmti/install.php`
+---
 
-### 3. Configuración de la base de datos
+### Opción 2: Instalación con Asistente Web
 
-Durante la instalación necesitas:
+#### 1. Acceder al instalador
 
-* Un usuario de MySQL/MariaDB con permisos para crear bases de datos
-  (puede ser `root` temporalmente).
-* El instalador crea automáticamente la base de datos (por defecto: `portal_db`).
+```
+http://tu-servidor/secmti/install.php
+```
 
-✅ Puedes definir tus propios valores durante el proceso.
+#### 2. Seguir el asistente
 
-### 4. ✅ ¡Importante! Elimina el instalador tras la instalación
+El instalador te guiará para:
+- Configurar conexión a MySQL
+- Crear la base de datos automáticamente
+- Crear usuario administrador
+- Generar archivo `config.php`
 
-Por seguridad, elimina `install.php` después de instalar:
+#### 3. ⚠️ Eliminar instalador (IMPORTANTE)
 
 ```bash
 rm /var/www/html/secmti/install.php
 ```
 
-> ⚠️ Dejar este archivo podría permitir accesos no autorizados o reinstalaciones maliciosas.
-
 ---
 
-## 🔐 Notas de Seguridad
+## 🗄️ Estructura de Base de Datos
 
-* Las contraseñas se almacenan hasheadas con `password_hash()` (bcrypt por defecto).
-* El sistema bloquea usuarios tras 5 intentos fallidos (configurable en `config.php`).
-* Se usa sesión segura con regeneración de ID.
-* El captcha matemático evita automatización de login.
-* El archivo `install.php` debe eliminarse manualmente tras instalación.
+### Scripts SQL Incluidos
 
----
+En la carpeta `/database/` encontrarás:
 
-## ⚙️ Configuración Manual (opcional)
+1. **`install.sql`** - Instalador completo
+   - Crea todas las tablas, vistas, procedures y triggers
+   - Zona horaria: Argentina (UTC-3)
+   - Charset: utf8mb4_spanish_ci
+   - Usuario admin por defecto
 
-Si prefieres no usar el instalador web, puedes crear `config.php` manualmente:
+2. **`seed_data.sql`** - Datos de ejemplo
+   - Usuarios de prueba
+   - Ubicaciones y servidores
+   - Servicios y credenciales
+   - Datos de hosting
 
-```php
-<?php
-$db_host = 'localhost';
-$db_user = 'tu_usuario';
-$db_pass = 'tu_contraseña';
-$db_name = 'portal_db';
-$admin_user = 'admin';
-$admin_pass = password_hash('tu_pass_segura', PASSWORD_DEFAULT);
-?>
+3. **`fix_dashboard_stats.sql`** - Arreglar dashboard
+   - Recrea el procedimiento `sp_get_stats()`
+   - Incluye diagnóstico completo
+
+4. **`verify_dashboard.sql`** - Verificación
+   - Comprueba que todo esté correcto
+   - Diagnóstico de problemas
+
+### Tablas Principales
+
+```
+users                    -- Usuarios del sistema
+dc_locations            -- Ubicaciones físicas
+dc_servers              -- Servidores (físicos/virtuales)
+dc_services             -- Servicios por servidor
+dc_credentials          -- Credenciales seguras
+dc_hosting_servers      -- Servidores de hosting
+dc_hosting_accounts     -- Cuentas cPanel
+dc_hosting_emails       -- Cuentas de email
+dc_hosting_ftp_accounts -- Cuentas FTP
+dc_access_log           -- Auditoría completa
 ```
 
-Colócalo en la raíz del proyecto y asegúrate de que tenga permisos restrictivos:
+---
+
+## 🎨 Estructura del Proyecto
+
+```
+secmti/
+├── index.php              # Landing page pública
+├── index2.php             # Portal principal (requiere login)
+├── login.php              # Página de autenticación
+├── logout.php             # Cierre de sesión
+├── bootstrap.php          # Inicialización del sistema
+├── config.example.php     # Template de configuración
+├── database.php           # Conexión PDO a MySQL
+│
+├── api/                   # Endpoints API
+│   ├── auth.php
+│   ├── organizer.php
+│   ├── datacenter.php
+│   ├── credentials.php
+│   └── hosting.php
+│
+├── database/              # Scripts SQL
+│   ├── install.sql
+│   ├── seed_data.sql
+│   ├── fix_dashboard_stats.sql
+│   └── verify_dashboard.sql
+│
+├── templates/             # Componentes reutilizables
+│   ├── navbar.php
+│   └── dashboard_stats.php
+│
+├── assets/
+│   ├── css/
+│   │   ├── main.css
+│   │   ├── landing.css
+│   │   ├── index2.css
+│   │   └── datacenter.css
+│   └── js/
+│       ├── datacenter_manager.js
+│       └── datacenter_view.js
+│
+├── manage.php             # Panel de administración
+├── users_manager.php      # Gestión de usuarios
+├── datacenter_view.php    # Vista infraestructura
+├── datacenter_manage.php  # Gestión infraestructura
+├── hosting_manager.php    # Gestión hosting
+├── mytop.php              # Monitor MySQL
+├── diag_x9k2.php          # Info del servidor
+│
+├── README.md              # Este archivo
+├── license.php            # Licencia web
+└── license.txt            # Licencia texto
+```
+
+---
+
+## 🔧 Uso del Sistema
+
+### Para Administradores
+
+1. **Acceder al portal**: `http://tu-servidor/secmti/index2.php`
+2. **Gestión de infraestructura**: Click en "🏢 Gestión de Infraestructura"
+3. **Agregar servidor**: Click en "Agregar Servidor"
+4. **Organizar servicios**: Click en "✏️ Organizar Botones" (modo drag & drop)
+5. **Ver estadísticas**: Dashboard en la página principal
+
+### Para Usuarios
+
+1. Login con credenciales asignadas
+2. Acceso a servicios según permisos
+3. Vista de infraestructura (solo lectura)
+
+---
+
+## 🔒 Seguridad
+
+### Mejores Prácticas Implementadas
+
+✅ **Contraseñas**: Hasheadas con `password_hash()` (bcrypt)  
+✅ **SQL Injection**: Queries preparadas con PDO  
+✅ **XSS**: `htmlspecialchars()` en todas las salidas  
+✅ **CSRF**: Tokens en todos los formularios  
+✅ **Sesiones**: Regeneración de ID tras login  
+✅ **Timeout**: Sesiones expiran a los 30 minutos  
+✅ **Bloqueo**: Cuenta bloqueada tras 5 intentos  
+✅ **Auditoría**: Logs de todos los accesos  
+
+### Recomendaciones Adicionales
+
+- 🔐 Usa HTTPS en producción
+- 🛡️ Configura firewall (solo puertos necesarios)
+- 📝 Revisa logs regularmente
+- 🔄 Mantén PHP y MySQL actualizados
+- 💾 Realiza backups periódicos
+
+---
+
+## 🐛 Solución de Problemas
+
+### El dashboard no muestra estadísticas
 
 ```bash
-chmod 600 config.php
-chown www-data:www-data config.php
+mysql -u root -p portal_db < database/fix_dashboard_stats.sql
+```
+
+### Error de conexión a la base de datos
+
+1. Verificar credenciales en `config.php`
+2. Comprobar que MySQL esté corriendo
+3. Verificar permisos del usuario de BD
+
+### No puedo hacer login
+
+1. Verificar que la tabla `users` tenga datos
+2. Comprobar que la sesión esté iniciada
+3. Limpiar cookies del navegador
+
+### Problemas con caracteres especiales (ñ, á, é)
+
+Verificar en `config.php`:
+
+```php
+'database' => [
+    'charset' => 'utf8mb4',
+    'collation' => 'utf8mb4_spanish_ci'
+]
 ```
 
 ---
 
-## 📊 Páginas Incluidas
+## 🤝 Contribuciones
 
-| Archivo         | Descripción                             | Acceso    |
-| --------------- | --------------------------------------- | --------- |
-| `index.php`     | Página pública de presentación          | Público   |
-| `index2.php`    | Portal de servicios (tras login)        | Protegido |
-| `manage.php`    | Panel de administración                 | Protegido |
-| `install.php`   | Instalador web (eliminar tras uso)      | Temporal  |
-| `diag_x9k2.php` | Diagnóstico del servidor y PHP          | Protegido |
-| `mytop.php`     | Monitor en tiempo real de MySQL/MariaDB | Protegido |
-| `config.php`    | Archivo de configuración                | Privado   |
+Las contribuciones son bienvenidas. Por favor:
+
+1. Fork del repositorio
+2. Crea una rama para tu feature
+3. Commit de cambios
+4. Push a la rama
+5. Crea un Pull Request
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia **GNU GPL v3**.
+Este proyecto está bajo la **Licencia GNU GPL v3**.
 
-Consulta los archivos:
+- [`license.php`](license.php) - Versión web interactiva
+- [`license.txt`](license.txt) - Texto completo de la licencia
 
-* [`license.php`](license.php) (versión web)
-* [`license.txt`](license.txt) (texto completo)
+### En Resumen
 
-✅ Puedes usar, modificar y distribuir este software libremente, siempre que:
-
-* Mantengas la misma licencia.
-* Incluyas el crédito al autor original.
-
-🚫 **Sin garantía. El uso es bajo tu responsabilidad.**
+✅ **Puedes**: Usar, modificar, distribuir el software libremente  
+✅ **Debes**: Mantener la misma licencia y dar crédito al autor  
+❌ **No hay garantía**: El uso es bajo tu responsabilidad  
 
 ---
 
-## 📢 Compatibilidad con PHP 8.4
+## 👨‍💻 Autor
 
-Este proyecto es compatible con **PHP 8.4.0 RC4** (lanzado el 2024).
-
-Según el anuncio oficial en [php.net](https://php.net):
-
-> "The next release will be the production-ready, general availability release, planned for 21 November 2024."
-
-Se recomienda probar en entornos de desarrollo, **no usar en producción** hasta la versión estable.
-
-Para más detalles: [Ver NEWS y UPGRADING](https://www.php.net/ChangeLog-8.php#8.4.0)
+**Sergio Cabrera**  
+📧 Email: [sergiomiers@gmail.com](mailto:sergiomiers@gmail.com)  
+🐙 GitHub: [@sergioecm60](https://github.com/sergioecm60)
 
 ---
 
-## 📬 Contacto y Soporte
+## 🙏 Agradecimientos
 
-¿Tienes dudas, sugerencias o encontraste un bug?
+Este proyecto fue desarrollado con la asistencia de:
 
-📧 [sergiomiers@gmail.com](mailto:sergiomiers@gmail.com)
-
-Tu feedback ayuda a mejorar el proyecto.
+- **Claude** (Anthropic) - Desarrollo de arquitectura, seguridad y gestión de infraestructura
+- **Gemini** (Google) - Optimización de código y consultas SQL
+- **ChatGPT** (OpenAI) - Diseño de interfaz y experiencia de usuario
+- **Qwen** (Alibaba) - Debugging y mejoras de rendimiento
 
 ---
 
-## 📂 Estructura del Proyecto (recomendada)
+## 🗓️ Roadmap
 
-```
-secmti/
-├── index.php
-├── index2.php
-├── manage.php
-├── install.php
-├── diag_x9k2.php
-├── mytop.php
-├── config.php
-├── license.txt
-├── license.php
-└── README.md
-```
+### Versión 1.1 (Próxima)
+- [ ] API REST completa
+- [ ] Exportación de inventario (PDF/Excel)
+- [ ] Gráficos de estadísticas con Chart.js
+- [ ] Sistema de notificaciones
+
+### Versión 1.2
+- [ ] Integración con Proxmox API
+- [ ] Monitoreo de servicios (ping/uptime)
+- [ ] Backup automático de configuraciones
+- [ ] Modo oscuro
+
+### Versión 2.0
+- [ ] Multi-tenancy (múltiples organizaciones)
+- [ ] Aplicación móvil (PWA)
+- [ ] Dashboard avanzado con métricas
+- [ ] Integración con sistemas de tickets
+
+---
+
+## 📞 Soporte
+
+Para reportar bugs o solicitar features:
+
+1. **GitHub Issues**: [Crear issue](https://github.com/sergioecm60/secmti/issues)
+2. **Email**: [sergiomiers@gmail.com](mailto:sergiomiers@gmail.com)
+
+---
+
+⭐ **Si este proyecto te resulta útil, considera darle una estrella en GitHub!**
+
+---
+
+*Última actualización: Octubre 2025*
