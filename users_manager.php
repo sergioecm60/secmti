@@ -127,7 +127,7 @@ $user_count = count($all_users);
                             <td data-label="Último Login"><?= $user['last_login'] ? date('d/m/Y H:i', strtotime($user['last_login'])) : 'Nunca' ?></td>
                             <td class="actions-cell">
                                 <button type="button" class="edit-btn">Editar</button>
-                                <form method="POST" style="display:inline;" onsubmit="return confirm('¿Estás seguro de que quieres eliminar a este usuario?');">
+                                <form method="POST" class="delete-form">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
@@ -165,7 +165,7 @@ $user_count = count($all_users);
                 </div>
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input type="email" name="email" id="email">
+                    <input type="email" name="email" id="email" autocomplete="email">
                 </div>
                 <div class="form-group">
                     <label for="password">Contraseña</label>
@@ -226,6 +226,15 @@ $user_count = count($all_users);
                 const userId = this.closest('tr').dataset.userId;
                 const userData = allUsersData.find(u => u.id == userId);
                 openModal(userData);
+            });
+        });
+
+        // Manejar la confirmación de borrado de forma segura
+        document.querySelectorAll('.delete-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                if (!confirm('¿Estás seguro de que quieres eliminar a este usuario?')) {
+                    e.preventDefault();
+                }
             });
         });
     });

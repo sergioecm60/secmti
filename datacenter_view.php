@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
                         header('Content-Type: application/json');
                         echo json_encode(['success' => true, 'message' => 'Servidor eliminado.']);
-                        exit;
+                        exit; // Detener la ejecución después de la respuesta AJAX
                     }
                     $status_message = '<div class="status-message success">✅ Servidor eliminado</div>';
                     break;
@@ -243,7 +243,7 @@ try {
                        placeholder="🔍 Buscar servidor, IP, servicio..."
                        autocomplete="off" autofocus>
             </form>
-            <button type="button" id="addServerBtn" class="add-btn" onclick="showServerModal()">+ Agregar Servidor</button>
+            <button type="button" id="addServerBtn" class="add-btn">+ Agregar Servidor</button>
         </div>
 
         <!-- Token CSRF para que lo use el JS de borrado -->
@@ -273,7 +273,7 @@ try {
                         <div class="server-header-actions">
                             <button type="button" class="view-toggle-btn edit-btn" data-server-id="<?= $server['id'] ?>" aria-label="Editar servidor">✏️</button>
                             <button type="button" class="view-toggle-btn delete-btn" data-server-id="<?= $server['id'] ?>" data-server-name="<?= htmlspecialchars($server['label']) ?>" aria-label="Eliminar servidor">🗑️</button>
-                            <button type="button" class="view-toggle-btn" aria-expanded="false" aria-controls="server-body-<?= $server['id'] ?>">▶</button>
+                            <button type="button" class="view-toggle-btn" aria-expanded="false" aria-controls="server-body-<?= $server['id'] ?>" aria-label="Expandir/Contraer servidor <?= htmlspecialchars($server['label']) ?>">▶</button>
                         </div>
                     </div>
 
@@ -363,7 +363,7 @@ try {
                                         </span>
                                         <span class="cred-pass-container">
                                             <span class="cred-pass">••••••••</span>
-                                            <button type="button" class="copy-cred-btn" data-type="dc_credential" data-id="<?= $cred['id'] ?>">📋</button>
+                                            <button type="button" class="copy-cred-btn" data-type="dc_credential" data-id="<?= $cred['id'] ?>" aria-label="Copiar contraseña para <?= htmlspecialchars($cred['username']) ?>">📋</button>
                                         </span>
                                     </div>
                                     <?php endforeach; ?>
@@ -390,14 +390,12 @@ try {
 
     <a href="./index2.php" class="back-btn">← Volver al Portal</a>
 
-    <footer class="footer">
-        <strong><?= htmlspecialchars($config['footer']['line1'] ?? '') ?></strong>
-    </footer>
+    <?php require_once 'templates/footer.php'; ?>
 
     <!-- Modal para Agregar/Editar Servidor (movido desde datacenter_manager_mysql.php) -->
     <div id="serverModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeServerModal()">&times;</span>
+            <span class="close">&times;</span>
             <h2 id="modalTitle">Agregar Servidor</h2>
             <form method="POST" id="serverForm" action="datacenter_view.php">
                 <input type="hidden" name="action" value="save_server">
@@ -452,7 +450,7 @@ try {
 
                 <div class="form-actions">
                     <button type="submit" class="save-btn">💾 Guardar</button>
-                    <button type="button" class="cancel-btn" onclick="closeServerModal()">Cancelar</button>
+                    <button type="button" class="cancel-btn">Cancelar</button>
                 </div>
             </form>
         </div>

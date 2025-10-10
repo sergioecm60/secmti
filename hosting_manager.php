@@ -274,55 +274,60 @@ try {
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                 <input type="hidden" name="host_id" id="hostId">
 
-                <div class="form-group">
-                    <label for="label">Etiqueta Descriptiva *</label>
-                    <input type="text" name="label" id="hostLabel" required placeholder="Ej: Hosting Clientes A">
+                <!-- Pestañas de navegación del modal -->
+                <div class="modal-tabs">
+                    <button type="button" class="tab-link active" data-tab="tab-general">General</button>
+                    <button type="button" class="tab-link" data-tab="tab-cpanel">cPanel</button>
+                    <button type="button" class="tab-link" data-tab="tab-ftp">FTP</button>
+                    <button type="button" class="tab-link" data-tab="tab-email">Email</button>
                 </div>
-                <div class="form-group">
-                    <label for="hostname">Hostname (Dominio del servidor) *</label>
-                    <input type="text" name="hostname" id="hostHostname" required placeholder="Ej: vps.midominio.com">
-                </div>
-                <div class="form-grid">
+
+                <!-- Contenido de las pestañas -->
+                <div id="tab-general" class="tab-content active">
                     <div class="form-group">
-                        <label for="cpanel_port">Puerto cPanel/WHM</label>
-                        <input type="number" name="cpanel_port" id="hostCpanelPort" value="2083">
+                        <label for="label">Etiqueta Descriptiva *</label>
+                        <input type="text" name="label" id="hostLabel" required placeholder="Ej: Hosting Clientes A">
                     </div>
                     <div class="form-group">
-                        <label for="webmail_port">Puerto Webmail</label>
-                        <input type="number" name="webmail_port" id="hostWebmailPort" value="2096">
+                        <label for="hostname">Hostname (Dominio del servidor) *</label>
+                        <input type="text" name="hostname" id="hostHostname" required placeholder="Ej: vps.midominio.com">
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="cpanel_port">Puerto cPanel/WHM</label>
+                            <input type="number" name="cpanel_port" id="hostCpanelPort" value="2083">
+                        </div>
+                        <div class="form-group">
+                            <label for="webmail_port">Puerto Webmail</label>
+                            <input type="number" name="webmail_port" id="hostWebmailPort" value="2096">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notas</label>
+                        <textarea name="notes" id="hostNotes" rows="3"></textarea>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="notes">Notas</label>
-                    <textarea name="notes" id="hostNotes" rows="3"></textarea>
+
+                <div id="tab-cpanel" class="tab-content">
+                    <h3>👤 Cuentas cPanel</h3>
+                    <div id="cpanelAccountsContainer"></div>
+                    <button type="button" class="add-btn" id="addCpanelAccountBtn">+ Agregar Cuenta cPanel</button>
                 </div>
 
-                <hr>
-
-                <h3>👤 Cuentas cPanel</h3>
-                <div id="cpanelAccountsContainer">
-                    <!-- Las cuentas cPanel se insertarán aquí con JS -->
+                <div id="tab-ftp" class="tab-content">
+                    <h3>🔒 Cuentas FTP</h3>
+                    <div id="ftpAccountsContainer"></div>
+                    <button type="button" class="add-btn" id="addFtpAccountBtn">+ Agregar Cuenta FTP</button>
                 </div>
-                <button type="button" class="add-btn" id="addCpanelAccountBtn">+ Agregar Cuenta cPanel</button>
 
-                <hr>
-
-                <h3> Cuentas FTP</h3>
-                <div id="ftpAccountsContainer">
-                    <!-- Las cuentas FTP se insertarán aquí con JS -->
+                <div id="tab-email" class="tab-content">
+                    <h3>✉️ Cuentas de Email</h3>
+                    <div class="form-group">
+                        <input type="search" id="emailSearchInput" class="sub-search-input" placeholder="🔍 Buscar en cuentas de email...">
+                    </div>
+                    <div id="emailAccountsContainer"></div>
+                    <button type="button" class="add-btn" id="addEmailAccountBtn">+ Agregar Cuenta de Email</button>
                 </div>
-                <button type="button" class="add-btn" id="addFtpAccountBtn">+ Agregar Cuenta FTP</button>
-
-                <hr>
-
-                <h3>✉️ Cuentas de Email</h3>
-                <div class="form-group">
-                    <input type="search" id="emailSearchInput" class="sub-search-input" placeholder="🔍 Buscar en cuentas de email...">
-                </div>
-                <div id="emailAccountsContainer">
-                    <!-- Las cuentas de email se insertarán aquí con JS -->
-                </div>
-                <button type="button" class="add-btn" id="addEmailAccountBtn">+ Agregar Cuenta de Email</button>
 
                 <div class="form-actions">
                     <button type="submit" class="save-btn">Guardar</button>
@@ -335,6 +340,7 @@ try {
     <script nonce="<?= htmlspecialchars($nonce) ?>">
     document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('hostModal');
+        const modalTabs = modal.querySelector('.modal-tabs');
         const addHostBtn = document.getElementById('addHostBtn');
         const closeBtn = modal.querySelector('.close');
         const cancelBtn = modal.querySelector('.cancel-btn');
@@ -343,6 +349,12 @@ try {
         window.openHostModal = function(hostData = null) {
             const form = document.getElementById('hostForm');
             form.reset();
+
+            // Resetear pestañas a la primera
+            modal.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
+            modal.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            modal.querySelector('.tab-link[data-tab="tab-general"]').classList.add('active');
+            modal.querySelector('#tab-general').classList.add('active');
             
             // Limpiar contenedores dinámicos
             document.getElementById('ftpAccountsContainer').innerHTML = '';
@@ -501,6 +513,21 @@ try {
             }
         });
 
+        // --- Lógica para las pestañas del modal ---
+        if (modalTabs) {
+            modalTabs.addEventListener('click', function(e) {
+                if (e.target.classList.contains('tab-link')) {
+                    const tabId = e.target.dataset.tab;
+
+                    // Ocultar todos y mostrar el seleccionado
+                    modal.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
+                    modal.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+                    e.target.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                }
+            });
+        }
     });
     </script>
 </body>

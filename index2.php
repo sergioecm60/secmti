@@ -17,7 +17,7 @@ $nonce = base64_encode(random_bytes(16));
 // La cabecera CSP es específica para esta página.
 // Se permite 'self' y el CDN de SortableJS para scripts, y se usa el nonce para scripts y estilos en línea.
 // Se elimina 'unsafe-inline' de style-src para cumplir con las mejores prácticas de CSP cuando se usa un nonce.
-header("Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'nonce-{$nonce}'; style-src 'self' 'unsafe-inline';");
+header("Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'nonce-{$nonce}'; style-src 'self' 'nonce-{$nonce}';");
 
 // --- Conexión a la Base de Datos ---
 require_once 'database.php';
@@ -150,19 +150,17 @@ $pdo = get_database_connection($config, false); // false: no es crítico si fall
             <div class="footer-contact-line">
                 <span><?= htmlspecialchars($config['footer']['line2'] ?? '') ?></span>
                 <?php if (!empty($config['footer']['whatsapp_number']) &&
-                          !empty($config['footer']['whatsapp_svg_path'])): ?>
-                    <a href="https://wa.me/<?= htmlspecialchars($config['footer']['whatsapp_number']) ?>"
+                          !empty($config['footer']['whatsapp_svg_path'])): ?><a href="https://wa.me/<?= htmlspecialchars($config['footer']['whatsapp_number']) ?>"
                        target="_blank"
                        rel="noopener noreferrer"
                        class="footer-whatsapp-link"
                        aria-label="Contactar por WhatsApp">
                         <svg class="icon" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="<?= $config['footer']['whatsapp_svg_path'] ?>"/>
+                            <path d="<?= htmlspecialchars($config['footer']['whatsapp_svg_path']) ?>"/>
                         </svg>
                         <span><?= htmlspecialchars($config['footer']['whatsapp_number']) ?></span>
-                    </a>
-                <?php endif; ?>
-            </div>
+                    </a><?php endif; ?>
+        </div>
             <a href="<?= htmlspecialchars($config['footer']['license_url'] ?? '#') ?>"
                target="_blank"
                rel="license">

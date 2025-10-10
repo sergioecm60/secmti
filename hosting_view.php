@@ -99,14 +99,19 @@ try {
                                 <small>(<?= htmlspecialchars($server['hostname']) ?>)</small>
                             </div>
                             <div class="server-header-actions">
-                                <button type="button" class="view-toggle-btn" aria-expanded="false">▶</button>
+                                <?php if (($_SESSION['user_role'] ?? 'user') === 'admin'): ?>
+                                    <a href="hosting_manager.php#host-<?= $server['id'] ?>" class="quick-link" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">✏️ Editar</a>
+                                <?php endif; ?>
+                                <button type="button" class="view-toggle-btn" aria-expanded="false" aria-label="Expandir/Contraer servidor <?= htmlspecialchars($server['label']) ?>">▶</button>
                             </div>
                         </div>
                         <div class="server-body">
                             <!-- cPanel Accounts -->
                             <?php if (!empty($server['accounts'])): ?>
                             <div class="info-row">
-                                <div class="info-label">👤 Cuentas cPanel</div>
+                                <div class="info-label">
+                                    👤 Cuentas cPanel <span class="count-badge"><?= count($server['accounts']) ?></span>
+                                </div>
                                 <?php foreach ($server['accounts'] as $acc): ?>
                                 <div class="service-card">
                                     <div class="service-title"><?= htmlspecialchars($acc['label'] ?: $acc['username']) ?></div>
@@ -125,7 +130,9 @@ try {
                             <!-- FTP Accounts -->
                             <?php if (!empty($server['ftp_accounts'])): ?>
                             <div class="info-row">
-                                <div class="info-label">🔒 Cuentas FTP</div>
+                                <div class="info-label">
+                                    🔒 Cuentas FTP <span class="count-badge"><?= count($server['ftp_accounts']) ?></span>
+                                </div>
                                 <?php foreach ($server['ftp_accounts'] as $ftp): ?>
                                 <div class="service-card">
                                     <div class="cred-row">
@@ -141,7 +148,9 @@ try {
                             <!-- Email Accounts -->
                             <?php if (!empty($server['emails'])): ?>
                             <div class="info-row">
-                                <div class="info-label">✉️ Cuentas de Email (<?= count($server['emails']) ?>)</div>
+                                <div class="info-label">
+                                    ✉️ Cuentas de Email <span class="count-badge"><?= count($server['emails']) ?></span>
+                                </div>
                                 <input type="search" class="sub-search-input" placeholder="Buscar en emails de este servidor..." data-target-list="email-list-<?= $server['id'] ?>">
                                 <div class="scrollable-list" id="email-list-<?= $server['id'] ?>">
                                     <?php foreach ($server['emails'] as $email): ?>
@@ -229,12 +238,10 @@ try {
                 card.classList.remove('collapsed');
                 body.style.maxHeight = body.scrollHeight + 'px';
                 toggleBtn.setAttribute('aria-expanded', 'true');
-                toggleBtn.textContent = '▼';
             } else {
                 body.style.maxHeight = null;
                 card.classList.add('collapsed');
                 toggleBtn.setAttribute('aria-expanded', 'false');
-                toggleBtn.textContent = '▶';
             }
         }
 
@@ -254,14 +261,21 @@ try {
                 })
                 .then(data => {
                     if (data.success && data.password) {
-                        navigator.clipboard.writeText(data.password);
-                        copyBtn.textContent = '✅ Copiado';
-                        setTimeout(() => { copyBtn.textContent = originalText; }, 2000);
+                        return navigator.clipboard.writeText(data.password);
                     } else {
                         throw new Error(data.message || 'Error desconocido.');
                     }
                 })
-                .catch(error => { console.error('Error al copiar:', error); });
+                .then(() => {
+                    copyBtn.textContent = '✅ Copiado';
+                })
+                .catch(error => {
+                    console.error('Error al copiar:', error);
+                    copyBtn.textContent = '❌ Error';
+                })
+                .finally(() => {
+                    setTimeout(() => { copyBtn.textContent = originalText; }, 2000);
+                });
         });
     });
     </script>

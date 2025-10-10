@@ -16,12 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
             card.classList.remove('collapsed');
             body.style.maxHeight = body.scrollHeight + 'px';
             toggleBtn.setAttribute('aria-expanded', 'true');
-            toggleBtn.innerHTML = '▲';
         } else {
             card.classList.add('collapsed');
             body.style.maxHeight = null;
             toggleBtn.setAttribute('aria-expanded', 'false');
-            toggleBtn.innerHTML = '▶';
         }
     };
 
@@ -48,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.addEventListener('click', async (e) => {
         if (e.target.classList.contains('copy-cred-btn')) {
             const button = e.target;
-            const credId = button.dataset.credId;
+            const credId = button.dataset.id; // Corrected from credId to id
             const originalText = button.textContent;
             
             try {
@@ -69,7 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error al copiar:', error);
                 button.textContent = '❌';
             } finally {
-                setTimeout(() => { button.textContent = originalText; }, 2000);
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
             }
         }
     });
@@ -146,6 +146,13 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => modal.style.display = 'none', 300); // Wait for transition to finish
     };
 
+    // --- Event listeners for modal close buttons ---
+    const closeBtn = modal.querySelector('.close');
+    const cancelBtn = modal.querySelector('.cancel-btn');
+
+    if (closeBtn) closeBtn.addEventListener('click', closeServerModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeServerModal);
+
     // --- Event listeners for UI buttons ---
     document.body.addEventListener('click', async (e) => {
         // Global button to add a server
@@ -157,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const serverId = e.target.dataset.serverId;
             try {
                 // Call our new API to get the details
-                const response = await fetch(`datacenter_view.php?action=get_server_details&id=${serverId}`);
+                const response = await fetch(`api/datacenter.php?action=get_server_details&id=${serverId}`);
                 const result = await response.json();
                 if (result.success) {
                     showServerModal(result.data); // Show the modal with the received data

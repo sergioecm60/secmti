@@ -844,3 +844,9 @@
     display: inline-block;
     margin-bottom: 1rem;
 }
+
+/* Bonus: Rotar el botón de toggle al expandir */
+.server-header .view-toggle-btn[aria-expanded="true"] {
+    transform: rotate(90deg);
+    transition: transform 0.2s ease-in-out;
+}

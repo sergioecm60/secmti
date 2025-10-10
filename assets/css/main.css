@@ -469,6 +469,11 @@ header.admin-header p {
     cursor: pointer;
 }
 
+.page-manage .delete-form {
+    display: inline;
+    margin: 0;
+}
+
 /* --- Styles for login.php (.page-login) --- */
 .page-login {
     background: linear-gradient(135deg, var(--page-background) 0%, var(--primary-color) 100%);

@@ -1,30 +1,44 @@
 <?php
-// activity_log.php - Página para visualizar el log de actividad del portal.
+/**
+ * activity_log.php - Página para visualizar el log de actividad del portal.
+ *
+ * Este script muestra un registro de las acciones realizadas en el portal,
+ * permitiendo a los administradores monitorear la actividad del sistema.
+ */
 
 require_once 'bootstrap.php';
 require_once 'database.php';
 
-// Verificar autenticación y rol de administrador.
+// Verificar autenticación y rol de administrador (control de acceso).
 if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+    // Si el usuario no ha iniciado sesión o no es administrador, redirigir a la página de inicio de sesión.
     header('Location: login.php');
     exit;
 }
 
+// Obtener conexión a la base de datos.
 $pdo = get_database_connection($config, true);
 
-// --- Carga de datos para mostrar en la tabla ---
+// --- Carga de datos para mostrar en la tabla de logs ---
 $logs = [];
-$limit = 50; // Mostrar los últimos 50 registros
+$limit = 50; // Define el número máximo de registros a mostrar en la tabla.
 try {
+    // Preparar la consulta SQL para obtener los logs de actividad.
     $stmt = $pdo->prepare("
         SELECT l.id, l.action, l.entity_type, l.entity_id, l.ip_address, l.created_at, u.username
         FROM dc_access_log l
         LEFT JOIN users u ON l.user_id = u.id
         ORDER BY l.created_at DESC
         LIMIT :limit
-    ");
+    "); // Ordena los logs por fecha de creación descendente y limita la cantidad.
+    
+    // Vincular el parámetro :limit con el valor de $limit (protección contra SQL injection).
     $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+    
+    // Ejecutar la consulta preparada.
     $stmt->execute();
+    
+    // Obtener todos los resultados como un array asociativo.
     $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     $status_message = '<div class="status-message error">Error al cargar los logs de actividad.</div>';
@@ -103,7 +117,17 @@ try {
 
     <footer class="footer">
         <strong><?= htmlspecialchars($config['footer']['line1'] ?? '') ?></strong><br>
-        <span><?= htmlspecialchars($config['footer']['line2'] ?? '') ?></span>
+        <div class="footer-contact-line">
+            <span><?= htmlspecialchars($config['footer']['line2'] ?? '') ?></span>
+            <?php if (!empty($config['footer']['whatsapp_number']) && !empty($config['footer']['whatsapp_svg_path'])): ?>
+                <a href="https://wa.me/<?= htmlspecialchars($config['footer']['whatsapp_number']) ?>" target="_blank" rel="noopener noreferrer" class="footer-whatsapp-link" aria-label="Contactar por WhatsApp" tabindex="0">
+                    <svg class="icon" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="<?= htmlspecialchars($config['footer']['whatsapp_svg_path']) ?>"/>
+                    </svg>
+                </a>
+            <?php endif; ?>
+        </div>
+        <a href="<?= htmlspecialchars($config['footer']['license_url'] ?? '#') ?>" target="_blank" rel="license">Términos y Condiciones</a>
     </footer>
 </body>
 </html>
