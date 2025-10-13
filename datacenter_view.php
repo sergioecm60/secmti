@@ -29,12 +29,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             switch ($_POST['action']) {
                 case 'save_server':
                     $server_data = $_POST['server'];
+                    $encryption = new \SecMTI\Util\Encryption(base64_decode($config['encryption_key']));
                     
                     if (empty($server_data['id']) || strpos($server_data['id'], 'new_') === 0) {
                         // NUEVO SERVIDOR
                         $stmt = $pdo->prepare("
-                            INSERT INTO dc_servers (server_id, label, type, location_id, status, hw_model, hw_cpu, hw_ram, hw_disk, net_ip_lan, 
-                                                    net_ip_wan, net_host_external, net_gateway, net_dns, notes, username, pass_hash, created_by)
+                            INSERT INTO dc_servers (server_id, label, type, location_id, status, hw_model, hw_cpu, hw_ram, hw_disk, net_ip_lan,
+                                                    net_ip_wan, net_host_external, net_gateway, net_dns, notes, username, password, created_by)
                             VALUES (?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         ");
                         $server_id = 'srv_' . uniqid();
@@ -42,40 +43,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                             $server_id, $server_data['label'], $server_data['type'] ?? 'physical', $server_data['location_id'] ?: null,
                             $server_data['hw_model'] ?? '', $server_data['hw_cpu'] ?? '', $server_data['hw_ram'] ?? '', $server_data['hw_disk'] ?? '',
                             $server_data['net_ip_lan'] ?? '', $server_data['net_ip_wan'] ?? '', $server_data['net_host_external'] ?? '', $server_data['net_gateway'] ?? '',
-                            json_encode(array_filter(array_map('trim', explode(',', $server_data['net_dns'] ?? '')))),
+                            json_encode(array_filter(array_map('trim', explode(',', $server_data['net_dns'] ?? '')))), // DNS como JSON
                             $server_data['notes'] ?? '',
                             $server_data['username'] ?? '',
-                            !empty($server_data['password']) ? password_hash($server_data['password'], PASSWORD_DEFAULT) : null,
+                            !empty($server_data['password']) ? $encryption->encrypt($server_data['password']) : null, // Cifrar contraseña
                             $_SESSION['user_id']
                         ]);
                         $db_server_id = $pdo->lastInsertId();
                     } else {
                         // ACTUALIZAR SERVIDOR
                         $stmt = $pdo->prepare("
-                            UPDATE dc_servers SET label = ?, type = ?, location_id = ?, hw_model = ?, hw_cpu = ?, hw_ram = ?, hw_disk = ?,
-                                net_ip_lan = ?, net_ip_wan = ?, net_host_external = ?, net_gateway = ?, net_dns = ?, notes = ?, username = ?
+                            UPDATE dc_servers SET label = ?, type = ?, location_id = ?, hw_model = ?, hw_cpu = ?, hw_ram = ?, hw_disk = ?, net_ip_lan = ?,
+                                net_ip_wan = ?, net_host_external = ?, net_gateway = ?, net_dns = ?, notes = ?, username = ?
                             WHERE id = ?
                         ");
                         $params = [
                             $server_data['label'], $server_data['type'] ?? 'physical', $server_data['location_id'] ?: null,
                             $server_data['hw_model'] ?? '', $server_data['hw_cpu'] ?? '', $server_data['hw_ram'] ?? '', $server_data['hw_disk'] ?? '',
                             $server_data['net_ip_lan'] ?? '', $server_data['net_ip_wan'] ?? '', $server_data['net_host_external'] ?? '', $server_data['net_gateway'] ?? '',
-                            json_encode(array_filter(array_map('trim', explode(',', $server_data['net_dns'] ?? '')))),
+                            json_encode(array_filter(array_map('trim', explode(',', $server_data['net_dns'] ?? '')))), // DNS como JSON
                             $server_data['notes'] ?? '', $server_data['username'] ?? '', $server_data['id']
                         ];
                         $stmt->execute($params);
 
                         // Actualizar contraseña solo si se proporcionó una nueva
                         if (!empty($server_data['password'])) {
-                            $stmt_pass = $pdo->prepare("UPDATE dc_servers SET pass_hash = ? WHERE id = ?");
-                            $stmt_pass->execute([password_hash($server_data['password'], PASSWORD_DEFAULT), $server_data['id']]);
+                            $stmt_pass = $pdo->prepare("UPDATE dc_servers SET password = ? WHERE id = ?");
+                            $stmt_pass->execute([$encryption->encrypt($server_data['password']), $server_data['id']]); // Cifrar contraseña
                         }
                         $db_server_id = $server_data['id'];
                     }
                     
                     // Lógica para servicios y credenciales (simplificada para brevedad, pero la idea es la misma)
                     $services_data = $_POST['services'] ?? [];
-                    $encryption = new \SecMTI\Util\Encryption(base64_decode($config['encryption_key']));
                     $submitted_service_ids = [];
                     foreach ($services_data as $service_id_key => $service_item) {
                         if (empty($service_item['name'])) continue;
@@ -201,7 +201,7 @@ try {
 
     // 2. Obtener los servidores
     $base_query = "
-        SELECT s.*, l.name as location_name FROM dc_servers s 
+        SELECT s.id, s.server_id, s.label, s.type, s.location_id, s.status, s.hw_model, s.hw_cpu, s.hw_ram, s.hw_disk, s.net_ip_lan, s.net_ip_wan, s.net_host_external, s.net_gateway, s.net_dns, s.notes, s.username, s.password, l.name as location_name FROM dc_servers s 
         LEFT JOIN dc_locations l ON s.location_id = l.id
     ";
 
@@ -236,8 +236,8 @@ try {
         // 2. OBTENER CREDENCIALES: Traemos todas las credenciales de los servicios encontrados.
         if (!empty($service_ids)) {
             $in_sql_svc = implode(',', array_fill(0, count($service_ids), '?'));
-            // No seleccionamos el hash de la contraseña por seguridad.
-            $stmt_creds = $pdo->prepare("SELECT id, service_id, username, role, notes FROM dc_credentials WHERE service_id IN ($in_sql_svc) ORDER BY role DESC");
+            // Seleccionamos la contraseña cifrada para poder usar la función de copiar.
+            $stmt_creds = $pdo->prepare("SELECT id, service_id, username, role, notes, password FROM dc_credentials WHERE service_id IN ($in_sql_svc) ORDER BY role DESC");
             $stmt_creds->execute($service_ids);
             
             // Agrupamos las credenciales por el ID de su servicio para un fácil acceso.
@@ -432,9 +432,9 @@ try {
                                         <span>
                                             👤 <strong><?= htmlspecialchars($server['username']) ?></strong>
                                         </span>
-                                        <!-- El botón de copiar contraseña para el servidor principal usará un tipo diferente -->
-                                        <button type="button" class="copy-cred-btn" data-type="server_main" data-id="<?= $server['id'] ?>" title="Copiar contraseña del servidor">📋</button>
-                                    </div>
+                                        <?php if (!empty($server['password'])): // Mostrar el botón solo si hay una contraseña para copiar ?>
+                                            <button type="button" class="copy-cred-btn" data-type="server_main" data-id="<?= $server['id'] ?>" title="Copiar contraseña del servidor">📋</button>
+                                        <?php endif; ?>                                    </div>
                                 </div>
                                 <?php endif; ?>
 
@@ -544,7 +544,7 @@ try {
 
                         <h3>🔑 Credencial Principal</h3>
                         <div class="form-grid form-grid-with-labels">
-                            <div class="form-group"><label for="serverUsername">Usuario Principal</label><input type="text" name="server[username]" id="serverUsername" placeholder="Ej: root, admin"></div>
+                            <div class="form-group"><label for="serverUsername">Usuario Principal</label><input type="text" name="server[username]" id="serverUsername" placeholder="Ej: root, admin" autocomplete="username"></div>
                             <div class="form-group"><label for="serverPassword">Contraseña Principal</label><input type="password" name="server[password]" id="serverPassword" placeholder="Dejar en blanco para no cambiar" autocomplete="new-password"></div>
                         </div>
 

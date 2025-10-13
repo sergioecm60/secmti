@@ -15,7 +15,9 @@
             <small class="role-badge">(<?= htmlspecialchars($cred['role']) ?>)</small>
             <?php endif; ?>
         </span>
-        <button type="button" class="copy-cred-btn" data-id="<?= $cred['id'] ?>" title="Copiar contraseña para <?= htmlspecialchars($cred['username']) ?>">📋</button>
+        <?php if (!empty($cred['password'])): // Mostrar el botón solo si hay una contraseña para copiar ?>
+            <button type="button" class="copy-cred-btn" data-id="<?= $cred['id'] ?>" title="Copiar contraseña para <?= htmlspecialchars($cred['username']) ?>">📋</button>
+        <?php endif; ?>
     </div>
     <?php endforeach; ?>
 </div>

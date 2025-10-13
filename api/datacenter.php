@@ -31,20 +31,24 @@ try {
         case 'get_password':
             if ($id <= 0) throw new Exception('ID de credencial no válido.', 400);
 
-            $type = $_GET['type'] ?? 'dc_credential';
+            $type = $_GET['type'] ?? 'dc_credential'; // Obtener el tipo de credencial
             $encrypted_password = null;
 
             if ($type === 'server_main') {
-                $stmt = $pdo->prepare("SELECT pass_hash FROM dc_servers WHERE id = ?");
+                // Si es la credencial principal del servidor, buscar en dc_servers
+                $stmt = $pdo->prepare("SELECT password FROM dc_servers WHERE id = ?");
                 $stmt->execute([$id]);
                 $encrypted_password = $stmt->fetchColumn();
-            } else { // Asumimos dc_credential por defecto
+            } else {
+                // Por defecto, buscar en dc_credentials (para servicios)
                 $stmt = $pdo->prepare("SELECT password FROM dc_credentials WHERE id = ?");
                 $stmt->execute([$id]);
                 $encrypted_password = $stmt->fetchColumn();
             }
-            
-            if (!$encrypted_password) throw new Exception('No se encontró la credencial.', 404);
+
+            if (empty($encrypted_password)) {
+                throw new Exception('La contraseña no está disponible o no se encontró.', 404);
+            }
 
             // Descifrar la contraseña
             if (empty($config['encryption_key']) || strlen(base64_decode($config['encryption_key'])) !== 32) {
@@ -52,6 +56,9 @@ try {
             }
             $encryption = new Encryption(base64_decode($config['encryption_key']));
             $decrypted_password = $encryption->decrypt($encrypted_password);
+            if ($decrypted_password === false) {
+                throw new Exception('Error al descifrar la contraseña. Puede estar corrupta o la clave de cifrado es incorrecta.', 500);
+            }
 
             echo json_encode(['success' => true, 'password' => $decrypted_password]);
             break;
@@ -79,7 +86,7 @@ try {
             $all_credentials = [];
             if (!empty($service_ids)) {
                 $in_sql_svc = implode(',', array_fill(0, count($service_ids), '?'));
-                $stmt_creds = $pdo->prepare("SELECT id, service_id, username, role, notes FROM dc_credentials WHERE service_id IN ($in_sql_svc) ORDER BY role DESC");
+                $stmt_creds = $pdo->prepare("SELECT id, service_id, username, role, notes, password FROM dc_credentials WHERE service_id IN ($in_sql_svc) ORDER BY role DESC");
                 $stmt_creds->execute($service_ids);
                 foreach ($stmt_creds->fetchAll(PDO::FETCH_ASSOC) as $cred) {
                     $all_credentials[$cred['service_id']][] = $cred;

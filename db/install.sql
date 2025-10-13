@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS `dc_servers` (
   `net_dns` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'JSON array de DNS',
   `notes` TEXT COLLATE utf8mb4_spanish_ci,
   `username` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `pass_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `password` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Cifrado con la clave de la aplicación.',
   `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `created_by` INT DEFAULT NULL,
@@ -283,21 +283,15 @@ END$$
 
 CREATE PROCEDURE `sp_search_infrastructure` (IN `search_term` VARCHAR(255))
 BEGIN
-    SELECT DISTINCT
-        s.id AS server_id,
-        s.server_id AS server_code,
-        s.label AS server_name,
-        s.type,
-        s.status,
-        s.net_ip_lan,
-        s.net_ip_wan,
-        s.net_host_external,
-        sv.name AS service_name,
-        sv.protocol,
-        sv.port,
-        'server' AS match_type
+    -- Modificado para devolver las mismas columnas que la consulta principal
+    SELECT DISTINCT 
+                    s.id, s.server_id, s.label, s.type, s.location_id, s.status, 
+                    s.hw_model, s.hw_cpu, s.hw_ram, s.hw_disk, s.net_ip_lan, 
+                    s.net_ip_wan, s.net_host_external, s.net_gateway, s.net_dns, 
+                    s.notes, s.username, s.password, l.name as location_name
     FROM dc_servers s
     LEFT JOIN dc_services sv ON s.id = sv.server_id
+    LEFT JOIN dc_locations l ON s.location_id = l.id
     WHERE 
         s.label LIKE CONCAT('%', search_term, '%')
         OR s.server_id LIKE CONCAT('%', search_term, '%')

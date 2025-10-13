@@ -67,21 +67,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.classList.contains('copy-cred-btn')) {
             const button = e.target;
             const credId = button.dataset.id;
-            const credType = button.dataset.type || 'dc_credential'; // Nuevo: obtener el tipo
+            const credType = button.dataset.type || 'dc_credential'; // Obtener el tipo de credencial
             const originalText = button.textContent;
             
             try {
-                // Usamos la API unificada de datacenter
-                const response = await fetch(`api/datacenter.php?action=get_password&id=${credId}&type=${credType}`, {
-                    method: 'GET' // No necesita cuerpo, es una solicitud de datos
-                });
+                const response = await fetch(`api/datacenter.php?action=get_password&id=${credId}&type=${credType}`);
                 const data = await response.json();
 
-                if (data.success && data.password) {
+                if (data.success && typeof data.password === 'string' && data.password.length > 0) {
                     await navigator.clipboard.writeText(data.password);
                     button.textContent = '✅';
                 } else {
-                    throw new Error(data.message || 'No se pudo obtener la contraseña.');
+                    throw new Error(data.message || 'La contraseña recibida no es válida.');
                 }
             } catch (error) {
                 console.error('Error al copiar:', error);
