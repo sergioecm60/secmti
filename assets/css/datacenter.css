@@ -1,11 +1,299 @@
-/* datacenter.css - Estilos específicos para gestión de infraestructura */
+/* ==========================================================================
+   DATACENTER.CSS - Versión Optimizada
+   Sistema de Gestión de Infraestructura SecMTI
+   ========================================================================== */
+/* ==========================================================================
+   LAYOUT PRINCIPAL
+   ========================================================================== */
 
-.server-list {
+.admin-container-full-width {
+    max-width: 1400px;
+}
+
+.datacenter-main-wrapper {
+    min-height: 500px;
+    max-height: calc(100vh - 350px);
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
 }
+
+/* ==========================================================================
+   HEADER COMPACTO
+   ========================================================================== */
+
+.compact-header {
+    background: var(--container-background);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    flex-wrap: wrap;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex: 1;
+    min-width: 300px;
+}
+
+.header-left h1 {
+    font-size: 1.5rem;
+    margin: 0;
+    color: var(--primary-color);
+}
+
+.stats-compact {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.stat-badge {
+    background: rgba(11, 47, 177, 0.1);
+    color: var(--primary-color);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.compact-search {
+    min-width: 200px;
+}
+
+.compact-search input {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border: 2px solid var(--primary-color);
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.btn-action {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+    white-space: nowrap;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background: var(--success-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #000;
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+}
+
+/* ==========================================================================
+   ESTADÍSTICAS (DEPRECADO - Mantenido para compatibilidad)
+   ========================================================================== */
+
+.stats-bar {
+    background: var(--container-background);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+
+.stat-item {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.search-box {
+    margin: 2rem auto;
+    max-width: 600px;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.search-box input {
+    flex: 1;
+    padding: 1rem;
+    border: 2px solid var(--primary-color);
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.view-all-controls {
+    padding: 1rem 0;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.no-data {
+    text-align: center;
+    padding: 3rem;
+}
+
+/* ==========================================================================
+   SECCIONES POR UBICACIÓN
+   ========================================================================== */
+
+.sections-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) transparent;
+}
+
+.sections-container::-webkit-scrollbar {
+    width: 10px;
+}
+
+.sections-container::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05);
+    border-radius: 5px;
+}
+
+.sections-container::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 5px;
+}
+
+.service-section {
+    background: var(--container-background);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    border: 2px solid var(--border-color);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.service-section:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border-color: var(--primary-color);
+}
+
+.section-title {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #6c757d 0%, #343a40 100%);
+    color: var(--primary-text-color);
+}
+
+.section-toggle-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.section-toggle-btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.section-toggle-btn::before {
+    content: '▼';
+    margin-right: 0.5rem;
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+.service-section.collapsed .section-toggle-btn::before {
+    transform: rotate(-90deg);
+}
+
+.section-title-text {
+    margin-right: auto;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.section-badge {
+    background: rgba(255,255,255,0.2);
+    color: var(--primary-text-color);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-left: 1rem;
+    font-weight: 600;
+}
+
+.section-body {
+    padding: 1.5rem;
+    max-height: 2000px;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out, padding 0.3s ease;
+}
+
+.service-section.collapsed .section-body {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* ==========================================================================
+   GRID DE SERVIDORES
+   ========================================================================== */
+
+.servers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+/* ==========================================================================
+   TARJETAS DE SERVIDOR
+   ========================================================================== */
 
 .server-card {
     border: 2px solid var(--border-color);
@@ -16,19 +304,8 @@
 }
 
 .server-card:hover {
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
-}
-
-.server-card .server-body {
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.server-card.collapsed .server-body {
-    display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    transform: translateY(-4px);
 }
 
 .server-header {
@@ -41,613 +318,63 @@
     gap: 1rem;
 }
 
-.server-title {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex: 1;
-}
-
-.server-icon {
-    font-size: 1.5rem;
-}
-
-.server-title input {
-    flex: 1;
-    font-size: 1.1rem;
-    font-weight: 600;
-    border: none;
-    background: rgba(255,255,255,0.95);
-    color: var(--text-color-on-light);
-    padding: 0.5rem 0.75rem;
-    border-radius: 6px;
-}
-
-.modal-content input,
-.modal-content select,
-.modal-content textarea {
-    color: var(--text-color-on-light);
-}
-
-.action-btn {
-    background: rgba(255,255,255,0.2);
-    color: var(--primary-text-color);
-    border: 1px solid rgba(255,255,255,0.3);
-    padding: 0.4rem 0.8rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    text-decoration: none;
-}
-.action-btn.edit-btn:hover { background: #ffc107; color: #000; }
-.action-btn.delete-btn:hover { background: var(--danger-color); }
-
-.action-btn.action-btn--warning {
-    background-color: #ffc107;
-    color: #000;
-    border-color: #e0a800;
-}
-
-.action-btn.action-btn--warning:hover {
-    background-color: #e0a800;
-    color: #000;
-}
-
-.server-actions {
+.server-header-actions {
     display: flex;
     gap: 0.5rem;
-    align-items: center;
-}
-
-.server-type {
-    padding: 0.4rem 0.6rem;
-    border: none;
-    border-radius: 6px;
-    background: rgba(255,255,255,0.95);
-    color: var(--text-color-on-light);
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.toggle-server-btn,
-.delete-server-btn {
-    background: rgba(255,255,255,0.2);
-    color: var(--primary-text-color);
-    border: 1px solid rgba(255,255,255,0.3);
-    padding: 0.4rem 0.8rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
-
-.toggle-server-btn:hover {
-    background: rgba(255,255,255,0.3);
-}
-
-.delete-server-btn:hover {
-    background: var(--danger-color);
-    border-color: var(--danger-color);
-}
-
-.info-section {
-    background: rgba(0,0,0,0.02);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1.25rem;
-}
-
-.info-section h3 {
-    color: var(--primary-color);
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.75rem;
-}
-
-.form-grid input {
-    padding: 0.6rem;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 0.95rem;
-    background: var(--container-background);
-    color: var(--text-color-on-light);
-    transition: all 0.2s ease;
-}
-
-.form-grid input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(11, 47, 177, 0.1);
-}
-
-/* DNS List */
-.dns-list {
-    margin-top: 1rem;
-}
-
-.dns-list label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: var(--text-color-on-light);
-}
-
-.dns-item {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.dns-item input {
-    flex: 1;
-    padding: 0.6rem;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-}
-
-.delete-dns-btn {
-    background: var(--danger-color);
-    color: white;
-    border: none;
-    padding: 0.5rem 0.75rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-.add-dns-btn {
-    background: var(--primary-color);
-    color: var(--primary-text-color);
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    margin-top: 0.5rem;
-}
-
-/* Services */
-.services-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.service-item {
-    background: var(--container-background);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1rem;
-}
-
-.service-header {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    align-items: center;
-}
-
-.service-header input {
-    flex: 1;
-    padding: 0.6rem;
-    border: 2px solid var(--primary-color);
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 1rem;
-}
-
-.delete-service-btn {
-    background: var(--danger-color);
-    color: white;
-    border: none;
-    padding: 0.5rem 0.75rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 1.1rem;
-}
-
-.service-details {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.service-details input,
-.service-details select {
-    padding: 0.6rem;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 0.95rem;
-}
-
-.inline-fields {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.inline-fields select {
-    flex: 0 0 120px;
-}
-
-.inline-fields input {
-    flex: 1;
-}
-
-/* Credentials */
-.credentials-list {
-    background: rgba(0,0,0,0.03);
-    border: 1px dashed var(--border-color);
-    border-radius: 6px;
-    padding: 1rem;
-    margin-top: 0.5rem;
-}
-
-.credentials-list label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 0.75rem;
-    color: var(--text-color-on-light);
-}
-
-.credential-item {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto auto;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-    align-items: center;
-}
-
-.credential-item input {
-    padding: 0.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 0.9rem;
-}
-
-.credential-item input[type="password"] {
-    font-family: 'Courier New', monospace;
-    letter-spacing: 2px;
-}
-
-.toggle-pass-btn {
-    background: var(--container-background);
-    border: 1px solid var(--border-color);
-    padding: 0.5rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: all 0.2s ease;
-}
-
-.toggle-pass-btn:hover {
-    background: var(--primary-color);
-    color: white;
-}
-
-.delete-cred-btn {
-    background: var(--danger-color);
-    color: white;
-    border: none;
-    padding: 0.5rem 0.75rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-.add-credential-btn {
-    background: var(--success-color);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    margin-top: 0.5rem;
-}
-
-.add-service-btn {
-    background: var(--primary-color);
-    color: var(--primary-text-color);
-    border: none;
-    padding: 0.75rem 1.25rem;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    align-self: flex-start;
-}
-
-.add-service-btn:hover {
-    opacity: 0.9;
-    transform: translateY(-2px);
-}
-
-/* Notes */
-.info-section textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-family: inherit;
-    font-size: 0.95rem;
-    resize: vertical;
-    min-height: 80px;
-}
-
-.info-section textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(11, 47, 177, 0.1);
-}
-
-/* Logout button en header */
-.logout-btn {
-    position: absolute;
-    top: 1.5rem;
-    right: 2rem;
-    background: rgba(255,255,255,0.2);
-    color: var(--primary-text-color);
-    border: 1px solid rgba(255,255,255,0.3);
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
-
-.logout-btn:hover {
-    background: rgba(255,255,255,0.3);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .server-header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .server-title {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .server-actions {
-        justify-content: space-between;
-    }
-    
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .credential-item {
-        grid-template-columns: 1fr;
-    }
-    
-    .credential-item input {
-        width: 100%;
-    }
-    
-    .toggle-pass-btn,
-    .delete-cred-btn {
-        width: 100%;
-    }
-    
-    .inline-fields {
-        flex-direction: column;
-    }
-    
-    .inline-fields select {
-        flex: 1;
-    }
-    
-    .logout-btn {
-        position: static;
-        margin-top: 1rem;
-        text-align: center;
-    }
-}
-
-/* ==========================================================================
-   Modal Styles
-   ========================================================================== */
-
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 9999;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.6);
-    align-items: center;
-    justify-content: center;
-}
-.modal.active {
-    display: flex;
-}
-
-.modal-content {
-    background-color: var(--container-background);
-    margin: auto;
-    padding: 30px;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 800px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-}
-.close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-.close:hover { color: #000; }
-
-.hidden {
-    display: none !important;
-}
-
-/* ==========================================================================
-   Modal Form Styles
-   ========================================================================== */
-
-.form-group {
-    margin-bottom: 1rem;
-}
-.form-group label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-.form-group input, .form-group select, .form-group textarea {
-    width: 100%;
-    padding: 0.6rem;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-}
-.form-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-}
-.cancel-btn {
-    background: #6c757d;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-}
-.modal-content hr {
-    margin: 1.5rem 0;
-    border: 0;
-    border-top: 1px solid var(--border-color);
-}
-
-.modal-content h3 {
-    margin: 2rem 0;
-    border: 0;
-    border-top: 1px solid var(--border-color);
-}
-
-.form-group small {
-    display: block;
-    margin-top: 0.25rem;
-    font-size: 0.8rem;
-    opacity: 0.8;
-}
-
-/* ==========================================================================
-   Other Component Styles from Manager
-   ========================================================================== */
-
-.badge {
-    background: var(--primary-color);
-    color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 500;
-}
-
-.service-item .service-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.75rem;
-}
-
-.service-details p {
-    margin: 0.5rem 0;
-    font-size: 0.9rem;
-}
-
-.cred-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.cred-row:last-child {
-    border-bottom: none;
-}
-
-.edit-server-btn {
-    background: #ffc107;
-    color: #000;
-    border: none;
-    padding: 0.4rem 0.8rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-/* ==========================================================================
-   Estilos para datacenter_view.php
-   ========================================================================== */
-
-.admin-container-full-width {
-    max-width: 1400px;
-}
-
-.search-box {
-    margin: 2rem auto;
-    max-width: 600px;
-    text-align: center;
-}
-
-.search-box input {
-    width: 100%;
-    padding: 1rem;
-    border: 2px solid var(--primary-color);
-    border-radius: 8px;
-    font-size: 1rem;
-}
-
-.servers-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 1.5rem;
-    margin: 2rem 0;
-}
-
-.server-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-}
-
-.server-type-badge {
-    background: rgba(255,255,255,0.2);
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.85rem;
+    margin-left: auto;
 }
 
 .server-body {
-    padding: 1.25rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    transition: max-height 0.4s ease-out;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) transparent;
 }
 
-.info-row {
+.server-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.server-body::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05);
+    border-radius: 4px;
+}
+
+.server-body::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+.server-card.collapsed .server-body {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+}
+
+.server-type-badge-body {
+    background: var(--primary-color);
+    color: var(--primary-text-color);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    display: inline-block;
     margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
+}
+
+/* ==========================================================================
+   INFORMACIÓN DEL SERVIDOR
+   ========================================================================== */
+
+.info-row {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -659,7 +386,7 @@
     font-weight: 600;
     color: var(--primary-color);
     font-size: 0.9rem;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
 }
 
 .network-grid {
@@ -684,12 +411,25 @@
     font-family: 'Courier New', monospace;
 }
 
+/* ==========================================================================
+   SERVICIOS
+   ========================================================================== */
+
+.service-card-wrapper {
+    margin-bottom: 1rem;
+}
+
 .service-card {
     background: rgba(11, 47, 177, 0.05);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 1rem;
-    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.service-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(11, 47, 177, 0.1);
 }
 
 .service-title {
@@ -721,6 +461,8 @@
     font-size: 0.85rem;
     font-weight: 500;
     transition: all 0.2s;
+    border: none;
+    cursor: pointer;
 }
 
 .quick-link:hover {
@@ -728,106 +470,61 @@
     transform: translateY(-2px);
 }
 
-.quick-link-standalone {
-    display: inline-flex;
-    margin-top: 1rem;
-}
-
-.quick-link#go-to-management-link {
-    display: inline-flex;
-    margin-top: 1rem;
-}
+/* ==========================================================================
+   CREDENCIALES
+   ========================================================================== */
 
 .credentials-box {
     background: rgba(220, 53, 69, 0.05);
     border: 1px dashed var(--danger-color);
     border-radius: 6px;
     padding: 0.75rem;
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
 }
 
-.cred-pass-container {
-    text-align: right;
+.cred-row {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.5rem;
+    padding: 0.6rem 0.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    transition: background 0.2s ease;
 }
 
-.cred-pass {
-    font-family: 'Courier New', monospace;
-    background: var(--container-background);
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    cursor: default;
-    user-select: none;
+.cred-row:hover {
+    background: rgba(0,0,0,0.03);
 }
 
-.copy-cred-btn {
-    background: transparent;
-    border: 1px solid var(--border-color);
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.copy-cred-btn:hover {
-    background: var(--primary-color);
-    color: var(--primary-text-color);
+.cred-row:last-child {
+    border-bottom: none;
 }
 
 .role-badge {
     opacity: 0.7;
 }
 
-.server-notes {
-    font-style: italic;
-}
-
-.stats-bar {
+.copy-cred-btn {
     background: var(--container-background);
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 2rem;
-    display: flex;
-    justify-content: space-around;
-    text-align: center;
+    border: 1px solid var(--border-color);
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1.1rem;
 }
 
-.stat-item {
-    flex: 1;
+.copy-cred-btn:hover {
+    background: var(--primary-color);
+    color: var(--primary-text-color);
+    transform: scale(1.1);
 }
 
-.stat-number {
-    font-size: 2rem;
-    font-weight: bold;
-    color: var(--primary-color);
-}
+/* ==========================================================================
+   BOTONES Y ACCIONES
+   ========================================================================== */
 
-.stat-label {
-    font-size: 0.9rem;
-    color: #666;
-}
-
-.no-data {
-    text-align: center;
-    padding: 3rem;
-}
-
-@media (max-width: 768px) {
-    .network-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Comportamiento del acordeón del servidor */
-.server-card.collapsed .server-body {
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-}
-
-.view-toggle-btn {
+.toggle-server-btn,
+.action-btn {
     background: rgba(255,255,255,0.2);
     color: var(--primary-text-color);
     border: 1px solid rgba(255,255,255,0.3);
@@ -836,57 +533,111 @@
     cursor: pointer;
     font-weight: 600;
     transition: all 0.2s ease;
-    margin-left: auto; /* Empuja el botón a la derecha */
     text-decoration: none;
 }
 
-.server-header-actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-left: auto;
-}
-
-.view-toggle-btn:hover {
+.toggle-server-btn:hover,
+.action-btn:hover {
     background: rgba(255,255,255,0.3);
+    transform: scale(1.1);
 }
 
-.view-toggle-btn.delete-btn:hover {
+.toggle-server-btn[aria-expanded="true"] {
+    transform: rotate(0deg);
+}
+
+.toggle-server-btn[aria-expanded="false"] {
+    transform: rotate(0deg);
+}
+
+.action-btn.action-btn--warning {
+    background-color: #ffc107;
+    color: #000;
+    border-color: #e0a800;
+}
+
+.action-btn.action-btn--warning:hover {
+    background-color: #e0a800;
+}
+
+.edit-btn:hover {
+    background: #ffc107;
+    color: #000;
+    border-color: #ffc107;
+}
+
+.delete-btn:hover {
     background: var(--danger-color);
     border-color: var(--danger-color);
 }
 
-.server-type-badge-body {
-    background: var(--primary-color);
-    color: var(--primary-text-color);
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    display: inline-block;
-    margin-bottom: 1rem;
-}
-
-/* Bonus: Rotar el botón de toggle al expandir */
-.server-header .view-toggle-btn[aria-expanded="true"] {
-    transform: rotate(90deg);
-    transition: transform 0.2s ease-in-out;
-}
-
-/* Estilos para el grid de formulario con etiquetas visibles */
-.form-grid-with-labels {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
-.form-grid-with-labels .form-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-grid-with-labels .form-group label {
-    margin-bottom: 0.5rem;
+.add-btn {
+    background: var(--success-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
     font-weight: 500;
+    transition: all 0.2s ease;
 }
 
-/* Estilos para pestañas en el modal */
+.add-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.add-service-quick-btn {
+    margin-top: 0.5rem;
+    width: 100%;
+}
+
+/* ==========================================================================
+   MODAL
+   ========================================================================== */
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background-color: var(--container-background);
+    margin: auto;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #000;
+}
+
 .modal-tabs {
     display: flex;
     border-bottom: 2px solid var(--border-color);
@@ -920,7 +671,79 @@
     display: block;
 }
 
-/* Contenedor para items dinámicos (servicios, credenciales) */
+/* ==========================================================================
+   FORMULARIOS
+   ========================================================================== */
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color-on-light);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(11, 47, 177, 0.1);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.form-grid-with-labels {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.form-grid-with-labels .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.save-btn {
+    background: var(--success-color);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.cancel-btn {
+    background: #6c757d;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* Contenedores dinámicos (servicios, credenciales) */
 .dynamic-container {
     display: flex;
     flex-direction: column;
@@ -936,13 +759,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-}
-
-.dynamic-item-container .delete-btn {
-    align-self: flex-end;
-    margin-top: 0.5rem;
-    background-color: var(--danger-color);
-    color: white;
 }
 
 .credentials-sub-container {
@@ -970,76 +786,72 @@
     align-items: center;
 }
 
-.add-credential-btn {
-    padding: 0.3rem 0.6rem;
-    font-size: 0.8rem;
-    align-self: flex-start;
-    background-color: var(--success-color);
-    color: white;
-}
-
 /* ==========================================================================
-   Estilos para Secciones por Ubicación
+   RESPONSIVE
    ========================================================================== */
 
-.sections-container {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    margin-top: 2rem;
+@media (max-width: 768px) {
+    .sections-container {
+        max-height: calc(100vh - 300px);
+    }
+    
+    .servers-grid,
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .network-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .search-box {
+        flex-direction: column;
+    }
+    
+    .compact-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .header-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        min-width: auto;
+    }
+    
+    .header-left h1 {
+        font-size: 1.25rem;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .header-actions > * {
+        flex: 1;
+    }
+    
+    .compact-search {
+        min-width: auto;
+        width: 100%;
+    }
 }
 
-.service-section {
-    background: var(--container-background);
-    border-radius: 16px;
-    padding: 0;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    border: 2px solid var(--border-color);
-    overflow: hidden;
-    transition: all 0.3s ease;
+@media (min-width: 1200px) {
+    .servers-grid {
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    }
 }
 
-.service-section:hover {
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-    border-color: var(--primary-color);
-}
-
-.service-section .section-title {
-    margin: 0;
-    padding: 0;
-    position: relative;
-    background: linear-gradient(135deg, #6c757d 0%, #343a40 100%);
-    color: var(--primary-text-color);
-}
-
-.section-toggle-btn {
-    background: none;
-    border: none;
-    color: inherit;
-    font: inherit;
-    padding: 1rem 1.5rem;
-    display: flex;
-    align-items: center;
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-}
-
-.section-toggle-btn .section-title-text {
-    margin-right: auto;
-    font-size: 1.3rem;
-    font-weight: 700;
-}
-
-.section-body {
-    padding: 1.5rem;
-}
-
-.section-badge {
-    background: rgba(255,255,255,0.2);
-    color: var(--primary-text-color);
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    margin-left: 1rem;
+@media (min-width: 1600px) {
+    .servers-grid {
+        grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    }
+    
+    .server-body {
+        max-height: 700px;
+    }
 }

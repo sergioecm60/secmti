@@ -2,6 +2,7 @@
 /**
  * api/datacenter.php
  * Endpoint seguro para acciones del datacenter.
+ * Endpoint seguro para acciones del datacenter - Versión optimizada
  */
 
 require_once '../bootstrap.php';
@@ -14,7 +15,7 @@ header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 // 1. Verificar autenticación del usuario
 if (empty($_SESSION['user_id'])) {
     http_response_code(401); // Unauthorized
-    echo json_encode(['success' => false, 'message' => 'Acceso no autorizado.']);
+    echo json_encode(['success' => false, 'message' => 'Acceso no autorizado']);
     exit;
 }
 
@@ -24,12 +25,14 @@ try {
 
     $pdo = get_database_connection($config, false);
     if (!$pdo) {
-        throw new Exception('No se pudo conectar a la base de datos.', 500);
+        throw new Exception('Error de conexión a base de datos', 500);
     }
 
     switch ($action) {
         case 'get_password':
-            if ($id <= 0) throw new Exception('ID de credencial no válido.', 400);
+            if ($id <= 0) {
+                throw new Exception('ID de credencial inválido', 400);
+            }
 
             $type = $_GET['type'] ?? 'dc_credential'; // Obtener el tipo de credencial
             $encrypted_password = null;
@@ -47,17 +50,19 @@ try {
             }
 
             if (empty($encrypted_password)) {
-                throw new Exception('La contraseña no está disponible o no se encontró.', 404);
+                throw new Exception('Contraseña no disponible', 404);
             }
 
             // Descifrar la contraseña
             if (empty($config['encryption_key']) || strlen(base64_decode($config['encryption_key'])) !== 32) {
-                throw new Exception('Error de configuración de cifrado en el servidor.', 500);
+                throw new Exception('Error de configuración de cifrado', 500);
             }
+            
             $encryption = new Encryption(base64_decode($config['encryption_key']));
             $decrypted_password = $encryption->decrypt($encrypted_password);
+            
             if ($decrypted_password === false) {
-                throw new Exception('Error al descifrar la contraseña. Puede estar corrupta o la clave de cifrado es incorrecta.', 500);
+                throw new Exception('Error al descifrar contraseña', 500);
             }
 
             echo json_encode(['success' => true, 'password' => $decrypted_password]);
@@ -65,15 +70,21 @@ try {
 
         case 'get_server_details':
             if (($_SESSION['user_role'] ?? 'user') !== 'admin') {
-                throw new Exception('No tienes permiso para esta acción.', 403);
+                throw new Exception('Permisos insuficientes', 403);
             }
-            if ($id <= 0) throw new Exception('ID de servidor no válido.', 400);
+            
+            if ($id <= 0) {
+                throw new Exception('ID de servidor inválido', 400);
+            }
 
+            // Obtener servidor
             $stmt = $pdo->prepare("SELECT * FROM dc_servers WHERE id = ?");
             $stmt->execute([$id]);
             $server = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$server) throw new Exception('Servidor no encontrado.', 404);
+            if (!$server) {
+                throw new Exception('Servidor no encontrado', 404);
+            }
 
             $server['net_dns'] = json_decode($server['net_dns'] ?? '[]', true);
 
@@ -84,15 +95,23 @@ try {
 
             $service_ids = array_column($services, 'id');
             $all_credentials = [];
+            
             if (!empty($service_ids)) {
-                $in_sql_svc = implode(',', array_fill(0, count($service_ids), '?'));
-                $stmt_creds = $pdo->prepare("SELECT id, service_id, username, role, notes, password FROM dc_credentials WHERE service_id IN ($in_sql_svc) ORDER BY role DESC");
+                $in_sql = implode(',', array_fill(0, count($service_ids), '?'));
+                $stmt_creds = $pdo->prepare("
+                    SELECT id, service_id, username, role, notes, password 
+                    FROM dc_credentials 
+                    WHERE service_id IN ($in_sql) 
+                    ORDER BY role DESC
+                ");
                 $stmt_creds->execute($service_ids);
+                
                 foreach ($stmt_creds->fetchAll(PDO::FETCH_ASSOC) as $cred) {
                     $all_credentials[$cred['service_id']][] = $cred;
                 }
             }
 
+            // Ensamblar
             foreach ($services as &$service) {
                 $service['credentials'] = $all_credentials[$service['id']] ?? [];
             }
@@ -102,7 +121,7 @@ try {
             break;
 
         default:
-            throw new Exception('Acción no válida.', 400);
+            throw new Exception('Acción no válida', 400);
     }
 
 } catch (Exception $e) {

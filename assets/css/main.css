@@ -296,6 +296,7 @@ body.page-manage, body.page-info, body.page-mytop {
     border: 1px solid var(--border-color);
     overflow: hidden;
 }
+
 header.admin-header {
     padding: 1.5rem 2rem;
     text-align: center;

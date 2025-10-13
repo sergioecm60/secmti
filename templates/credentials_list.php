@@ -16,7 +16,7 @@
             <?php endif; ?>
         </span>
         <?php if (!empty($cred['password'])): // Mostrar el botón solo si hay una contraseña para copiar ?>
-            <button type="button" class="copy-cred-btn" data-id="<?= $cred['id'] ?>" title="Copiar contraseña para <?= htmlspecialchars($cred['username']) ?>">📋</button>
+            <button type="button" class="copy-cred-btn" data-type="dc_credential" data-id="<?= $cred['id'] ?>" title="Copiar contraseña para <?= htmlspecialchars($cred['username']) ?>">📋</button>
         <?php endif; ?>
     </div>
     <?php endforeach; ?>
