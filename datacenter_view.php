@@ -81,8 +81,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         if (empty($service_item['name'])) continue;
 
                         if (strpos($service_id_key, 'new_') === 0) {
-                            $stmt_svc = $pdo->prepare("INSERT INTO dc_services (server_id, name, url_internal, url_external, port, protocol, notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                            $stmt_svc->execute([$db_server_id, $service_item['name'], $service_item['url_internal'] ?? '', $service_item['url_external'] ?? '', $service_item['port'] ?? '', $service_item['protocol'] ?? 'https', $service_item['notes'] ?? '']);
+                            $service_unique_id = 'svc_' . uniqid();
+                            $stmt_svc = $pdo->prepare("INSERT INTO dc_services (server_id, service_id, name, url_internal, url_external, port, protocol, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                            $stmt_svc->execute([$db_server_id, $service_unique_id, $service_item['name'], $service_item['url_internal'] ?? '', $service_item['url_external'] ?? '', $service_item['port'] ?? '', $service_item['protocol'] ?? 'https', $service_item['notes'] ?? '']);
                             $current_service_id = $pdo->lastInsertId();
                         } else {
                             $stmt_svc = $pdo->prepare("UPDATE dc_services SET name=?, url_internal=?, url_external=?, port=?, protocol=?, notes=? WHERE id=?");
