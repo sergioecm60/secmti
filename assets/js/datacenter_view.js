@@ -62,6 +62,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    /**
+     * Función robusta para copiar texto al portapapeles.
+     * Usa la API moderna si está disponible (contexto seguro), si no, usa el método antiguo.
+     * @param {string} text - El texto a copiar.
+     */
+    async function copyToClipboard(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            // Método moderno y seguro
+            await navigator.clipboard.writeText(text);
+        } else {
+            // Método antiguo para contextos no seguros (HTTP en IPs locales)
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'absolute';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        }
+    }
+
     // --- Lógica de Copiar Contraseña ---
     document.body.addEventListener('click', async (e) => {
         if (e.target.classList.contains('copy-cred-btn')) {
@@ -75,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
 
                 if (data.success && typeof data.password === 'string' && data.password.length > 0) {
-                    await navigator.clipboard.writeText(data.password);
+                    await copyToClipboard(data.password);
                     button.textContent = '✅';
                 } else {
                     throw new Error(data.message || 'La contraseña recibida no es válida.');
