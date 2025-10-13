@@ -66,14 +66,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.addEventListener('click', async (e) => {
         if (e.target.classList.contains('copy-cred-btn')) {
             const button = e.target;
-            const credId = button.dataset.id; // Corrected from credId to id
+            const credId = button.dataset.id;
+            const credType = button.dataset.type || 'dc_credential'; // Nuevo: obtener el tipo
             const originalText = button.textContent;
             
             try {
-                const response = await fetch('api/credentials.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: credId, csrf_token: csrfToken })
+                // Usamos la API unificada de datacenter
+                const response = await fetch(`api/datacenter.php?action=get_password&id=${credId}&type=${credType}`, {
+                    method: 'GET' // No necesita cuerpo, es una solicitud de datos
                 });
                 const data = await response.json();
 
@@ -148,6 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.showServerModal = (serverData = null) => {
         form.reset();
+        document.getElementById('servicesContainer').innerHTML = ''; // Limpiar servicios
+
         if (serverData) {
             // Editar
             document.getElementById('modalTitle').textContent = 'Editar Servidor';
@@ -166,6 +168,15 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('netHostExt').value = serverData.net_host_external || '';
             document.getElementById('netGateway').value = serverData.net_gateway || '';
             document.getElementById('serverNotes').value = serverData.notes || '';
+            document.getElementById('serverUsername').value = serverData.username || '';
+            // La contraseña no se rellena por seguridad, solo se puede establecer una nueva
+            document.getElementById('serverPassword').value = '';
+
+            // Poblar servicios
+            const servicesContainer = document.getElementById('servicesContainer');
+            (serverData.services || []).forEach(service => {
+                servicesContainer.appendChild(createServiceElement(service));
+            });
         } else {
             // Crear
             document.getElementById('modalTitle').textContent = 'Agregar Servidor';
@@ -184,6 +195,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = modal.querySelector('.close');
     const cancelBtn = modal.querySelector('.cancel-btn');
 
+    // --- Lógica para pestañas del modal ---
+    modal.querySelector('.modal-tabs').addEventListener('click', (e) => {
+        if (e.target.classList.contains('tab-link')) switchTab(e.target.dataset.tab);
+    });
+
     if (closeBtn) closeBtn.addEventListener('click', closeServerModal);
     if (cancelBtn) cancelBtn.addEventListener('click', closeServerModal);
 
@@ -192,6 +208,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Global button to add a server
         if (e.target.id === 'addServerBtn') {
             showServerModal(null); // Call without data to create a new one
+        }
+
+        // Botón rápido para agregar servicio desde la tarjeta
+        if (e.target.classList.contains('add-service-quick-btn')) {
+            e.target.closest('.server-header-actions .edit-btn')?.click(); // Simula clic en editar
+            setTimeout(() => switchTab('tab-services'), 200); // Cambia a la pestaña de servicios
         }
 
         if (e.target.classList.contains('edit-btn')) {
@@ -210,4 +232,62 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // --- Lógica para Servicios Dinámicos en el Modal ---
+    function createServiceElement(serviceData = {}) {
+        const serviceId = serviceData.id || 'new_svc_' + Date.now();
+        const div = document.createElement('div');
+        div.className = 'dynamic-item-container';
+        div.innerHTML = `
+            <div class="form-grid">
+                <input type="hidden" name="services[${serviceId}][id]" value="${serviceData.id || ''}">
+                <input type="text" name="services[${serviceId}][name]" placeholder="Nombre del Servicio" value="${serviceData.name || ''}" required>
+                <input type="text" name="services[${serviceId}][port]" placeholder="Puerto" value="${serviceData.port || ''}">
+                <select name="services[${serviceId}][protocol]">
+                    <option value="https" ${serviceData.protocol === 'https' ? 'selected' : ''}>HTTPS</option>
+                    <option value="http" ${serviceData.protocol === 'http' ? 'selected' : ''}>HTTP</option>
+                    <option value="ssh" ${serviceData.protocol === 'ssh' ? 'selected' : ''}>SSH</option>
+                    <option value="rdp" ${serviceData.protocol === 'rdp' ? 'selected' : ''}>RDP</option>
+                    <option value="other" ${serviceData.protocol === 'other' ? 'selected' : ''}>Otro</option>
+                </select>
+            </div>
+            <div class="form-grid">
+                <input type="text" name="services[${serviceId}][url_internal]" placeholder="URL Interna (LAN)" value="${serviceData.url_internal || ''}">
+                <input type="text" name="services[${serviceId}][url_external]" placeholder="URL Externa (WAN)" value="${serviceData.url_external || ''}">
+            </div>
+            <textarea name="services[${serviceId}][notes]" placeholder="Notas del servicio...">${serviceData.notes || ''}</textarea>
+            <button type="button" class="delete-btn service-delete-btn">Eliminar Servicio</button>
+        `;
+        return div;
+    }
+
+    document.getElementById('addServiceModalBtn').addEventListener('click', () => {
+        document.getElementById('servicesContainer').appendChild(createServiceElement());
+    });
+
+    document.getElementById('servicesContainer').addEventListener('click', (e) => {
+        if (e.target.classList.contains('service-delete-btn')) {
+            if (confirm('¿Seguro que quieres eliminar este servicio? Los cambios se aplicarán al guardar.')) {
+                e.target.closest('.dynamic-item-container').remove();
+            }
+        }
+    });
+
+    function switchTab(tabId) {
+        const modalContent = document.querySelector('#serverModal .modal-content');
+        
+        // Ocultar todos los contenidos de pestañas
+        modalContent.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Desactivar todos los enlaces de pestañas
+        modalContent.querySelectorAll('.tab-link').forEach(link => {
+            link.classList.remove('active');
+        });
+
+        // Mostrar el contenido y activar el enlace de la pestaña seleccionada
+        modalContent.querySelector('#' + tabId).classList.add('active');
+        modalContent.querySelector(`.tab-link[data-tab="${tabId}"]`).classList.add('active');
+    }
 });

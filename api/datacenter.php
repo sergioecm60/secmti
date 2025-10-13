@@ -31,12 +31,22 @@ try {
         case 'get_password':
             if ($id <= 0) throw new Exception('ID de credencial no válido.', 400);
 
-            $stmt = $pdo->prepare("SELECT password FROM dc_credentials WHERE id = ?");
-            $stmt->execute([$id]);
-            $encrypted_password = $stmt->fetchColumn();
+            $type = $_GET['type'] ?? 'dc_credential';
+            $encrypted_password = null;
+
+            if ($type === 'server_main') {
+                $stmt = $pdo->prepare("SELECT pass_hash FROM dc_servers WHERE id = ?");
+                $stmt->execute([$id]);
+                $encrypted_password = $stmt->fetchColumn();
+            } else { // Asumimos dc_credential por defecto
+                $stmt = $pdo->prepare("SELECT password FROM dc_credentials WHERE id = ?");
+                $stmt->execute([$id]);
+                $encrypted_password = $stmt->fetchColumn();
+            }
             
             if (!$encrypted_password) throw new Exception('No se encontró la credencial.', 404);
 
+            // Descifrar la contraseña
             if (empty($config['encryption_key']) || strlen(base64_decode($config['encryption_key'])) !== 32) {
                 throw new Exception('Error de configuración de cifrado en el servidor.', 500);
             }

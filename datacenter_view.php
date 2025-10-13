@@ -33,9 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     if (empty($server_data['id']) || strpos($server_data['id'], 'new_') === 0) {
                         // NUEVO SERVIDOR
                         $stmt = $pdo->prepare("
-                            INSERT INTO dc_servers (server_id, label, type, location_id, status, hw_model, hw_cpu, hw_ram, hw_disk,
-                                                    net_ip_lan, net_ip_wan, net_host_external, net_gateway, net_dns, notes, created_by)
-                            VALUES (?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            INSERT INTO dc_servers (server_id, label, type, location_id, status, hw_model, hw_cpu, hw_ram, hw_disk, net_ip_lan, 
+                                                    net_ip_wan, net_host_external, net_gateway, net_dns, notes, username, pass_hash, created_by)
+                            VALUES (?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         ");
                         $server_id = 'srv_' . uniqid();
                         $stmt->execute([
@@ -43,27 +43,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                             $server_data['hw_model'] ?? '', $server_data['hw_cpu'] ?? '', $server_data['hw_ram'] ?? '', $server_data['hw_disk'] ?? '',
                             $server_data['net_ip_lan'] ?? '', $server_data['net_ip_wan'] ?? '', $server_data['net_host_external'] ?? '', $server_data['net_gateway'] ?? '',
                             json_encode(array_filter(array_map('trim', explode(',', $server_data['net_dns'] ?? '')))),
-                            $server_data['notes'] ?? '', $_SESSION['user_id']
+                            $server_data['notes'] ?? '',
+                            $server_data['username'] ?? '',
+                            !empty($server_data['password']) ? password_hash($server_data['password'], PASSWORD_DEFAULT) : null,
+                            $_SESSION['user_id']
                         ]);
                         $db_server_id = $pdo->lastInsertId();
                     } else {
                         // ACTUALIZAR SERVIDOR
                         $stmt = $pdo->prepare("
                             UPDATE dc_servers SET label = ?, type = ?, location_id = ?, hw_model = ?, hw_cpu = ?, hw_ram = ?, hw_disk = ?,
-                                net_ip_lan = ?, net_ip_wan = ?, net_host_external = ?, net_gateway = ?, net_dns = ?, notes = ?
+                                net_ip_lan = ?, net_ip_wan = ?, net_host_external = ?, net_gateway = ?, net_dns = ?, notes = ?, username = ?
                             WHERE id = ?
                         ");
-                        $stmt->execute([
+                        $params = [
                             $server_data['label'], $server_data['type'] ?? 'physical', $server_data['location_id'] ?: null,
                             $server_data['hw_model'] ?? '', $server_data['hw_cpu'] ?? '', $server_data['hw_ram'] ?? '', $server_data['hw_disk'] ?? '',
                             $server_data['net_ip_lan'] ?? '', $server_data['net_ip_wan'] ?? '', $server_data['net_host_external'] ?? '', $server_data['net_gateway'] ?? '',
                             json_encode(array_filter(array_map('trim', explode(',', $server_data['net_dns'] ?? '')))),
-                            $server_data['notes'] ?? '', $server_data['id']
-                        ]);
+                            $server_data['notes'] ?? '', $server_data['username'] ?? '', $server_data['id']
+                        ];
+                        $stmt->execute($params);
+
+                        // Actualizar contraseña solo si se proporcionó una nueva
+                        if (!empty($server_data['password'])) {
+                            $stmt_pass = $pdo->prepare("UPDATE dc_servers SET pass_hash = ? WHERE id = ?");
+                            $stmt_pass->execute([password_hash($server_data['password'], PASSWORD_DEFAULT), $server_data['id']]);
+                        }
                         $db_server_id = $server_data['id'];
                     }
                     
                     // Lógica para servicios y credenciales (simplificada para brevedad, pero la idea es la misma)
+                    $services_data = $_POST['services'] ?? [];
+                    $submitted_service_ids = [];
+                    foreach ($services_data as $service_id_key => $service_item) {
+                        if (empty($service_item['name'])) continue;
+
+                        if (strpos($service_id_key, 'new_') === 0) {
+                            $stmt_svc = $pdo->prepare("INSERT INTO dc_services (server_id, name, url_internal, url_external, port, protocol, notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                            $stmt_svc->execute([$db_server_id, $service_item['name'], $service_item['url_internal'] ?? '', $service_item['url_external'] ?? '', $service_item['port'] ?? '', $service_item['protocol'] ?? 'https', $service_item['notes'] ?? '']);
+                            $current_service_id = $pdo->lastInsertId();
+                        } else {
+                            $stmt_svc = $pdo->prepare("UPDATE dc_services SET name=?, url_internal=?, url_external=?, port=?, protocol=?, notes=? WHERE id=?");
+                            $stmt_svc->execute([$service_item['name'], $service_item['url_internal'] ?? '', $service_item['url_external'] ?? '', $service_item['port'] ?? '', $service_item['protocol'] ?? 'https', $service_item['notes'] ?? '', $service_id_key]);
+                            $current_service_id = $service_id_key;
+                            $submitted_service_ids[] = $current_service_id;
+                        }
+
+                        // Lógica para credenciales de este servicio
+                        // (Simplificado: aquí iría la lógica para agregar/editar/eliminar credenciales por servicio)
+                    }
+
+                    // Eliminar servicios que ya no están en el formulario
+                    if (!empty($db_server_id) && strpos($db_server_id, 'new_') !== 0) {
+                        $stmt_current_ids = $pdo->prepare("SELECT id FROM dc_services WHERE server_id = ?");
+                        $stmt_current_ids->execute([$db_server_id]);
+                        $current_ids = $stmt_current_ids->fetchAll(PDO::FETCH_COLUMN);
+                        $ids_to_delete = array_diff($current_ids, $submitted_service_ids);
+                        if (!empty($ids_to_delete)) {
+                            $placeholders = implode(',', array_fill(0, count($ids_to_delete), '?'));
+                            $stmt_del = $pdo->prepare("DELETE FROM dc_services WHERE id IN ($placeholders)");
+                            $stmt_del->execute($ids_to_delete);
+                        }
+                    }
                     // ...
                     
                     $pdo->commit();
@@ -289,7 +331,11 @@ try {
                         <div class="server-card collapsed" data-server-id="<?= $server['id'] ?>">
                             <div class="server-header">
                                 <div>
-                                    <?= $server['type'] === 'physical' ? '🖥️' : ($server['type'] === 'virtual' ? '💿' : '📦') ?>
+                                    <?php
+                                        $icons = ['physical' => '🖥️', 'virtual' => '💿', 'container' => '📦', 'cloud' => '☁️', 'isp' => '🌐'];
+                                        $icon = $icons[$server['type']] ?? '⚙️';
+                                        echo $icon;
+                                    ?>
                                     <strong><?= htmlspecialchars($server['label']) ?></strong>
                                 </div>
                                 <div class="server-header-actions">
@@ -349,11 +395,26 @@ try {
                                 </div>
                                 <?php endif; ?>
 
+                                <!-- Credenciales Principales del Servidor -->
+                                <?php if (!empty($server['username'])): ?>
+                                <div class="info-row">
+                                    <div class="info-label">🔑 Credencial Principal</div>
+                                    <div class="cred-row">
+                                        <span>
+                                            👤 <strong><?= htmlspecialchars($server['username']) ?></strong>
+                                        </span>
+                                        <!-- El botón de copiar contraseña para el servidor principal usará un tipo diferente -->
+                                        <button type="button" class="copy-cred-btn" data-type="server_main" data-id="<?= $server['id'] ?>" title="Copiar contraseña del servidor">📋</button>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+
                                 <!-- Servicios -->
                                 <?php if (!empty($server['services'])): ?>
                                 <div class="info-row">
                                     <div class="info-label">⚙️ Servicios (<?= count($server['services']) ?>)</div>
                                     <?php foreach ($server['services'] as $service): ?>
+                                    <div class="service-card-wrapper">
                                     <div class="service-card">
                                         <div class="service-title">
                                             <?= htmlspecialchars($service['name']) ?>
@@ -374,10 +435,12 @@ try {
                                         </div>
 
                                         <?php require 'templates/credentials_list.php'; // Muestra la lista de credenciales ?>
+                                     </div>
                                     </div>
                                     <?php endforeach; ?>
+                                    <button type="button" class="add-btn add-service-quick-btn" data-server-id="<?= $server['id'] ?>">+ Agregar Servicio</button>
                                 </div>
-                                <?php endif; ?>
+                                <?php endif; // Fin de if (!empty($server['services'])) ?>
 
                                 <!-- Notas -->
                                 <?php require 'templates/notes_section.php'; // Muestra la sección de notas ?>
@@ -402,6 +465,14 @@ try {
             <h2 id="modalTitle">Agregar Servidor</h2>
             <form method="POST" id="serverForm" action="datacenter_view.php">
                 <input type="hidden" name="action" value="save_server">
+
+                <!-- Pestañas de navegación del modal -->
+                <div class="modal-tabs">
+                    <button type="button" class="tab-link active" data-tab="tab-general">General</button>
+                    <button type="button" class="tab-link" data-tab="tab-services">Servicios</button>
+                    <button type="button" class="tab-link" data-tab="tab-network">Red</button>
+                </div>
+
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                 <input type="hidden" name="server[id]" id="serverId">
                 
@@ -417,67 +488,74 @@ try {
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="serverLabel">Nombre del Servidor *</label>
-                    <input type="text" name="server[label]" id="serverLabel" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="serverType">Tipo</label>
-                    <select name="server[type]" id="serverType">
-                        <option value="physical">Físico</option>
-                        <option value="virtual">Virtual</option>
-                        <option value="container">Container</option>
-                        <option value="cloud">Cloud</option>
-                    </select>
-                </div>
+                    <div id="tab-general" class="tab-content active">
+                        <div class="form-group">
+                            <label for="serverLabel">Nombre del Servidor *</label>
+                            <input type="text" name="server[label]" id="serverLabel" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="serverType">Tipo</label>
+                            <select name="server[type]" id="serverType">
+                                <option value="physical">Físico</option>
+                                <option value="virtual">Virtual</option>
+                                <option value="container">Container</option>
+                                <option value="cloud">Cloud</option>
+                                <option value="isp">Proveedor de Internet</option>
+                            </select>
+                        </div>
 
-                <h3>💻 Hardware</h3>
-                <div class="form-grid form-grid-with-labels">
-                    <div class="form-group">
-                        <label for="hwModel">Modelo</label>
-                        <input type="text" name="server[hw_model]" id="hwModel" placeholder="Ej: Dell PowerEdge R740">
-                    </div>
-                    <div class="form-group">
-                        <label for="hwCpu">CPU</label>
-                        <input type="text" name="server[hw_cpu]" id="hwCpu" placeholder="Ej: 2x Xeon Gold 6248R">
-                    </div>
-                    <div class="form-group">
-                        <label for="hwRam">RAM</label>
-                        <input type="text" name="server[hw_ram]" id="hwRam" placeholder="Ej: 128GB DDR4">
-                    </div>
-                    <div class="form-group">
-                        <label for="hwDisk">Disco</label>
-                        <input type="text" name="server[hw_disk]" id="hwDisk" placeholder="Ej: 2x 1TB NVMe RAID1">
-                    </div>
-                </div>
+                        <h3>💻 Hardware</h3>
+                        <div class="form-grid form-grid-with-labels">
+                            <div class="form-group"><label for="hwModel">Modelo</label><input type="text" name="server[hw_model]" id="hwModel" placeholder="Ej: Dell PowerEdge R740"></div>
+                            <div class="form-group"><label for="hwCpu">CPU</label><input type="text" name="server[hw_cpu]" id="hwCpu" placeholder="Ej: 2x Xeon Gold 6248R"></div>
+                            <div class="form-group"><label for="hwRam">RAM</label><input type="text" name="server[hw_ram]" id="hwRam" placeholder="Ej: 128GB DDR4"></div>
+                            <div class="form-group"><label for="hwDisk">Disco</label><input type="text" name="server[hw_disk]" id="hwDisk" placeholder="Ej: 2x 1TB NVMe RAID1"></div>
+                        </div>
 
-                <h3>🌐 Red</h3>
-                <div class="form-grid form-grid-with-labels">
-                    <div class="form-group">
-                        <label for="netIpLan">IP LAN</label>
-                        <input type="text" name="server[net_ip_lan]" id="netIpLan" placeholder="IP LAN">
-                    </div>
-                    <div class="form-group">
-                        <label for="netIpWan">IP WAN</label>
-                        <input type="text" name="server[net_ip_wan]" id="netIpWan" placeholder="IP WAN">
-                    </div>
-                    <div class="form-group">
-                        <label for="netDns">DNS</label>
-                        <input type="text" name="server[net_dns]" id="netDns" placeholder="DNS (separados por coma)">
-                    </div>
-                    <div class="form-group">
-                        <label for="netHostExt">Host Externo</label>
-                        <input type="text" name="server[net_host_external]" id="netHostExt" placeholder="Host externo">
-                    </div>
-                    <div class="form-group">
-                        <label for="netGateway">Gateway</label>
-                        <input type="text" name="server[net_gateway]" id="netGateway" placeholder="Gateway">
-                    </div>
-                </div>
+                        <h3>🔑 Credencial Principal</h3>
+                        <div class="form-grid form-grid-with-labels">
+                            <div class="form-group"><label for="serverUsername">Usuario Principal</label><input type="text" name="server[username]" id="serverUsername" placeholder="Ej: root, admin"></div>
+                            <div class="form-group"><label for="serverPassword">Contraseña Principal</label><input type="password" name="server[password]" id="serverPassword" placeholder="Dejar en blanco para no cambiar" autocomplete="new-password"></div>
+                        </div>
 
-                <div class="form-group">
-                    <label for="serverNotes">📝 Notas</label>
-                    <textarea name="server[notes]" id="serverNotes" rows="3"></textarea>
+                        <div class="form-group">
+                            <label for="serverNotes">📝 Notas Generales del Servidor</label>
+                            <textarea name="server[notes]" id="serverNotes" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div id="tab-services" class="tab-content">
+                        <h3>⚙️ Servicios</h3>
+                        <div id="servicesContainer" class="dynamic-container"></div>
+                        <button type="button" class="add-btn" id="addServiceModalBtn">+ Agregar Servicio</button>
+                    </div>
+
+                    <div id="tab-network" class="tab-content">
+                        <h3>🌐 Red</h3>
+                        <div class="form-grid form-grid-with-labels">
+                            <div class="form-group">
+                                <label for="netIpWan">IP WAN</label>
+                                <input type="text" name="server[net_ip_wan]" id="netIpWan" placeholder="IP WAN">
+                            </div>
+                            <div class="form-group">
+                                <label for="netGateway">Gateway</label>
+                                <input type="text" name="server[net_gateway]" id="netGateway" placeholder="Gateway">
+                            </div>
+                            <div class="form-group">
+                                <label for="netDns">DNS</label>
+                                <input type="text" name="server[net_dns]" id="netDns" placeholder="DNS (separados por coma)">
+                            </div>
+                            <div class="form-group">
+                                <label for="netIpLan">IP LAN</label>
+                                <input type="text" name="server[net_ip_lan]" id="netIpLan" placeholder="IP LAN">
+                            </div>
+                            <div class="form-group">
+                                <label for="netHostExt">Host Externo</label>
+                                <input type="text" name="server[net_host_external]" id="netHostExt" placeholder="Host externo">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-actions">
