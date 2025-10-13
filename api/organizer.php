@@ -79,7 +79,7 @@ $new_config_content = safe_config_export($config);
 if (file_exists($config_file)) {
     if (!copy($config_file, $config_file . '.bak')) {
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'No se pudo crear el backup del archivo de configuración.']);
+        echo json_encode(['success' => false, 'message' => 'No se pudo crear el backup del archivo de configuración (' . $config_file . '.bak).']);
         exit;
     }
 }
@@ -88,5 +88,5 @@ if (file_put_contents($config_file, $new_config_content)) {
     echo json_encode(['success' => true, 'message' => 'Orden guardado correctamente.']);
 } else {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'No se pudo escribir en el archivo de configuración.']);
+    echo json_encode(['success' => false, 'message' => 'No se pudo escribir en el archivo de configuración (' . $config_file . ').']);
 }

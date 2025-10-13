@@ -100,7 +100,7 @@ try {
                             </div>
                             <div class="server-header-actions">
                                 <?php if (($_SESSION['user_role'] ?? 'user') === 'admin'): ?>
-                                    <a href="hosting_manager.php#host-<?= $server['id'] ?>" class="quick-link" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">✏️ Editar</a>
+                                    <a href="hosting_manager.php?edit=<?= $server['id'] ?>" class="quick-link" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">✏️ Editar</a>
                                 <?php endif; ?>
                                 <button type="button" class="view-toggle-btn" aria-expanded="false" aria-label="Expandir/Contraer servidor <?= htmlspecialchars($server['label']) ?>">▶</button>
                             </div>

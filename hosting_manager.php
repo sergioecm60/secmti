@@ -243,7 +243,7 @@ try {
                                 <small>(<?= htmlspecialchars($server['hostname']) ?>)</small>
                             </div>
                             <div class="server-actions">
-                                <a href="hosting_view.php#host-<?= $server['id'] ?>" class="action-btn" target="_blank">👁️ Ver</a>
+                                <button type="button" class="action-btn view-btn" data-host-data='<?= htmlspecialchars(json_encode($server)) ?>'>👁️ Ver</button>
                                 <button type="button" class="action-btn edit-btn" data-host-data='<?= htmlspecialchars(json_encode($server)) ?>'>✏️ Editar</button>
                                 <form method="POST" class="delete-form">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
@@ -346,7 +346,7 @@ try {
         const cancelBtn = modal.querySelector('.cancel-btn');
         const serverList = document.querySelector('.server-list');
 
-        window.openHostModal = function(hostData = null) {
+        window.openHostModal = function(hostData = null, isReadOnly = false) {
             const form = document.getElementById('hostForm');
             form.reset();
 
@@ -362,7 +362,7 @@ try {
             document.getElementById('emailAccountsContainer').innerHTML = '';
 
             if (hostData) {
-                document.getElementById('modalTitle').textContent = 'Editar Servidor de Hosting';
+                document.getElementById('modalTitle').textContent = isReadOnly ? 'Ver Servidor de Hosting' : 'Editar Servidor de Hosting';
                 document.getElementById('hostId').value = hostData.id;
                 document.getElementById('hostLabel').value = hostData.label;
                 document.getElementById('hostHostname').value = hostData.hostname;
@@ -393,6 +393,17 @@ try {
             }
             modal.classList.add('active');
         }
+        
+        // Función para establecer el modo de solo lectura en el modal
+        function setReadOnly(isReadOnly) {
+            const form = document.getElementById('hostForm');
+            form.querySelectorAll('input, textarea, select, button').forEach(el => {
+                if (!el.classList.contains('cancel-btn') && !el.classList.contains('close')) {
+                    el.disabled = isReadOnly;
+                }
+            });
+            form.querySelector('.save-btn').style.display = isReadOnly ? 'none' : '';
+        }
 
         window.closeHostModal = function() {
             modal.classList.remove('active');
@@ -412,9 +423,16 @@ try {
 
         serverList.addEventListener('click', function(e) {
             const editBtn = e.target.closest('.edit-btn');
+            const viewBtn = e.target.closest('.view-btn');
+
             if (editBtn) {
                 const hostData = JSON.parse(editBtn.dataset.hostData);
-                openHostModal(hostData);
+                openHostModal(hostData, false);
+                setReadOnly(false);
+            } else if (viewBtn) {
+                const hostData = JSON.parse(viewBtn.dataset.hostData);
+                openHostModal(hostData, true);
+                setReadOnly(true);
             }
         });
 

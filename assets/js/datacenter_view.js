@@ -14,19 +14,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (shouldExpand) {
             card.classList.remove('collapsed');
-            body.style.maxHeight = body.scrollHeight + 'px';
+            body.style.maxHeight = body.scrollHeight + 'px'; // Permite que el contenido se expanda
             toggleBtn.setAttribute('aria-expanded', 'true');
         } else {
             card.classList.add('collapsed');
-            body.style.maxHeight = null;
             toggleBtn.setAttribute('aria-expanded', 'false');
+            body.style.maxHeight = null; // Colapsa el contenido
         }
     };
 
     serverCards.forEach(card => {
+        // Asignar el evento de toggle directamente al botón de expandir/contraer
         const toggleBtn = card.querySelector('.view-toggle-btn[aria-expanded]');
         if (toggleBtn) {
-            toggleBtn.addEventListener('click', () => toggleCard(card));
+            toggleBtn.addEventListener('click', (e) => {
+                toggleCard(card);
+            });
         }
     });
 
@@ -41,6 +44,23 @@ document.addEventListener('DOMContentLoaded', () => {
             serverCards.forEach(card => toggleCard(card, 'collapse'));
         });
     }
+
+    // --- Lógica para Secciones de Ubicación Colapsables ---
+    document.querySelectorAll('.service-section .section-toggle-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const section = button.closest('.service-section');
+            const body = section.querySelector('.section-body');
+            const isCollapsed = section.classList.contains('collapsed');
+
+            if (isCollapsed) {
+                section.classList.remove('collapsed');
+                body.style.maxHeight = body.scrollHeight + 'px';
+            } else {
+                section.classList.add('collapsed');
+                body.style.maxHeight = null;
+            }
+        });
+    });
 
     // --- Lógica de Copiar Contraseña ---
     document.body.addEventListener('click', async (e) => {
@@ -96,8 +116,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     const result = await response.json();
                     if (result.success) {
-                        document.querySelector(`.server-card[data-server-id='${serverId}']`).remove();
-                        alert(result.message);
+                        const cardToRemove = document.querySelector(`.server-card[data-server-id='${serverId}']`);
+                        if (cardToRemove) {
+                            cardToRemove.style.transition = 'opacity 0.5s, transform 0.5s';
+                            cardToRemove.style.opacity = '0';
+                            cardToRemove.style.transform = 'scale(0.9)';
+                            setTimeout(() => cardToRemove.remove(), 500);
+                        }
+                        // Mostrar un mensaje de éxito temporal en la parte superior
+                        const statusContainer = document.querySelector('.admin-header');
+                        if (statusContainer) {
+                            const successMsg = document.createElement('div');
+                            successMsg.className = 'status-message success';
+                            successMsg.textContent = '✅ ' + (result.message || 'Servidor eliminado correctamente.');
+                            statusContainer.insertAdjacentElement('afterend', successMsg);
+                            setTimeout(() => successMsg.remove(), 4000);
+                        }
                     } else {
                         throw new Error(result.message);
                     }

@@ -60,7 +60,7 @@ body.page-index2 {
 }
 
 /* Contenedores y secciones globales */
-.container, .info-section, .section, .content, #loginModal > div {
+.admin-container, .container, .info-section, .section, .content, #loginModal > div {
     background-color: var(--container-background); /* Fondo claro por defecto */
     color: var(--text-color-on-light); /* Texto oscuro por defecto para contenedores */
 }
@@ -909,6 +909,22 @@ body.page-manage .back-btn {
         text-align: left;
         color: var(--primary-color);
     }
+}
+
+/* ==========================================================================
+   6. Utility Classes
+   ========================================================================== */
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 @media (max-width: 480px) {

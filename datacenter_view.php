@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
                         header('Content-Type: application/json');
                         echo json_encode(['success' => true, 'message' => 'Servidor eliminado.']);
-                        exit; // Detener la ejecución después de la respuesta AJAX
+                        exit;
                     }
                     $status_message = '<div class="status-message success">✅ Servidor eliminado</div>';
                     break;
@@ -189,6 +189,16 @@ try {
         $server_data['services'] = $all_services[$server_data['id']] ?? [];
         $servers[] = $server_data;
     }
+
+    // --- NUEVO: Agrupar servidores por ubicación ---
+    $grouped_servers = [];
+    foreach ($servers as $server) {
+        $location_id = $server['location_id'] ?? 0; // 0 para 'Sin Ubicación'
+        if (!isset($grouped_servers[$location_id])) {
+            $grouped_servers[$location_id] = ['name' => $server['location_name'] ?? 'Sin Ubicación', 'servers' => []];
+        }
+        $grouped_servers[$location_id]['servers'][] = $server;
+    }
 } catch (Exception $e) {
     error_log('Error loading infrastructure: ' . $e->getMessage());
 }
@@ -211,7 +221,7 @@ try {
 
         <?= $status_message ?>
 
-        <!-- Estadísticas -->
+        <!-- Estadísticas (sin cambios) -->
         <?php
         $total_servers = count($servers);
         $total_services = array_sum(array_map(function($s) { return count($s['services']); }, $servers));
@@ -239,10 +249,12 @@ try {
         <!-- Búsqueda -->
         <div class="search-box">
             <form method="GET" action="">
-                <input type="search" name="search" value="<?= htmlspecialchars($search) ?>"
+                <label for="main-search-input" class="visually-hidden">Buscar en infraestructura</label>
+                <input type="search" id="main-search-input" name="search" value="<?= htmlspecialchars($search) ?>"
                        placeholder="🔍 Buscar servidor, IP, servicio..."
-                       autocomplete="off" autofocus>
+                       autocomplete="off">
             </form>
+            <a href="locations_manager.php" class="action-btn action-btn--warning">📍 Gestionar Ubicaciones</a>
             <button type="button" id="addServerBtn" class="add-btn">+ Agregar Servidor</button>
         </div>
 
@@ -262,127 +274,118 @@ try {
                 </div>
             <?php endif; ?>
 
-            <div class="servers-grid">
-                <?php foreach ($servers as $server): ?>
-                <div class="server-card collapsed">
-                    <div class="server-header">
-                        <div>
-                            <?= $server['type'] === 'physical' ? '🖥️' : ($server['type'] === 'virtual' ? '💿' : '📦') ?>
-                            <strong><?= htmlspecialchars($server['label']) ?></strong>
-                        </div>
-                        <div class="server-header-actions">
-                            <button type="button" class="view-toggle-btn edit-btn" data-server-id="<?= $server['id'] ?>" aria-label="Editar servidor">✏️</button>
-                            <button type="button" class="view-toggle-btn delete-btn" data-server-id="<?= $server['id'] ?>" data-server-name="<?= htmlspecialchars($server['label']) ?>" aria-label="Eliminar servidor">🗑️</button>
-                            <button type="button" class="view-toggle-btn" aria-expanded="false" aria-controls="server-body-<?= $server['id'] ?>" aria-label="Expandir/Contraer servidor <?= htmlspecialchars($server['label']) ?>">▶</button>
-                        </div>
-                    </div>
-
-                    <div class="server-body" id="server-body-<?= $server['id'] ?>">
-                        <div class="server-type-badge-body"><?= ucfirst($server['type']) ?></div>
-                        <!-- Hardware -->
-                        <?php if (!empty($server['hw_model'])): ?>
-                        <div class="info-row">
-                            <div class="info-label">💻 Hardware</div>
-                            <div><?= htmlspecialchars($server['hw_model']) ?>
-                                <?php if (!empty($server['hw_cpu']) || !empty($server['hw_ram'])): ?>
-                                <br><small>
-                                    <?= htmlspecialchars($server['hw_cpu']) ?>
-                                    <?= !empty($server['hw_ram']) ? ' | ' . htmlspecialchars($server['hw_ram']) : '' ?>
-                                </small>
-                                <?php endif; ?>
+            <!-- NUEVO: Contenedor de secciones por ubicación -->
+            <div class="sections-container">
+                <?php foreach ($grouped_servers as $location_id => $group): ?>
+                <section class="service-section" id="location-<?= $location_id ?>">
+                    <h2 class="section-title">
+                        <button class="section-toggle-btn" aria-expanded="true">
+                            <span class="section-title-text">📍 <?= htmlspecialchars($group['name']) ?></span>
+                            <span class="section-badge"><?= count($group['servers']) ?></span>
+                        </button>
+                    </h2>
+                    <div class="section-body servers-grid">
+                        <?php foreach ($group['servers'] as $server): ?>
+                        <div class="server-card collapsed" data-server-id="<?= $server['id'] ?>">
+                            <div class="server-header">
+                                <div>
+                                    <?= $server['type'] === 'physical' ? '🖥️' : ($server['type'] === 'virtual' ? '💿' : '📦') ?>
+                                    <strong><?= htmlspecialchars($server['label']) ?></strong>
+                                </div>
+                                <div class="server-header-actions">
+                                    <button type="button" class="view-toggle-btn edit-btn" data-server-id="<?= $server['id'] ?>" aria-label="Editar servidor" title="Editar Servidor">✏️</button>
+                                    <button type="button" class="view-toggle-btn delete-btn" data-server-id="<?= $server['id'] ?>" data-server-name="<?= htmlspecialchars($server['label']) ?>" aria-label="Eliminar servidor" title="Eliminar Servidor">🗑️</button>
+                                    <button type="button" class="view-toggle-btn" aria-expanded="false" aria-controls="server-body-<?= $server['id'] ?>" aria-label="Expandir/Contraer servidor <?= htmlspecialchars($server['label']) ?>" title="Ver/Ocultar Detalles">▶</button>
+                                </div>
                             </div>
-                        </div>
-                        <?php endif; ?>
 
-                        <!-- Red -->
-                        <?php if (!empty($server['net_ip_lan']) || !empty($server['net_ip_wan'])): ?>
-                        <div class="info-row">
-                            <div class="info-label">🌐 Red</div>
-                            <div class="network-grid">
-                                <?php if (!empty($server['net_ip_lan'])): ?>
-                                <div class="network-item">
-                                    <span class="network-label">LAN</span>
-                                    <span class="network-value"><?= htmlspecialchars($server['net_ip_lan']) ?></span>
+                            <div class="server-body" id="server-body-<?= $server['id'] ?>">
+                                <div class="server-type-badge-body"><?= ucfirst($server['type']) ?></div>
+                                <!-- Hardware -->
+                                <?php if (!empty($server['hw_model'])): ?>
+                                <div class="info-row">
+                                    <div class="info-label">💻 Hardware</div>
+                                    <div><?= htmlspecialchars($server['hw_model']) ?>
+                                        <?php if (!empty($server['hw_cpu']) || !empty($server['hw_ram'])): ?>
+                                        <br><small>
+                                            <?= htmlspecialchars($server['hw_cpu']) ?>
+                                            <?= !empty($server['hw_ram']) ? ' | ' . htmlspecialchars($server['hw_ram']) : '' ?>
+                                        </small>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                                 <?php endif; ?>
-                                <?php if (!empty($server['net_ip_wan'])): ?>
-                                <div class="network-item">
-                                    <span class="network-label">WAN</span>
-                                    <span class="network-value"><?= htmlspecialchars($server['net_ip_wan']) ?></span>
+
+                                <!-- Red -->
+                                <?php if (!empty($server['net_ip_lan']) || !empty($server['net_ip_wan'])): ?>
+                                <div class="info-row">
+                                    <div class="info-label">🌐 Red</div>
+                                    <div class="network-grid">
+                                        <?php if (!empty($server['net_ip_lan'])): ?>
+                                        <div class="network-item">
+                                            <span class="network-label">LAN</span>
+                                            <span class="network-value"><?= htmlspecialchars($server['net_ip_lan']) ?></span>
+                                        </div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($server['net_ip_wan'])): ?>
+                                        <div class="network-item">
+                                            <span class="network-label">WAN</span>
+                                            <span class="network-value"><?= htmlspecialchars($server['net_ip_wan']) ?></span>
+                                        </div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($server['net_host_external'])): ?>
+                                        <div class="network-item">
+                                            <span class="network-label">Host</span>
+                                            <span class="network-value"><?= htmlspecialchars($server['net_host_external']) ?></span>
+                                        </div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($server['net_gateway'])): ?>
+                                        <div class="network-item">
+                                            <span class="network-label">Gateway</span>
+                                            <span class="network-value"><?= htmlspecialchars($server['net_gateway']) ?></span>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                                 <?php endif; ?>
-                                <?php if (!empty($server['net_host_external'])): ?>
-                                <div class="network-item">
-                                    <span class="network-label">Host</span>
-                                    <span class="network-value"><?= htmlspecialchars($server['net_host_external']) ?></span>
-                                </div>
-                                <?php endif; ?>
-                                <?php if (!empty($server['net_gateway'])): ?>
-                                <div class="network-item">
-                                    <span class="network-label">Gateway</span>
-                                    <span class="network-value"><?= htmlspecialchars($server['net_gateway']) ?></span>
-                                </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <?php endif; ?>
 
-                        <!-- Servicios -->
-                        <?php if (!empty($server['services'])): ?>
-                        <div class="info-row">
-                            <div class="info-label">⚙️ Servicios (<?= count($server['services']) ?>)</div>
-                            <?php foreach ($server['services'] as $service): ?>
-                            <div class="service-card">
-                                <div class="service-title">
-                                    <?= htmlspecialchars($service['name']) ?>
-                                    <?php if (!empty($service['port'])): ?>
-                                    <small class="port-number">:<?= htmlspecialchars($service['port']) ?></small>
-                                    <?php endif; ?>
-                                </div>
-
-                                <div class="quick-links">
-                                    <?php if (!empty($service['url_internal'])): ?>
-                                    <a href="<?= htmlspecialchars($service['url_internal']) ?>" 
-                                       target="_blank" class="quick-link">🏠 LAN</a>
-                                    <?php endif; ?>
-                                    <?php if (!empty($service['url_external'])): ?>
-                                    <a href="<?= htmlspecialchars($service['url_external']) ?>" 
-                                       target="_blank" class="quick-link">🌍 WAN</a>
-                                    <?php endif; ?>
-                                </div>
-
-                                <?php if (!empty($service['credentials'])): ?>
-                                <div class="credentials-box">
-                                    <?php foreach ($service['credentials'] as $cred): ?>
-                                    <div class="cred-row">
-                                        <span>
-                                            👤 <strong><?= htmlspecialchars($cred['username']) ?></strong>
-                                            <?php if (!empty($cred['role']) && strtolower($cred['role']) !== 'user'): ?>
-                                            <small class="role-badge">(<?= htmlspecialchars($cred['role']) ?>)</small>
+                                <!-- Servicios -->
+                                <?php if (!empty($server['services'])): ?>
+                                <div class="info-row">
+                                    <div class="info-label">⚙️ Servicios (<?= count($server['services']) ?>)</div>
+                                    <?php foreach ($server['services'] as $service): ?>
+                                    <div class="service-card">
+                                        <div class="service-title">
+                                            <?= htmlspecialchars($service['name']) ?>
+                                            <?php if (!empty($service['port'])): ?>
+                                            <small class="port-number">:<?= htmlspecialchars($service['port']) ?></small>
                                             <?php endif; ?>
-                                        </span>
-                                        <span class="cred-pass-container">
-                                            <span class="cred-pass">••••••••</span>
-                                            <button type="button" class="copy-cred-btn" data-type="dc_credential" data-id="<?= $cred['id'] ?>" aria-label="Copiar contraseña para <?= htmlspecialchars($cred['username']) ?>">📋</button>
-                                        </span>
+                                        </div>
+
+                                        <div class="quick-links">
+                                            <?php if (!empty($service['url_internal'])): ?>
+                                            <a href="<?= htmlspecialchars($service['url_internal']) ?>" 
+                                               target="_blank" class="quick-link">🏠 LAN</a>
+                                            <?php endif; ?>
+                                            <?php if (!empty($service['url_external'])): ?>
+                                            <a href="<?= htmlspecialchars($service['url_external']) ?>" 
+                                               target="_blank" class="quick-link">🌍 WAN</a>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <?php require 'templates/credentials_list.php'; // Muestra la lista de credenciales ?>
                                     </div>
                                     <?php endforeach; ?>
                                 </div>
                                 <?php endif; ?>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <?php endif; ?>
 
-                        <!-- Notas -->
-                        <?php if (!empty($server['notes'])): ?>
-                        <div class="info-row">
-                            <div class="info-label">📝 Notas</div>
-                            <small class="server-notes"><?= nl2br(htmlspecialchars($server['notes'])) ?></small>
+                                <!-- Notas -->
+                                <?php require 'templates/notes_section.php'; // Muestra la sección de notas ?>
+                            </div>
                         </div>
-                        <?php endif; ?>
+                        <?php endforeach; ?>
                     </div>
-                </div>
+                </section>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
@@ -403,7 +406,7 @@ try {
                 <input type="hidden" name="server[id]" id="serverId">
                 
                 <div class="form-group">
-                    <label>Ubicación</label>
+                    <label for="serverLocation">Ubicación</label>
                     <select name="server[location_id]" id="serverLocation">
                         <option value="">-- Sin Ubicación --</option>
                         <?php foreach ($locations as $location): ?>
@@ -414,12 +417,12 @@ try {
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Nombre del Servidor *</label>
+                    <label for="serverLabel">Nombre del Servidor *</label>
                     <input type="text" name="server[label]" id="serverLabel" required>
                 </div>
                 
                 <div class="form-group">
-                    <label>Tipo</label>
+                    <label for="serverType">Tipo</label>
                     <select name="server[type]" id="serverType">
                         <option value="physical">Físico</option>
                         <option value="virtual">Virtual</option>
@@ -429,24 +432,53 @@ try {
                 </div>
 
                 <h3>💻 Hardware</h3>
-                <div class="form-grid">
-                    <input type="text" name="server[hw_model]" id="hwModel" placeholder="Modelo">
-                    <input type="text" name="server[hw_cpu]" id="hwCpu" placeholder="CPU">
-                    <input type="text" name="server[hw_ram]" id="hwRam" placeholder="RAM">
-                    <input type="text" name="server[hw_disk]" id="hwDisk" placeholder="Disco">
+                <div class="form-grid form-grid-with-labels">
+                    <div class="form-group">
+                        <label for="hwModel">Modelo</label>
+                        <input type="text" name="server[hw_model]" id="hwModel" placeholder="Ej: Dell PowerEdge R740">
+                    </div>
+                    <div class="form-group">
+                        <label for="hwCpu">CPU</label>
+                        <input type="text" name="server[hw_cpu]" id="hwCpu" placeholder="Ej: 2x Xeon Gold 6248R">
+                    </div>
+                    <div class="form-group">
+                        <label for="hwRam">RAM</label>
+                        <input type="text" name="server[hw_ram]" id="hwRam" placeholder="Ej: 128GB DDR4">
+                    </div>
+                    <div class="form-group">
+                        <label for="hwDisk">Disco</label>
+                        <input type="text" name="server[hw_disk]" id="hwDisk" placeholder="Ej: 2x 1TB NVMe RAID1">
+                    </div>
                 </div>
 
                 <h3>🌐 Red</h3>
-                <div class="form-grid">
-                    <input type="text" name="server[net_ip_lan]" id="netIpLan" placeholder="IP LAN">
-                    <input type="text" name="server[net_ip_wan]" id="netIpWan" placeholder="IP WAN">
-                    <input type="text" name="server[net_dns]" id="netDns" placeholder="DNS (separados por coma)">
-                    <input type="text" name="server[net_host_external]" id="netHostExt" placeholder="Host externo">
-                    <input type="text" name="server[net_gateway]" id="netGateway" placeholder="Gateway">
+                <div class="form-grid form-grid-with-labels">
+                    <div class="form-group">
+                        <label for="netIpLan">IP LAN</label>
+                        <input type="text" name="server[net_ip_lan]" id="netIpLan" placeholder="IP LAN">
+                    </div>
+                    <div class="form-group">
+                        <label for="netIpWan">IP WAN</label>
+                        <input type="text" name="server[net_ip_wan]" id="netIpWan" placeholder="IP WAN">
+                    </div>
+                    <div class="form-group">
+                        <label for="netDns">DNS</label>
+                        <input type="text" name="server[net_dns]" id="netDns" placeholder="DNS (separados por coma)">
+                    </div>
+                    <div class="form-group">
+                        <label for="netHostExt">Host Externo</label>
+                        <input type="text" name="server[net_host_external]" id="netHostExt" placeholder="Host externo">
+                    </div>
+                    <div class="form-group">
+                        <label for="netGateway">Gateway</label>
+                        <input type="text" name="server[net_gateway]" id="netGateway" placeholder="Gateway">
+                    </div>
                 </div>
 
-                <h3>📝 Notas</h3>
-                <textarea name="server[notes]" id="serverNotes" rows="3"></textarea>
+                <div class="form-group">
+                    <label for="serverNotes">📝 Notas</label>
+                    <textarea name="server[notes]" id="serverNotes" rows="3"></textarea>
+                </div>
 
                 <div class="form-actions">
                     <button type="submit" class="save-btn">💾 Guardar</button>
@@ -456,6 +488,7 @@ try {
         </div>
     </div>
 
-    <script src="./assets/js/datacenter_view.js" nonce="<?= htmlspecialchars($nonce) ?>" defer></script>
+    <?php require_once 'templates/footer.php'; ?>
+    <script src="assets/js/datacenter_view.js" nonce="<?= htmlspecialchars($nonce) ?>"></script>
 </body>
 </html>

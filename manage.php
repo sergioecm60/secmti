@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (file_put_contents($config_file, $new_config_content)) {
                 $status_message = '<div class="status-message success">¡Configuración guardada con éxito!</div>';
             } else {
-                $status_message = '<div class="status-message error">Error: No se pudo escribir en el archivo de configuración. Verifique los permisos.</div>';
+                $status_message = '<div class="status-message error">Error: No se pudo escribir en el archivo de configuración (<code>' . htmlspecialchars($config_file) . '</code>). Verifique los permisos.</div>';
             }
         }
     }

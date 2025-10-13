@@ -83,6 +83,17 @@
 .action-btn.edit-btn:hover { background: #ffc107; color: #000; }
 .action-btn.delete-btn:hover { background: var(--danger-color); }
 
+.action-btn.action-btn--warning {
+    background-color: #ffc107;
+    color: #000;
+    border-color: #e0a800;
+}
+
+.action-btn.action-btn--warning:hover {
+    background-color: #e0a800;
+    color: #000;
+}
+
 .server-actions {
     display: flex;
     gap: 0.5rem;
@@ -803,8 +814,11 @@
     }
 }
 
+/* Comportamiento del acordeón del servidor */
 .server-card.collapsed .server-body {
-    display: none;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 .view-toggle-btn {
@@ -849,4 +863,85 @@
 .server-header .view-toggle-btn[aria-expanded="true"] {
     transform: rotate(90deg);
     transition: transform 0.2s ease-in-out;
+}
+
+/* Estilos para el grid de formulario con etiquetas visibles */
+.form-grid-with-labels {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.form-grid-with-labels .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-grid-with-labels .form-group label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Estilos para Secciones por Ubicación
+   ========================================================================== */
+
+.sections-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.service-section {
+    background: var(--container-background);
+    border-radius: 16px;
+    padding: 0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    border: 2px solid var(--border-color);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.service-section:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border-color: var(--primary-color);
+}
+
+.service-section .section-title {
+    margin: 0;
+    padding: 0;
+    position: relative;
+    background: linear-gradient(135deg, #6c757d 0%, #343a40 100%);
+    color: var(--primary-text-color);
+}
+
+.section-toggle-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.section-toggle-btn .section-title-text {
+    margin-right: auto;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.section-body {
+    padding: 1.5rem;
+}
+
+.section-badge {
+    background: rgba(255,255,255,0.2);
+    color: var(--primary-text-color);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-left: 1rem;
 }
