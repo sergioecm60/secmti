@@ -75,6 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     
                     // Lógica para servicios y credenciales (simplificada para brevedad, pero la idea es la misma)
                     $services_data = $_POST['services'] ?? [];
+                    $encryption = new \SecMTI\Util\Encryption(base64_decode($config['encryption_key']));
                     $submitted_service_ids = [];
                     foreach ($services_data as $service_id_key => $service_item) {
                         if (empty($service_item['name'])) continue;
@@ -90,8 +91,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                             $submitted_service_ids[] = $current_service_id;
                         }
 
-                        // Lógica para credenciales de este servicio
-                        // (Simplificado: aquí iría la lógica para agregar/editar/eliminar credenciales por servicio)
+                        // --- Lógica para credenciales de este servicio ---
+                        $credentials_data = $service_item['credentials'] ?? [];
+                        $submitted_cred_ids = [];
+                        foreach ($credentials_data as $cred_id_key => $cred_item) {
+                            if (empty($cred_item['username'])) continue;
+
+                            if (strpos($cred_id_key, 'new_') === 0) {
+                                if (empty($cred_item['password'])) continue; // La contraseña es obligatoria para credenciales nuevas
+                                $stmt_cred = $pdo->prepare("INSERT INTO dc_credentials (service_id, credential_id, username, password, role, notes) VALUES (?, ?, ?, ?, ?, ?)");
+                                $stmt_cred->execute([$current_service_id, 'cred_' . uniqid(), $cred_item['username'], $encryption->encrypt($cred_item['password']), $cred_item['role'] ?? 'user', $cred_item['notes'] ?? '']);
+                            } else {
+                                $stmt_cred = $pdo->prepare("UPDATE dc_credentials SET username=?, role=?, notes=? WHERE id=?");
+                                $stmt_cred->execute([$cred_item['username'], $cred_item['role'] ?? 'user', $cred_item['notes'] ?? '', $cred_id_key]);
+                                if (!empty($cred_item['password'])) {
+                                    $stmt_pass = $pdo->prepare("UPDATE dc_credentials SET password=? WHERE id=?");
+                                    $stmt_pass->execute([$encryption->encrypt($cred_item['password']), $cred_id_key]);
+                                }
+                                $submitted_cred_ids[] = $cred_id_key;
+                            }
+                        }
+                        // Eliminar credenciales que ya no están en el formulario para este servicio
+                        $stmt_current_creds = $pdo->prepare("SELECT id FROM dc_credentials WHERE service_id = ?");
+                        $stmt_current_creds->execute([$current_service_id]);
+                        $current_cred_ids = $stmt_current_creds->fetchAll(PDO::FETCH_COLUMN);
+                        $cred_ids_to_delete = array_diff($current_cred_ids, $submitted_cred_ids);
+                        if (!empty($cred_ids_to_delete)) {
+                            $cred_placeholders = implode(',', array_fill(0, count($cred_ids_to_delete), '?'));
+                            $stmt_del_cred = $pdo->prepare("DELETE FROM dc_credentials WHERE id IN ($cred_placeholders)");
+                            $stmt_del_cred->execute($cred_ids_to_delete);
+                        }
                     }
 
                     // Eliminar servicios que ya no están en el formulario

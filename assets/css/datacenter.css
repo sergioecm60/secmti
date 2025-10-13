@@ -945,6 +945,39 @@
     color: white;
 }
 
+.credentials-sub-container {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border-color);
+}
+
+.credentials-sub-container h5 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.75rem;
+}
+
+.credentials-list-dynamic {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.credential-item-dynamic {
+    grid-template-columns: 1fr 1fr 1fr auto;
+    align-items: center;
+}
+
+.add-credential-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+    align-self: flex-start;
+    background-color: var(--success-color);
+    color: white;
+}
+
 /* ==========================================================================
    Estilos para Secciones por Ubicación
    ========================================================================== */

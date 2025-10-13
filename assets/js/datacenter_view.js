@@ -255,8 +255,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="text" name="services[${serviceId}][url_internal]" placeholder="URL Interna (LAN)" value="${serviceData.url_internal || ''}">
                 <input type="text" name="services[${serviceId}][url_external]" placeholder="URL Externa (WAN)" value="${serviceData.url_external || ''}">
             </div>
-            <textarea name="services[${serviceId}][notes]" placeholder="Notas del servicio...">${serviceData.notes || ''}</textarea>
+            <textarea name="services[${serviceId}][notes]" placeholder="Notas del servicio...">${serviceData.notes || ''}</textarea>            
+            <div class="credentials-sub-container">
+                <h5>🔑 Credenciales del Servicio</h5>
+                <div class="credentials-list-dynamic"></div>
+                <button type="button" class="add-btn add-credential-btn">+ Agregar Credencial</button>
+            </div>
             <button type="button" class="delete-btn service-delete-btn">Eliminar Servicio</button>
+        `;
+
+        const credContainer = div.querySelector('.credentials-list-dynamic');
+        (serviceData.credentials || []).forEach(cred => {
+            credContainer.appendChild(createCredentialElement(cred, serviceId));
+        });
+
+        return div;
+    }
+
+    function createCredentialElement(credData = {}, serviceId) {
+        const credId = credData.id || 'new_cred_' + Date.now();
+        const div = document.createElement('div');
+        div.className = 'form-grid credential-item-dynamic';
+        div.innerHTML = `
+            <input type="hidden" name="services[${serviceId}][credentials][${credId}][id]" value="${credData.id || ''}">
+            <input type="text" name="services[${serviceId}][credentials][${credId}][username]" placeholder="Usuario" value="${credData.username || ''}" required>
+            <input type="password" name="services[${serviceId}][credentials][${credId}][password]" placeholder="${credData.id ? 'Nueva Contraseña' : 'Contraseña'}" autocomplete="new-password">
+            <input type="text" name="services[${serviceId}][credentials][${credId}][role]" placeholder="Rol (ej: admin)" value="${credData.role || ''}">
+            <button type="button" class="delete-btn credential-delete-btn">✕</button>
         `;
         return div;
     }
@@ -270,6 +295,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (confirm('¿Seguro que quieres eliminar este servicio? Los cambios se aplicarán al guardar.')) {
                 e.target.closest('.dynamic-item-container').remove();
             }
+        }
+        if (e.target.classList.contains('add-credential-btn')) {
+            const serviceContainer = e.target.closest('.dynamic-item-container');
+            const serviceId = serviceContainer.querySelector('input[type=hidden]').name.match(/\[(.*?)\]/)[1];
+            serviceContainer.querySelector('.credentials-list-dynamic').appendChild(createCredentialElement({}, serviceId));
+        }
+        if (e.target.classList.contains('credential-delete-btn')) {
+            e.target.closest('.credential-item-dynamic').remove();
         }
     });
 
