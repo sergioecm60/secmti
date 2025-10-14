@@ -459,7 +459,10 @@ $tab_email_content = ob_get_clean();
             div.innerHTML = `
                 <input type="hidden" name="ftp_accounts[${ftpId}][id]" value="${ftpData.id || ''}" form="hostForm">
                 <input type="text" name="ftp_accounts[${ftpId}][username]" placeholder="Usuario FTP" value="${ftpData.username || ''}" required autocomplete="username" form="hostForm">
-                <input type="password" name="ftp_accounts[${ftpId}][password]" placeholder="${ftpData.id ? 'Nueva Contraseña (opcional)' : 'Contraseña (requerida)'}" value="" ${!ftpData.id ? 'required' : ''} autocomplete="new-password" form="hostForm">
+                <div class="password-field-wrapper">
+                    <input type="password" name="ftp_accounts[${ftpId}][password]" placeholder="${ftpData.id ? 'Nueva Contraseña (opcional)' : 'Contraseña (requerida)'}" value="" ${!ftpData.id ? 'required' : ''} autocomplete="new-password" form="hostForm">
+                    ${ftpData.id ? `<button type="button" class="copy-cred-btn" data-type="hosting_ftp" data-id="${ftpData.id}">📋</button>` : ''}
+                </div>
                 <input type="text" name="ftp_accounts[${ftpId}][notes]" placeholder="Notas (opcional)" value="${ftpData.notes || ''}" autocomplete="off" form="hostForm">
                 <button type="button" class="delete-btn ftp-delete-btn">✕</button>
             `;
@@ -480,7 +483,10 @@ $tab_email_content = ob_get_clean();
                 <input type="hidden" name="cpanel_accounts[${cpanelId}][id]" value="${cpanelData.id || ''}" form="hostForm">
                 <input type="text" name="cpanel_accounts[${cpanelId}][label]" placeholder="Etiqueta (ej: Cliente X)" value="${cpanelData.label || ''}" autocomplete="off" form="hostForm">
                 <input type="text" name="cpanel_accounts[${cpanelId}][username]" placeholder="Usuario cPanel" value="${cpanelData.username || ''}" required autocomplete="username" form="hostForm">
-                <input type="password" name="cpanel_accounts[${cpanelId}][password]" placeholder="${cpanelData.id ? 'Nueva Contraseña (opcional)' : 'Contraseña (requerida)'}" value="" ${!cpanelData.id ? 'required' : ''} autocomplete="new-password" form="hostForm">
+                <div class="password-field-wrapper">
+                    <input type="password" name="cpanel_accounts[${cpanelId}][password]" placeholder="${cpanelData.id ? 'Nueva Contraseña (opcional)' : 'Contraseña (requerida)'}" value="" ${!cpanelData.id ? 'required' : ''} autocomplete="new-password" form="hostForm">
+                    ${cpanelData.id ? `<button type="button" class="copy-cred-btn" data-type="hosting_account" data-id="${cpanelData.id}">📋</button>` : ''}
+                </div>
                 <input type="text" name="cpanel_accounts[${cpanelId}][domain]" placeholder="Dominio" value="${cpanelData.domain || ''}" autocomplete="url" form="hostForm">
                 <button type="button" class="delete-btn cpanel-delete-btn">✕</button>
             `;
@@ -499,7 +505,10 @@ $tab_email_content = ob_get_clean();
             div.innerHTML = `
                 <input type="hidden" name="email_accounts[${emailId}][id]" value="${emailData.id || ''}" form="hostForm">
                 <input type="email" name="email_accounts[${emailId}][email_address]" placeholder="Dirección de email" value="${emailData.email_address || ''}" required autocomplete="email" form="hostForm">
-                <input type="password" name="email_accounts[${emailId}][password]" placeholder="${emailData.id ? 'Nueva Contraseña (opcional)' : 'Contraseña (requerida)'}" value="" ${!emailData.id ? 'required' : ''} autocomplete="new-password" form="hostForm">
+                <div class="password-field-wrapper">
+                    <input type="password" name="email_accounts[${emailId}][password]" placeholder="${emailData.id ? 'Nueva Contraseña (opcional)' : 'Contraseña (requerida)'}" value="" ${!emailData.id ? 'required' : ''} autocomplete="new-password" form="hostForm">
+                    ${emailData.id ? `<button type="button" class="copy-cred-btn" data-type="hosting_email" data-id="${emailData.id}">📋</button>` : ''}
+                </div>
                 <input type="text" name="email_accounts[${emailId}][notes]" placeholder="Notas (ej: Nombre Apellido)" value="${emailData.notes || ''}" autocomplete="off" form="hostForm">
                 <button type="button" class="delete-btn email-delete-btn">✕</button>
             `;
@@ -536,7 +545,74 @@ $tab_email_content = ob_get_clean();
             if (e.target.classList.contains('email-delete-btn')) {
                 e.target.closest('.email-item').remove();
             }
+        }); // Este listener para los botones de borrar está bien aquí.
+
+        // --- Lógica para copiar contraseñas (CORREGIDO) ---
+        // Este listener debe estar a nivel de documento para capturar los clics en los botones
+        // que se añaden dinámicamente, y debe ser independiente de otros listeners.
+        document.addEventListener('click', function(e) {
+            const copyBtn = e.target.closest('.copy-cred-btn');
+            if (copyBtn) {
+                // Prevenir que otros eventos (como abrir/cerrar modales) se disparen
+                e.stopPropagation(); 
+                copyCredential(copyBtn);
+            }
         });
+
+        /**
+         * Copia una credencial de hosting al portapapeles.
+         * Esta función ahora está en el scope correcto y es llamada por el listener de arriba.
+         */
+        async function copyCredential(button) {
+            const credType = button.dataset.type;
+            const credId = button.dataset.id;
+            const originalHTML = button.innerHTML;
+
+            try {
+                button.innerHTML = '⏳';
+                button.disabled = true;
+
+                const response = await fetch(`api/hosting.php?action=get_password&type=${credType}&id=${credId}`);
+                const data = await response.json();
+
+                if (data.success && data.password) {
+                    // Usar la API del portapapeles si está disponible (contexto seguro: HTTPS o localhost)
+                    if (navigator.clipboard && window.isSecureContext) {
+                        await navigator.clipboard.writeText(data.password);
+                        button.innerHTML = '✓';
+                    } else {
+                        // Fallback para contextos no seguros (HTTP)
+                        const textArea = document.createElement('textarea');
+                        textArea.value = data.password;
+                        textArea.style.position = 'absolute';
+                        textArea.style.left = '-9999px';
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        try {
+                            document.execCommand('copy');
+                            button.innerHTML = '✓';
+                        } catch (err) {
+                            console.error('Fallback: Error al copiar', err);
+                            throw new Error('No se pudo copiar la contraseña');
+                        } finally {
+                            document.body.removeChild(textArea);
+                        }
+                    }
+                } else {
+                    throw new Error(data.message || 'Error al obtener contraseña');
+                }
+
+            } catch (error) {
+                console.error('Error al copiar credencial:', error);
+                button.innerHTML = '✗';
+                alert('Error al copiar: ' + error.message);
+            } finally {
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
+                }, 2000);
+            }
+        }
     });
     </script>
 </body>

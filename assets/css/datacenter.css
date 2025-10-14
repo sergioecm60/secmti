@@ -1395,3 +1395,28 @@
     0%, 100% { background-color: transparent; }
     50% { background-color: rgba(255, 193, 7, 0.15); }
 }
+/* assets/css/datacenter.css */
+
+.password-field-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-field-wrapper input[type="password"] {
+    padding-right: 35px; /* Espacio para el botón */
+    width: 100%;
+}
+
+.password-field-wrapper .copy-cred-btn {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0 5px;
+    color: #555;
+}
