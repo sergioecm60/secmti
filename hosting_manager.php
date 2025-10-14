@@ -605,13 +605,33 @@ $tab_email_content = ob_get_clean();
             } catch (error) {
                 console.error('Error al copiar credencial:', error);
                 button.innerHTML = '✗';
-                alert('Error al copiar: ' + error.message);
+                showNotification('Error al copiar: ' + error.message, 'error');
             } finally {
                 setTimeout(() => {
                     button.innerHTML = originalHTML;
                     button.disabled = false;
                 }, 2000);
             }
+        }
+
+        /**
+         * Muestra una notificación temporal en la esquina de la pantalla.
+         * @param {string} message - El mensaje a mostrar.
+         * @param {string} type - El tipo de notificación ('success', 'error', 'info').
+         */
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // La animación de salida se gestiona con CSS
+            setTimeout(() => {
+                notification.classList.add('slide-out');
+                notification.addEventListener('animationend', () => {
+                    notification.remove();
+                });
+            }, 3000);
         }
     });
     </script>
