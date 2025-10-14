@@ -206,9 +206,30 @@ class ServerCardManager {
             const data = await response.json();
             
             if (data.success && data.password) {
-                await navigator.clipboard.writeText(data.password);
-                button.innerHTML = '✓';
-                this.showNotification('Contraseña copiada al portapapeles', 'success');
+                // Usar la API del portapapeles si está disponible (contexto seguro: HTTPS)
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(data.password);
+                    button.innerHTML = '✓';
+                    this.showNotification('Contraseña copiada al portapapeles', 'success');
+                } else {
+                    // Fallback para contextos no seguros (HTTP)
+                    const textArea = document.createElement('textarea');
+                    textArea.value = data.password;
+                    textArea.style.position = 'absolute';
+                    textArea.style.left = '-9999px';
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        button.innerHTML = '✓';
+                        this.showNotification('Contraseña copiada (método de respaldo)', 'success');
+                    } catch (err) {
+                        console.error('Fallback: Error al copiar', err);
+                        throw new Error('No se pudo copiar la contraseña');
+                    } finally {
+                        document.body.removeChild(textArea);
+                    }
+                }
             } else {
                 throw new Error(data.message || 'Error al obtener contraseña');
             }
