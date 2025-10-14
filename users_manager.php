@@ -17,11 +17,8 @@ $pdo = get_database_connection($config, true);
 
 // --- MANEJO DEL GUARDADO DE USUARIOS ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Validar token CSRF
-    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-        $status_message = '<div class="status-message error">Error de validación CSRF. Intente de nuevo.</div>';
-    } else {
-        try {
+    try {
+            validate_request_csrf();
             $action = $_POST['action'] ?? '';
             $user_id = $_POST['user_id'] ?? null;
             $username = trim($_POST['username'] ?? '');
@@ -78,13 +75,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (Exception $e) {
             $status_message = '<div class="status-message error">Error: ' . $e->getMessage() . '</div>';
         }
-    }
 }
 
 // --- Carga de datos para mostrar en la tabla ---
 $all_users = $pdo->query("SELECT id, username, full_name, email, role, last_login FROM users ORDER BY username")->fetchAll(PDO::FETCH_ASSOC);
 $user_count = count($all_users);
 
+ob_start();
+?>
+<form method="POST" id="userForm">
+    <input type="hidden" name="action" value="save">
+    <?= csrf_field() ?>
+    <input type="hidden" name="user_id" id="userId">
+    
+    <div class="form-group">
+        <label for="username">Nombre de Usuario *</label>
+        <input type="text" name="username" id="username" required>
+    </div>
+    <div class="form-group">
+        <label for="full_name">Nombre Completo</label>
+        <input type="text" name="full_name" id="full_name">
+    </div>
+    <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" name="email" id="email" autocomplete="email">
+    </div>
+    <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input type="password" name="password" id="password" placeholder="Dejar en blanco para no cambiar" autocomplete="new-password">
+        <small id="password-help">Mínimo 8 caracteres. Obligatoria para usuarios nuevos.</small>
+    </div>
+    <div class="form-group">
+        <label for="role">Rol</label>
+        <select name="role" id="role">
+            <option value="user">Usuario</option>
+            <option value="admin">Administrador</option>
+        </select>
+    </div>
+</form>
+<?php
+$user_form_content = ob_get_clean();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -144,58 +174,28 @@ $user_count = count($all_users);
 
     <a href="index2.php" class="back-btn">← Volver al Portal</a>
 
-    <!-- Modal para Agregar/Editar Usuario -->
-    <div id="userModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2 id="modalTitle">Agregar Usuario</h2>
-            <form method="POST" id="userForm">
-                <input type="hidden" name="action" value="save">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-                <input type="hidden" name="user_id" id="userId">
-                
-                <div class="form-group">
-                    <label for="username">Nombre de Usuario *</label>
-                    <input type="text" name="username" id="username" required>
-                </div>
-                <div class="form-group">
-                    <label for="full_name">Nombre Completo</label>
-                    <input type="text" name="full_name" id="full_name">
-                </div>
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" name="email" id="email" autocomplete="email">
-                </div>
-                <div class="form-group">
-                    <label for="password">Contraseña</label>
-                    <input type="password" name="password" id="password" placeholder="Dejar en blanco para no cambiar" autocomplete="new-password">
-                    <small id="password-help">Mínimo 8 caracteres. Obligatoria para usuarios nuevos.</small>
-                </div>
-                <div class="form-group">
-                    <label for="role">Rol</label>
-                    <select name="role" id="role">
-                        <option value="user">Usuario</option>
-                        <option value="admin">Administrador</option>
-                    </select>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="save-btn">Guardar</button>
-                    <button type="button" class="cancel-btn">Cancelar</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <?php
+    echo render_modal([
+        'id' => 'userModal',
+        'title' => 'Gestionar Usuario',
+        'size' => 'medium',
+        'content' => $user_form_content,
+        'form_id' => 'userForm',
+        'submit_text' => 'Guardar Usuario'
+    ]);
+    ?>
 
+    <script src="assets/js/modal-system.js" nonce="<?= htmlspecialchars($nonce) ?>"></script>
     <script nonce="<?= htmlspecialchars($nonce) ?>">
     document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('userModal');
         const allUsersData = <?= json_encode($all_users) ?>;
 
         function openModal(userData = null) {
             const form = document.getElementById('userForm');
+            const modalTitle = document.querySelector('#userModal .modal-title');
             form.reset();
             if (userData) {
-                document.getElementById('modalTitle').textContent = 'Editar Usuario';
+                modalTitle.textContent = 'Editar Usuario';
                 document.getElementById('userId').value = userData.id;
                 document.getElementById('username').value = userData.username;
                 document.getElementById('full_name').value = userData.full_name || '';
@@ -204,21 +204,15 @@ $user_count = count($all_users);
                 document.getElementById('password').placeholder = 'Dejar en blanco para no cambiar';
                 document.getElementById('password').required = false;
             } else {
-                document.getElementById('modalTitle').textContent = 'Agregar Usuario';
+                modalTitle.textContent = 'Agregar Usuario';
                 document.getElementById('userId').value = 'new_' + Date.now();
                 document.getElementById('password').placeholder = 'Contraseña (obligatoria)';
                 document.getElementById('password').required = true;
             }
-            modal.classList.add('active');
-        }
-
-        function closeModal() {
-            modal.classList.remove('active');
+            modalManager.open('userModal');
         }
 
         document.getElementById('add-user-btn').addEventListener('click', () => openModal());
-        modal.querySelector('.close').addEventListener('click', closeModal);
-        modal.querySelector('.cancel-btn').addEventListener('click', closeModal);
 
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', function() {

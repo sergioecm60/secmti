@@ -10,7 +10,6 @@
  * 5. Definir constantes globales de seguridad.
  * 6. Implementar protecciones básicas contra ataques comunes.
  */
-
 // ============================================================================
 // 1. CONFIGURACIÓN DE ENTORNO Y ERRORES
 // ============================================================================
@@ -31,7 +30,7 @@ if (class_exists('Dotenv\Dotenv') && file_exists(__DIR__ . '/.env')) {
  * Detectar entorno basado ÚNICAMENTE en variable de entorno
  * Nunca confiar en HTTP_HOST para decisiones de seguridad
  */
-$app_env = getenv('APP_ENV') ?: 'production';
+$app_env = $_ENV['APP_ENV'] ?? 'production';
 define('IS_DEVELOPMENT', $app_env === 'development');
 define('IS_PRODUCTION', $app_env === 'production');
 
@@ -51,21 +50,20 @@ if (IS_DEVELOPMENT) {
 // 2. CARGA Y VALIDACIÓN DE CONFIGURACIÓN
 // ============================================================================
 
-$config_file = __DIR__ . '/config.php';
-
-if (!file_exists($config_file) || !is_readable($config_file)) {
-    error_log('CRITICAL: config.php no encontrado o no legible');
-    http_response_code(503);
-    die('Error del servidor. Por favor, contacte al administrador.');
-}
-
-$config = require $config_file;
-
-// Validar estructura básica de configuración
-if (!is_array($config)) {
-    error_log('CRITICAL: config.php no retorna un array válido');
+// Cargar la configuración desde config.php, que ahora leerá desde .env
+$config_loader_file = __DIR__ . '/config.php';
+if (!file_exists($config_loader_file)) {
+    error_log('CRITICAL: El archivo config.php que carga las variables de entorno no existe.');
     http_response_code(503);
     die('Error de configuración del servidor.');
+}
+$config = require $config_loader_file;
+
+// Validar que la configuración se cargó correctamente
+if (!is_array($config) || empty($config)) {
+    error_log('CRITICAL: config.php no retornó un array de configuración válido. Verifica el archivo .env y config.php.');
+    http_response_code(503);
+    die('Error de configuración del servidor. Revisa el archivo .env.');
 }
 
 // Validar claves críticas
@@ -392,7 +390,7 @@ define('USER_AGENT', $_SERVER['HTTP_USER_AGENT'] ?? 'unknown');
 
 // Base URL de la aplicación
 $protocol = $is_https ? 'https' : 'http';
-$base_url = $config['app']['base_url'] ?? ($protocol . '://' . $_SERVER['HTTP_HOST']);
+$base_url = $config['app']['url'] ?? ($protocol . '://' . $_SERVER['HTTP_HOST']);
 define('BASE_URL', rtrim($base_url, '/'));
 
 // ============================================================================
@@ -434,3 +432,151 @@ if (IS_DEVELOPMENT) {
 
 // Incluir el gestor de base de datos al final, para que esté disponible para todos los scripts.
 require_once __DIR__ . '/database.php';
+
+// ============================================================================
+// 10. HELPERS DE CIFRADO (Agregado en Mejora #1)
+// ============================================================================
+
+/**
+ * Obtiene una instancia del servicio de cifrado
+ * 
+ * @param array $config Configuración de la aplicación
+ * @return \SecMTI\Util\Encryption
+ * @throws Exception Si la clave de cifrado no es válida
+ */
+function get_encryption_service(array $config): \SecMTI\Util\Encryption {
+    static $encryption_instance = null;
+    
+    if ($encryption_instance === null) {
+        if (empty($config['security']['encryption_key'])) {
+            throw new Exception('Clave de cifrado no configurada');
+        }
+        
+        $key = base64_decode($config['security']['encryption_key']);
+        
+        if (strlen($key) !== 32) {
+            throw new Exception('Clave de cifrado inválida (debe ser 32 bytes)');
+        }
+        
+        $encryption_instance = new \SecMTI\Util\Encryption($key);
+    }
+    
+    return $encryption_instance;
+}
+
+/**
+ * Descifra una contraseña de forma segura
+ * 
+ * @param string $encrypted_password Contraseña cifrada
+ * @param array $config Configuración de la aplicación
+ * @return string|false Contraseña descifrada o false en caso de error
+ */
+function decrypt_password(string $encrypted_password, array $config) {
+    return get_encryption_service($config)->decrypt($encrypted_password);
+}
+
+/**
+ * Cifra una contraseña de forma segura
+ * 
+ * @param string $plain_password Contraseña en texto plano
+ * @param array $config Configuración de la aplicación
+ * @return string|false Contraseña cifrada o false en caso de error
+ */
+function encrypt_password(string $plain_password, array $config) {
+    return get_encryption_service($config)->encrypt($plain_password);
+}
+
+// ============================================================================
+// 11. HELPERS DE CSRF (Agregado en Mejora #2)
+// ============================================================================
+
+/**
+ * Genera un token CSRF y lo almacena en la sesión
+ * 
+ * @return string Token CSRF generado
+ */
+function generate_csrf_token(): string {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * Obtiene el token CSRF actual de la sesión
+ * 
+ * @return string|null Token CSRF o null si no existe
+ */
+function get_csrf_token(): ?string {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    return $_SESSION['csrf_token'] ?? null;
+}
+
+/**
+ * Valida un token CSRF
+ * 
+ * @param string|null $token Token a validar
+ * @param bool $throw_exception Si es true, lanza excepción en caso de fallo
+ * @return bool True si el token es válido
+ * @throws Exception Si $throw_exception es true y el token es inválido
+ */
+function validate_csrf_token(?string $token, bool $throw_exception = true): bool {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    $session_token = $_SESSION['csrf_token'] ?? null;
+    
+    // Validar que ambos tokens existan y sean iguales
+    $is_valid = !empty($token) && !empty($session_token) && hash_equals($session_token, $token);
+    
+    if (!$is_valid && $throw_exception) {
+        throw new Exception('Token CSRF inválido o faltante', 403);
+    }
+    
+    return $is_valid;
+}
+
+/**
+ * Valida el token CSRF de una petición HTTP
+ * Lee el token desde el header X-CSRF-Token o desde $_POST['csrf_token']
+ * 
+ * @param bool $throw_exception Si es true, lanza excepción en caso de fallo
+ * @return bool True si el token es válido
+ * @throws Exception Si $throw_exception es true y el token es inválido
+ */
+function validate_request_csrf(bool $throw_exception = true): bool {
+    // Intentar obtener el token del header o POST
+    $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? null;
+    
+    return validate_csrf_token($token, $throw_exception);
+}
+
+/**
+ * Genera un campo hidden de formulario con el token CSRF
+ * 
+ * @return string HTML del campo hidden
+ */
+function csrf_field(): string {
+    $token = generate_csrf_token();
+    return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($token, ENT_QUOTES, 'UTF-8') . '">';
+}
+
+// ============================================================================
+// 12. HELPERS DE MODALES (Agregado en Mejora #3)
+// ============================================================================
+
+/**
+ * Incluye el template de modales
+ */
+if (!function_exists('render_modal')) {
+    require_once __DIR__ . '/templates/modal_template.php';
+}

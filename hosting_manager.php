@@ -1,6 +1,5 @@
 <?php
 // hosting_manager.php - Gestor de servidores de hosting (cPanel/WHM)
-use SecMTI\Util\Encryption;
 
 require_once 'bootstrap.php';
 
@@ -16,20 +15,11 @@ if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 $pdo = get_database_connection($config, true);
 $status_message = '';
 
-// Inicializar el servicio de cifrado
-if (empty($config['security']['encryption_key']) || strlen(base64_decode($config['security']['encryption_key'])) !== 32) {
-    die("Error Crítico: La clave de cifrado ('encryption_key') no está definida en config.php o no es válida.");
-}
-$encryption = new Encryption(base64_decode($config['security']['encryption_key']));
-
-
 // --- MANEJO DE ACCIONES POST (GUARDAR, ELIMINAR) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-        $status_message = '<div class="status-message error">Error de validación CSRF.</div>';
-    } else {
-        try {
-            $pdo->beginTransaction();
+    try {
+        validate_request_csrf();
+        $pdo->beginTransaction();
             $action = $_POST['action'] ?? '';
 
             if ($action === 'save_host') {
@@ -58,16 +48,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // --- Guardar Cuentas FTP ---
                 $ftp_accounts = $_POST['ftp_accounts'] ?? [];
                 $submitted_ftp_ids = [];
-                foreach ($ftp_accounts as $ftp_data) {
-                    if (empty($ftp_data['username']) || empty($ftp_data['password'])) continue;
+                foreach ($ftp_accounts as $ftp_id_key => $ftp_data) {
+                    if (empty($ftp_data['username'])) continue;
 
-                    if (empty($ftp_data['id']) || strpos($ftp_data['id'], 'new_') === 0) {
+                    if (strpos($ftp_id_key, 'new_') === 0) {
+                        // Para cuentas nuevas, la contraseña es obligatoria
+                        if (empty($ftp_data['password'])) continue;
                         $stmt_ftp = $pdo->prepare("INSERT INTO dc_hosting_ftp_accounts (server_id, username, password, notes) VALUES (?, ?, ?, ?)");
-                        $stmt_ftp->execute([$host_id, $ftp_data['username'], $encryption->encrypt($ftp_data['password']), $ftp_data['notes'] ?? '']);
+                        $stmt_ftp->execute([$host_id, $ftp_data['username'], encrypt_password($ftp_data['password'], $config), $ftp_data['notes'] ?? '']);
+                        $submitted_ftp_ids[] = $pdo->lastInsertId(); // <-- ¡LA CORRECCIÓN CLAVE!
                     } else {
-                        $stmt_ftp = $pdo->prepare("UPDATE dc_hosting_ftp_accounts SET username=?, password=?, notes=? WHERE id=?");
-                        $stmt_ftp->execute([$ftp_data['username'], $encryption->encrypt($ftp_data['password']), $ftp_data['notes'] ?? '', $ftp_data['id']]);
-                        $submitted_ftp_ids[] = $ftp_data['id'];
+                        $stmt_ftp = $pdo->prepare("UPDATE dc_hosting_ftp_accounts SET username=?, notes=? WHERE id=?");
+                        $stmt_ftp->execute([$ftp_data['username'], $ftp_data['notes'] ?? '', $ftp_id_key]);
+                        if (!empty($ftp_data['password'])) {
+                            $stmt_pass = $pdo->prepare("UPDATE dc_hosting_ftp_accounts SET password=? WHERE id=?");
+                            $stmt_pass->execute([encrypt_password($ftp_data['password'], $config), $ftp_id_key]);
+                        }
+                        $submitted_ftp_ids[] = $ftp_id_key;
                     }
                 }
                 // Eliminar cuentas FTP que ya no están en el formulario
@@ -85,16 +82,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // --- Guardar Cuentas cPanel ---
                 $cpanel_accounts = $_POST['cpanel_accounts'] ?? [];
                 $submitted_cpanel_ids = [];
-                foreach ($cpanel_accounts as $cpanel_data) {
-                    if (empty($cpanel_data['username']) || empty($cpanel_data['password'])) continue;
+                foreach ($cpanel_accounts as $cpanel_id_key => $cpanel_data) {
+                    if (empty($cpanel_data['username'])) continue;
 
-                    if (empty($cpanel_data['id']) || strpos($cpanel_data['id'], 'new_') === 0) {
+                    if (strpos($cpanel_id_key, 'new_') === 0) {
+                        if (empty($cpanel_data['password'])) continue;
                         $stmt_cpanel = $pdo->prepare("INSERT INTO dc_hosting_accounts (server_id, username, password, domain, label, notes) VALUES (?, ?, ?, ?, ?, ?)");
-                        $stmt_cpanel->execute([$host_id, $cpanel_data['username'], $encryption->encrypt($cpanel_data['password']), $cpanel_data['domain'] ?? '', $cpanel_data['label'] ?? '', $cpanel_data['notes'] ?? '']);
+                        $stmt_cpanel->execute([$host_id, $cpanel_data['username'], encrypt_password($cpanel_data['password'], $config), $cpanel_data['domain'] ?? '', $cpanel_data['label'] ?? '', $cpanel_data['notes'] ?? '']);
+                        $submitted_cpanel_ids[] = $pdo->lastInsertId(); // <-- ¡LA CORRECCIÓN CLAVE!
                     } else {
-                        $stmt_cpanel = $pdo->prepare("UPDATE dc_hosting_accounts SET username=?, password=?, domain=?, label=?, notes=? WHERE id=?");
-                        $stmt_cpanel->execute([$cpanel_data['username'], $encryption->encrypt($cpanel_data['password']), $cpanel_data['domain'] ?? '', $cpanel_data['label'] ?? '', $cpanel_data['notes'] ?? '', $cpanel_data['id']]);
-                        $submitted_cpanel_ids[] = $cpanel_data['id'];
+                        $stmt_cpanel = $pdo->prepare("UPDATE dc_hosting_accounts SET username=?, domain=?, label=?, notes=? WHERE id=?");
+                        $stmt_cpanel->execute([$cpanel_data['username'], $cpanel_data['domain'] ?? '', $cpanel_data['label'] ?? '', $cpanel_data['notes'] ?? '', $cpanel_id_key]);
+                        if (!empty($cpanel_data['password'])) {
+                            $stmt_pass = $pdo->prepare("UPDATE dc_hosting_accounts SET password=? WHERE id=?");
+                            $stmt_pass->execute([encrypt_password($cpanel_data['password'], $config), $cpanel_id_key]);
+                        }
+                        $submitted_cpanel_ids[] = $cpanel_id_key;
                     }
                 }
                 if (!empty($host_id) && strpos($host_id, 'new_') !== 0) {
@@ -114,16 +117,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // --- Guardar Cuentas de Email ---
                 $email_accounts = $_POST['email_accounts'] ?? [];
                 $submitted_email_ids = [];
-                foreach ($email_accounts as $email_data) {
-                    if (empty($email_data['email_address']) || empty($email_data['password'])) continue;
+                foreach ($email_accounts as $email_id_key => $email_data) {
+                    if (empty($email_data['email_address'])) continue;
 
-                    if (empty($email_data['id']) || strpos($email_data['id'], 'new_') === 0) {
+                    if (strpos($email_id_key, 'new_') === 0) {
+                        if (empty($email_data['password'])) continue;
                         $stmt_email = $pdo->prepare("INSERT INTO dc_hosting_emails (server_id, email_address, password, notes) VALUES (?, ?, ?, ?)");
-                        $stmt_email->execute([$host_id, $email_data['email_address'], $encryption->encrypt($email_data['password']), $email_data['notes'] ?? '']);
+                        $stmt_email->execute([$host_id, $email_data['email_address'], encrypt_password($email_data['password'], $config), $email_data['notes'] ?? '']);
+                        $submitted_email_ids[] = $pdo->lastInsertId(); // <-- ¡LA CORRECCIÓN CLAVE!
                     } else {
-                        $stmt_email = $pdo->prepare("UPDATE dc_hosting_emails SET email_address=?, password=?, notes=? WHERE id=?");
-                        $stmt_email->execute([$email_data['email_address'], $encryption->encrypt($email_data['password']), $email_data['notes'] ?? '', $email_data['id']]);
-                        $submitted_email_ids[] = $email_data['id'];
+                        $stmt_email = $pdo->prepare("UPDATE dc_hosting_emails SET email_address=?, notes=? WHERE id=?");
+                        $stmt_email->execute([$email_data['email_address'], $email_data['notes'] ?? '', $email_id_key]);
+                        if (!empty($email_data['password'])) {
+                            $stmt_pass = $pdo->prepare("UPDATE dc_hosting_emails SET password=? WHERE id=?");
+                            $stmt_pass->execute([encrypt_password($email_data['password'], $config), $email_id_key]);
+                        }
+                        $submitted_email_ids[] = $email_id_key;
                     }
                 }
                 if (!empty($host_id) && strpos($host_id, 'new_') !== 0) {
@@ -154,9 +163,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         } catch (Exception $e) {
             $pdo->rollBack();
-            $status_message = '<div class="status-message error">Error: ' . htmlspecialchars($e->getMessage()) . '</div>';
+            $status_message = '<div class="status-message error">❌ Error: ' . htmlspecialchars($e->getMessage()) . '</div>';
+            // Loguear el error para depuración
+            error_log('Hosting Manager Save Error: ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine());
         }
-    }
 }
 
 // Mostrar mensaje de estado si viene de una redirección
@@ -209,6 +219,69 @@ try {
     error_log('Hosting Manager Error: ' . $e->getMessage());
 }
 
+ob_start();
+?>
+<div class="form-group">
+    <label for="hostLabel">Etiqueta Descriptiva *</label>
+    <input type="text" name="label" id="hostLabel" required placeholder="Ej: Hosting Clientes A" form="hostForm">
+</div>
+<div class="form-group">
+    <label for="hostHostname">Hostname (Dominio del servidor) *</label>
+    <input type="text" name="hostname" id="hostHostname" required placeholder="Ej: vps.midominio.com" form="hostForm">
+</div>
+<div class="form-grid">
+    <div class="form-group">
+        <label for="hostCpanelPort">Puerto cPanel/WHM</label>
+        <input type="number" name="cpanel_port" id="hostCpanelPort" value="2083" form="hostForm">
+    </div>
+    <div class="form-group">
+        <label for="hostWebmailPort">Puerto Webmail</label>
+        <input type="number" name="webmail_port" id="hostWebmailPort" value="2096" form="hostForm">
+    </div>
+</div>
+<div class="form-group">
+    <label for="hostNotes">Notas</label>
+    <textarea name="notes" id="hostNotes" rows="3" form="hostForm"></textarea>
+</div>
+<?php
+$tab_general_content = ob_get_clean();
+
+ob_start();
+?>
+<h3>👤 Cuentas cPanel</h3>
+<div class="dynamic-tab-content">
+    <div class="scrollable-list" id="cpanelAccountsContainer"></div>
+    <div class="fixed-actions">
+        <button type="button" class="add-btn" id="addCpanelAccountBtn">+ Agregar Cuenta cPanel</button>
+    </div>
+</div>
+<?php
+$tab_cpanel_content = ob_get_clean();
+
+ob_start();
+?>
+<h3>🔒 Cuentas FTP</h3>
+<div class="dynamic-tab-content">
+    <div class="scrollable-list" id="ftpAccountsContainer"></div>
+    <div class="fixed-actions">
+        <button type="button" class="add-btn" id="addFtpAccountBtn">+ Agregar Cuenta FTP</button>
+    </div>
+</div>
+<?php
+$tab_ftp_content = ob_get_clean();
+
+ob_start();
+?>
+<h3>✉️ Cuentas de Email</h3>
+<div class="dynamic-tab-content">
+    <input type="search" id="emailSearchInput" class="sub-search-input" placeholder="🔍 Buscar en cuentas de email...">
+    <div class="scrollable-list" id="emailAccountsContainer"></div>
+    <div class="fixed-actions">
+        <button type="button" class="add-btn" id="addEmailAccountBtn">+ Agregar Cuenta de Email</button>
+    </div>
+</div>
+<?php
+$tab_email_content = ob_get_clean();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -263,97 +336,44 @@ try {
 
     <a href="index2.php" class="back-btn">← Volver al Portal</a>
 
-    <!-- Modal para Servidor de Hosting -->
-    <div id="hostModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2 id="modalTitle">Agregar Servidor de Hosting</h2>
-            <form method="POST" id="hostForm">
-                <input type="hidden" name="action" value="save_host">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-                <input type="hidden" name="host_id" id="hostId">
+    <!-- El modal ahora se renderiza dentro de un único formulario -->
+    <form method="POST" id="hostForm">
+        <input type="hidden" name="action" value="save_host">
+        <?= csrf_field() ?>
+        <input type="hidden" name="host_id" id="hostId">
+        
+        <?php
+        echo render_modal([
+            'id' => 'hostModal',
+            'title' => 'Gestionar Servidor de Hosting',
+            'size' => 'xl',
+            'tabs' => [
+                ['id' => 'tab-general', 'label' => 'General', 'content' => $tab_general_content],
+                ['id' => 'tab-cpanel', 'label' => 'cPanel', 'content' => $tab_cpanel_content],
+                ['id' => 'tab-ftp', 'label' => 'FTP', 'content' => $tab_ftp_content],
+                ['id' => 'tab-email', 'label' => 'Email', 'content' => $tab_email_content],
+            ],
+            'form_id' => 'hostForm', // Sigue siendo necesario para el botón de submit
+            'submit_text' => 'Guardar'
+        ]);
+        ?>
+    </form>
 
-                <!-- Pestañas de navegación del modal -->
-                <div class="modal-tabs">
-                    <button type="button" class="tab-link active" data-tab="tab-general">General</button>
-                    <button type="button" class="tab-link" data-tab="tab-cpanel">cPanel</button>
-                    <button type="button" class="tab-link" data-tab="tab-ftp">FTP</button>
-                    <button type="button" class="tab-link" data-tab="tab-email">Email</button>
-                </div>
-
-                <!-- Contenido de las pestañas -->
-                <div id="tab-general" class="tab-content active">
-                    <div class="form-group">
-                        <label for="hostLabel">Etiqueta Descriptiva *</label>
-                        <input type="text" name="label" id="hostLabel" required placeholder="Ej: Hosting Clientes A">
-                    </div>
-                    <div class="form-group">
-                        <label for="hostHostname">Hostname (Dominio del servidor) *</label>
-                        <input type="text" name="hostname" id="hostHostname" required placeholder="Ej: vps.midominio.com">
-                    </div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="hostCpanelPort">Puerto cPanel/WHM</label>
-                            <input type="number" name="cpanel_port" id="hostCpanelPort" value="2083">
-                        </div>
-                        <div class="form-group">
-                            <label for="hostWebmailPort">Puerto Webmail</label>
-                            <input type="number" name="webmail_port" id="hostWebmailPort" value="2096">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="hostNotes">Notas</label>
-                        <textarea name="notes" id="hostNotes" rows="3"></textarea>
-                    </div>
-                </div>
-
-                <div id="tab-cpanel" class="tab-content">
-                    <h3>👤 Cuentas cPanel</h3>
-                    <div id="cpanelAccountsContainer"></div>
-                    <button type="button" class="add-btn" id="addCpanelAccountBtn">+ Agregar Cuenta cPanel</button>
-                </div>
-
-                <div id="tab-ftp" class="tab-content">
-                    <h3>🔒 Cuentas FTP</h3>
-                    <div id="ftpAccountsContainer"></div>
-                    <button type="button" class="add-btn" id="addFtpAccountBtn">+ Agregar Cuenta FTP</button>
-                </div>
-
-                <div id="tab-email" class="tab-content">
-                    <h3>✉️ Cuentas de Email</h3>
-                    <div class="form-group">
-                        <input type="search" id="emailSearchInput" class="sub-search-input" placeholder="🔍 Buscar en cuentas de email...">
-                    </div>
-                    <div id="emailAccountsContainer"></div>
-                    <button type="button" class="add-btn" id="addEmailAccountBtn">+ Agregar Cuenta de Email</button>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="save-btn">Guardar</button>
-                    <button type="button" class="cancel-btn">Cancelar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+    <script src="assets/js/modal-system.js" nonce="<?= htmlspecialchars($nonce) ?>"></script>
     <script nonce="<?= htmlspecialchars($nonce) ?>">
     document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('hostModal');
-        const modalTabs = modal.querySelector('.modal-tabs');
         const addHostBtn = document.getElementById('addHostBtn');
-        const closeBtn = modal.querySelector('.close');
-        const cancelBtn = modal.querySelector('.cancel-btn');
         const serverList = document.querySelector('.server-list');
 
         window.openHostModal = function(hostData = null, isReadOnly = false) {
             const form = document.getElementById('hostForm');
+            const modal = document.getElementById('hostModal');
+            const modalTitle = modal.querySelector('.modal-title');
             form.reset();
 
             // Resetear pestañas a la primera
-            modal.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
-            modal.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            modal.querySelector('.tab-link[data-tab="tab-general"]').classList.add('active');
-            modal.querySelector('#tab-general').classList.add('active');
+            const firstTab = modal.querySelector('.modal-tab');
+            if(firstTab) modalManager.switchTab(firstTab);
             
             // Limpiar contenedores dinámicos
             document.getElementById('ftpAccountsContainer').innerHTML = '';
@@ -361,7 +381,7 @@ try {
             document.getElementById('emailAccountsContainer').innerHTML = '';
 
             if (hostData) {
-                document.getElementById('modalTitle').textContent = isReadOnly ? 'Ver Servidor de Hosting' : 'Editar Servidor de Hosting';
+                modalTitle.textContent = isReadOnly ? 'Ver Servidor de Hosting' : 'Editar Servidor de Hosting';
                 document.getElementById('hostId').value = hostData.id;
                 document.getElementById('hostLabel').value = hostData.label;
                 document.getElementById('hostHostname').value = hostData.hostname;
@@ -387,10 +407,10 @@ try {
                     emailContainer.appendChild(createEmailAccountElement(email));
                 });
             } else {
-                document.getElementById('modalTitle').textContent = 'Agregar Servidor de Hosting';
+                modalTitle.textContent = 'Agregar Servidor de Hosting';
                 document.getElementById('hostId').value = 'new_' + Date.now();
             }
-            modal.classList.add('active');
+            modalManager.open('hostModal');
         }
         
         // Función para establecer el modo de solo lectura en el modal
@@ -398,30 +418,15 @@ try {
             const form = document.getElementById('hostForm');
             form.querySelectorAll('input, textarea, select, button').forEach(el => {
                 // No deshabilitar los botones de las pestañas, el de cancelar o el de cerrar.
-                if (!el.classList.contains('tab-link') && 
-                    !el.classList.contains('cancel-btn') && 
-                    !el.classList.contains('close')) {
+                if (!el.classList.contains('modal-tab') && !el.closest('.modal-footer .cancel-btn')) {
                     el.disabled = isReadOnly;
                 }
             });
-            form.querySelector('.save-btn').style.display = isReadOnly ? 'none' : '';
-        }
-
-        window.closeHostModal = function() {
-            modal.classList.remove('active');
-        }
-
-        // Cerrar modal al hacer clic fuera
-        window.onclick = function(event) {
-            if (event.target === modal) {
-                closeHostModal();
-            }
+            document.querySelector('#hostModal .save-btn').style.display = isReadOnly ? 'none' : '';
         }
 
         // --- Asignación de Eventos ---
         addHostBtn.addEventListener('click', () => openHostModal());
-        closeBtn.addEventListener('click', closeHostModal);
-        cancelBtn.addEventListener('click', closeHostModal);
 
         serverList.addEventListener('click', function(e) {
             const editBtn = e.target.closest('.edit-btn');
@@ -452,10 +457,10 @@ try {
             const div = document.createElement('div');
             div.className = 'form-grid ftp-item';
             div.innerHTML = `
-                <input type="hidden" name="ftp_accounts[${ftpId}][id]" value="${ftpData.id || ''}">
-                <input type="text" name="ftp_accounts[${ftpId}][username]" placeholder="Usuario FTP" value="${ftpData.username || ''}" required>
-                <input type="password" name="ftp_accounts[${ftpId}][password]" placeholder="Contraseña" value="${ftpData.password || ''}" required>
-                <input type="text" name="ftp_accounts[${ftpId}][notes]" placeholder="Notas (opcional)" value="${ftpData.notes || ''}">
+                <input type="hidden" name="ftp_accounts[${ftpId}][id]" value="${ftpData.id || ''}" form="hostForm">
+                <input type="text" name="ftp_accounts[${ftpId}][username]" placeholder="Usuario FTP" value="${ftpData.username || ''}" required autocomplete="username" form="hostForm">
+                <input type="password" name="ftp_accounts[${ftpId}][password]" placeholder="${ftpData.id ? 'Nueva Contraseña (opcional)' : 'Contraseña (requerida)'}" value="" ${!ftpData.id ? 'required' : ''} autocomplete="new-password" form="hostForm">
+                <input type="text" name="ftp_accounts[${ftpId}][notes]" placeholder="Notas (opcional)" value="${ftpData.notes || ''}" autocomplete="off" form="hostForm">
                 <button type="button" class="delete-btn ftp-delete-btn">✕</button>
             `;
             return div;
@@ -472,11 +477,11 @@ try {
             const div = document.createElement('div');
             div.className = 'form-grid cpanel-item';
             div.innerHTML = `
-                <input type="hidden" name="cpanel_accounts[${cpanelId}][id]" value="${cpanelData.id || ''}">
-                <input type="text" name="cpanel_accounts[${cpanelId}][label]" placeholder="Etiqueta (ej: Cliente X)" value="${cpanelData.label || ''}">
-                <input type="text" name="cpanel_accounts[${cpanelId}][username]" placeholder="Usuario cPanel" value="${cpanelData.username || ''}" required>
-                <input type="password" name="cpanel_accounts[${cpanelId}][password]" placeholder="Contraseña" value="${cpanelData.password || ''}" required>
-                <input type="text" name="cpanel_accounts[${cpanelId}][domain]" placeholder="Dominio" value="${cpanelData.domain || ''}">
+                <input type="hidden" name="cpanel_accounts[${cpanelId}][id]" value="${cpanelData.id || ''}" form="hostForm">
+                <input type="text" name="cpanel_accounts[${cpanelId}][label]" placeholder="Etiqueta (ej: Cliente X)" value="${cpanelData.label || ''}" autocomplete="off" form="hostForm">
+                <input type="text" name="cpanel_accounts[${cpanelId}][username]" placeholder="Usuario cPanel" value="${cpanelData.username || ''}" required autocomplete="username" form="hostForm">
+                <input type="password" name="cpanel_accounts[${cpanelId}][password]" placeholder="${cpanelData.id ? 'Nueva Contraseña (opcional)' : 'Contraseña (requerida)'}" value="" ${!cpanelData.id ? 'required' : ''} autocomplete="new-password" form="hostForm">
+                <input type="text" name="cpanel_accounts[${cpanelId}][domain]" placeholder="Dominio" value="${cpanelData.domain || ''}" autocomplete="url" form="hostForm">
                 <button type="button" class="delete-btn cpanel-delete-btn">✕</button>
             `;
             return div;
@@ -492,10 +497,10 @@ try {
             const div = document.createElement('div');
             div.className = 'form-grid email-item';
             div.innerHTML = `
-                <input type="hidden" name="email_accounts[${emailId}][id]" value="${emailData.id || ''}">
-                <input type="email" name="email_accounts[${emailId}][email_address]" placeholder="Dirección de email" value="${emailData.email_address || ''}" required>
-                <input type="password" name="email_accounts[${emailId}][password]" placeholder="Contraseña" value="${emailData.password || ''}" required>
-                <input type="text" name="email_accounts[${emailId}][notes]" placeholder="Notas (ej: Nombre Apellido)" value="${emailData.notes || ''}">
+                <input type="hidden" name="email_accounts[${emailId}][id]" value="${emailData.id || ''}" form="hostForm">
+                <input type="email" name="email_accounts[${emailId}][email_address]" placeholder="Dirección de email" value="${emailData.email_address || ''}" required autocomplete="email" form="hostForm">
+                <input type="password" name="email_accounts[${emailId}][password]" placeholder="${emailData.id ? 'Nueva Contraseña (opcional)' : 'Contraseña (requerida)'}" value="" ${!emailData.id ? 'required' : ''} autocomplete="new-password" form="hostForm">
+                <input type="text" name="email_accounts[${emailId}][notes]" placeholder="Notas (ej: Nombre Apellido)" value="${emailData.notes || ''}" autocomplete="off" form="hostForm">
                 <button type="button" class="delete-btn email-delete-btn">✕</button>
             `;
             return div;
@@ -512,8 +517,8 @@ try {
             const emailItems = document.querySelectorAll('#emailAccountsContainer .email-item');
             
             emailItems.forEach(item => {
-                const emailAddress = item.querySelector('input[type="email"]').value.toLowerCase();
-                const emailNotes = item.querySelector('input[type="text"]').value.toLowerCase();
+                const emailAddress = item.querySelector('input[name*="[email_address]"]').value.toLowerCase();
+                const emailNotes = item.querySelector('input[name*="[notes]"]').value.toLowerCase();
                 
                 const isVisible = emailAddress.includes(searchTerm) || emailNotes.includes(searchTerm);
                 item.style.display = isVisible ? '' : 'none';
@@ -532,22 +537,6 @@ try {
                 e.target.closest('.email-item').remove();
             }
         });
-
-        // --- Lógica para las pestañas del modal ---
-        if (modalTabs) {
-            modalTabs.addEventListener('click', function(e) {
-                if (e.target.classList.contains('tab-link')) {
-                    const tabId = e.target.dataset.tab;
-
-                    // Ocultar todos y mostrar el seleccionado
-                    modal.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
-                    modal.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
-                    e.target.classList.add('active');
-                    document.getElementById(tabId).classList.add('active');
-                }
-            });
-        }
     });
     </script>
 </body>

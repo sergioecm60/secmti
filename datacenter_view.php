@@ -18,13 +18,9 @@ $status_message = '';
 // GUARDAR CAMBIOS (Lógica movida desde datacenter_manager_mysql.php)
 // ============================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    // Validar token CSRF
-    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-        $status_message = '<div class="status-message error">Error de validación CSRF. Intente de nuevo.</div>';
-    } else {
-        try {
+    try {
+            validate_request_csrf();
             $pdo->beginTransaction();
-            $encryption = new \SecMTI\Util\Encryption(base64_decode($config['security']['encryption_key']));
             
             switch ($_POST['action']) {
                 case 'save_server':
@@ -54,8 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                             $server_data['net_gateway'] ?? '',
                             json_encode(array_filter(array_map('trim', explode(',', $server_data['net_dns'] ?? '')))),
                             $server_data['notes'] ?? '',
-                            $server_data['username'] ?? '',
-                            !empty($server_data['password']) ? $encryption->encrypt($server_data['password']) : null,
+                            $server_data['username'] ?? '',                            
+                            encrypt_password($server_data['password'], $config),
                             $_SESSION['user_id']
                         ]);
                         $db_server_id = $pdo->lastInsertId();
@@ -89,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         // Actualizar contraseña solo si se proporcionó una nueva
                         if (!empty($server_data['password'])) {
                             $stmt_pass = $pdo->prepare("UPDATE dc_servers SET password = ? WHERE id = ?");
-                            $stmt_pass->execute([$encryption->encrypt($server_data['password']), $server_data['id']]);
+                            $stmt_pass->execute([encrypt_password($server_data['password'], $config), $server_data['id']]);
                         }
                         $db_server_id = $server_data['id'];
                     }
@@ -146,8 +142,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         $submitted_cred_ids = [];
                         foreach ($credentials_data as $cred_id_key => $cred_item) {
                             if (empty($cred_item['username'])) continue;
-                            
+
                             if (strpos($cred_id_key, 'new_') === 0) {
+                                // CREAR: Para credenciales nuevas, la contraseña es obligatoria.
                                 if (empty($cred_item['password'])) continue;
                                 $stmt_cred = $pdo->prepare("
                                     INSERT INTO dc_credentials (service_id, credential_id, username, password, role, notes) 
@@ -157,12 +154,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                                     $current_service_id,
                                     'cred_' . uniqid(),
                                     $cred_item['username'],
-                                    $encryption->encrypt($cred_item['password']),
+                                    encrypt_password($cred_item['password'], $config),
                                     $cred_item['role'] ?? 'user',
                                     $cred_item['notes'] ?? ''
                                 ]);
                                 $submitted_cred_ids[] = $pdo->lastInsertId();
                             } else {
+                                // ACTUALIZAR: Para credenciales existentes, la contraseña es opcional.
                                 $stmt_cred = $pdo->prepare("
                                     UPDATE dc_credentials SET username=?, role=?, notes=? WHERE id=?
                                 ");
@@ -172,9 +170,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                                     $cred_item['notes'] ?? '',
                                     $cred_id_key
                                 ]);
+                                // Actualizar contraseña solo si se proporcionó una nueva.
                                 if (!empty($cred_item['password'])) {
                                     $stmt_pass = $pdo->prepare("UPDATE dc_credentials SET password=? WHERE id=?");
-                                    $stmt_pass->execute([$encryption->encrypt($cred_item['password']), $cred_id_key]);
+                                    $stmt_pass->execute([encrypt_password($cred_item['password'], $config), $cred_id_key]);
                                 }
                                 $submitted_cred_ids[] = $cred_id_key;
                             }
@@ -246,7 +245,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             error_log('Datacenter View/Manager Error: ' . $e->getMessage());
         }
     }
-}
 
 // Mensaje de estado desde redirección
 if (isset($_GET['status'])) {
@@ -413,7 +411,7 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
 
         <?= $status_message ?>
 
-        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+        <?= csrf_field() ?>
 
         <?php if (empty($servers)): ?>
             <div class="no-data">
@@ -421,185 +419,241 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
                 <p><?= empty($search) ? 'Comience agregando infraestructura' : 'Intente con otro término de búsqueda' ?></p>
             </div>
         <?php else: ?>
-            <?php if ($total_servers > 1): ?>
-                <div class="view-all-controls">
-                    <button type="button" id="expandAllBtn" class="quick-link">Expandir Todo</button>
-                    <button type="button" id="collapseAllBtn" class="quick-link">Contraer Todo</button>
-                </div>
-            <?php endif; ?>
+            <!-- Controles Globales de Vista -->
+            <div class="global-view-controls">
+                <button class="btn-action expand-all-btn" title="Expandir todos">⬇️ Expandir Todos</button>
+                <button class="btn-action collapse-all-btn" title="Colapsar todos">⬆️ Colapsar Todos</button>
+            </div>
 
             <!-- Secciones por ubicación -->
-            <div class="sections-container">
+            <div class="servers-container">
                 <?php foreach ($grouped_servers as $location_id => $group): ?>
-                <section class="service-section" id="location-<?= $location_id ?>">
-                    <h2 class="section-title">
-                        <button class="section-toggle-btn" aria-expanded="true">
-                            <span class="section-title-text">📍 <?= htmlspecialchars($group['name']) ?></span>
-                            <span class="section-badge"><?= count($group['servers']) ?></span>
-                        </button>
-                    </h2>
-                    <div class="section-body">
-                        <div class="servers-grid">
-                            <?php foreach ($group['servers'] as $server): ?>
-                            <div class="server-card collapsed" data-server-id="<?= $server['id'] ?>">
-                                <div class="server-header">
-                                    <div>
-                                        <?php
-                                            $icons = [
-                                                'physical' => '🖥️', 
-                                                'virtual' => '💿', 
-                                                'container' => '📦', 
-                                                'cloud' => '☁️', 
-                                                'isp' => '🌐'
-                                            ];
-                                            echo $icons[$server['type']] ?? '⚙️';
-                                        ?>
-                                        <strong><?= htmlspecialchars($server['label']) ?></strong>
-                                    </div>
-                                    <div class="server-header-actions">
-                                        <button type="button" 
-                                                class="action-btn edit-btn" 
-                                                data-server-id="<?= $server['id'] ?>" 
-                                                aria-label="Editar servidor" 
-                                                title="Editar Servidor">✏️</button>
-                                        <button type="button" 
-                                                class="action-btn delete-btn" 
-                                                data-server-id="<?= $server['id'] ?>" 
-                                                data-server-name="<?= htmlspecialchars($server['label']) ?>" 
-                                                aria-label="Eliminar servidor" 
-                                                title="Eliminar Servidor">🗑️</button>
-                                        <button type="button" 
-                                                class="toggle-server-btn" 
-                                                aria-expanded="false" 
-                                                aria-controls="server-body-<?= $server['id'] ?>" 
-                                                aria-label="Expandir/Contraer servidor" 
-                                                title="Ver/Ocultar Detalles">▶</button>
-                                    </div>
+                    <?php foreach ($group['servers'] as $server): ?>
+                    <div class="server-card" data-server-id="<?= $server['id'] ?>">
+                        <!-- Header -->
+                        <div class="server-header">
+                            <div class="server-main-info">
+                                <?php
+                                    $icons = ['physical' => '🖥️', 'virtual' => '💿', 'container' => '📦', 'cloud' => '☁️', 'isp' => '🌐'];
+                                    $icon = $icons[strtolower($server['type'] ?? '')] ?? '⚙️';
+                                ?>
+                                <div class="server-icon server-type-<?= strtolower($server['type'] ?? 'physical') ?>">
+                                    <?= $icon ?>
                                 </div>
-
-                                <div class="server-body" id="server-body-<?= $server['id'] ?>">
-                                    <div class="server-type-badge-body"><?= ucfirst($server['type']) ?></div>
-                                    
-                                    <!-- Hardware -->
-                                    <?php if (!empty($server['hw_model'])): ?>
-                                    <div class="info-row">
-                                        <div class="info-label">💻 Hardware</div>
-                                        <div><?= htmlspecialchars($server['hw_model']) ?>
-                                            <?php if (!empty($server['hw_cpu']) || !empty($server['hw_ram'])): ?>
-                                            <br><small>
-                                                <?= htmlspecialchars($server['hw_cpu']) ?>
-                                                <?= !empty($server['hw_ram']) ? ' | ' . htmlspecialchars($server['hw_ram']) : '' ?>
-                                            </small>
-                                            <?php endif; ?>
-                                        </div>
+                                <div class="server-title-area">
+                                    <h3 class="server-name"><?= htmlspecialchars($server['label']) ?></h3>
+                                    <div class="server-meta">
+                                        <span class="server-badge status-<?= strtolower($server['status'] ?? 'inactive') ?>">
+                                            <?= ($server['status'] ?? 'inactive') === 'active' ? '🟢 Activo' : '🔴 Inactivo' ?>
+                                        </span>
+                                        <span class="server-badge">📦 <?= htmlspecialchars(ucfirst($server['type'])) ?></span>
+                                        <?php if (!empty($server['net_ip_lan'])): ?>
+                                        <span class="server-badge">🏠 <?= htmlspecialchars($server['net_ip_lan']) ?></span>
+                                        <?php endif; ?>
                                     </div>
-                                    <?php endif; ?>
-
-                                    <!-- Red -->
-                                    <?php if (!empty($server['net_ip_lan']) || !empty($server['net_ip_wan'])): ?>
-                                    <div class="info-row">
-                                        <div class="info-label">🌐 Red</div>
-                                        <div class="network-grid">
-                                            <?php if (!empty($server['net_ip_lan'])): ?>
-                                            <div class="network-item">
-                                                <span class="network-label">LAN</span>
-                                                <span class="network-value"><?= htmlspecialchars($server['net_ip_lan']) ?></span>
-                                            </div>
-                                            <?php endif; ?>
-                                            <?php if (!empty($server['net_ip_wan'])): ?>
-                                            <div class="network-item">
-                                                <span class="network-label">WAN</span>
-                                                <span class="network-value"><?= htmlspecialchars($server['net_ip_wan']) ?></span>
-                                            </div>
-                                            <?php endif; ?>
-                                            <?php if (!empty($server['net_host_external'])): ?>
-                                            <div class="network-item">
-                                                <span class="network-label">Host</span>
-                                                <span class="network-value"><?= htmlspecialchars($server['net_host_external']) ?></span>
-                                            </div>
-                                            <?php endif; ?>
-                                            <?php if (!empty($server['net_gateway'])): ?>
-                                            <div class="network-item">
-                                                <span class="network-label">Gateway</span>
-                                                <span class="network-value"><?= htmlspecialchars($server['net_gateway']) ?></span>
-                                            </div>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                    <?php endif; ?>
-
-                                    <!-- Credencial Principal -->
-                                    <?php if (!empty($server['username'])): ?>
-                                    <div class="info-row">
-                                        <div class="info-label">🔑 Credencial Principal</div>
-                                        <div class="cred-row">
-                                            <span>👤 <strong><?= htmlspecialchars($server['username']) ?></strong></span>
-                                            <?php if (!empty($server['password'])): ?>
-                                                <button type="button" 
-                                                        class="copy-cred-btn" 
-                                                        data-type="server_main" 
-                                                        data-id="<?= $server['id'] ?>" 
-                                                        title="Copiar contraseña">📋</button>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                    <?php endif; ?>
-
-                                    <!-- Servicios -->
-                                    <?php if (!empty($server['services'])): ?>
-                                    <div class="info-row">
-                                        <div class="info-label">⚙️ Servicios (<?= count($server['services']) ?>)</div>
-                                        <?php foreach ($server['services'] as $service): ?>
-                                        <div class="service-card-wrapper">
-                                            <div class="service-card">
-                                                <div class="service-title">
-                                                    <?= htmlspecialchars($service['name']) ?>
-                                                    <?php if (!empty($service['port'])): ?>
-                                                    <small class="port-number">:<?= htmlspecialchars($service['port']) ?></small>
-                                                    <?php endif; ?>
-                                                </div>
-
-                                                <div class="quick-links">
-                                                    <?php if (!empty($service['url_internal'])): ?>
-                                                    <a href="<?= htmlspecialchars($service['url_internal']) ?>" 
-                                                       target="_blank" class="quick-link">🏠 LAN</a>
-                                                    <?php endif; ?>
-                                                    <?php if (!empty($service['url_external'])): ?>
-                                                    <a href="<?= htmlspecialchars($service['url_external']) ?>" 
-                                                       target="_blank" class="quick-link">🌍 WAN</a>
-                                                    <?php endif; ?>
-                                                </div>
-
-                                                <?php require 'templates/credentials_list.php'; ?>
-                                            </div>
-                                        </div>
-                                        <?php endforeach; ?>
-                                        <button type="button" 
-                                                class="add-btn add-service-quick-btn" 
-                                                data-server-id="<?= $server['id'] ?>">+ Agregar Servicio</button>
-                                    </div>
-                                    <?php endif; ?>
-
-                                    <!-- Notas -->
-                                    <?php require 'templates/notes_section.php'; ?>
                                 </div>
                             </div>
-                            <?php endforeach; ?>
+                            
+                            <div class="server-header-actions">
+                                <?php if (!empty($server['net_host_external'])): ?>
+                                <?php
+                                    $external_url = $server['net_host_external'];
+                                    // Añadir http:// si no tiene un protocolo
+                                    if (!preg_match("~^(?:f|ht)tps?://~i", $external_url)) {
+                                        $external_url = "http://" . $external_url;
+                                    }
+                                ?>
+                                <button class="server-quick-action" title="Abrir en nueva pestaña" data-action="open-external" data-url="<?= htmlspecialchars($external_url) ?>">🔗</button>
+                                <?php endif; ?>
+                                <button class="server-quick-action" title="Editar servidor" data-action="edit" data-server-id="<?= $server['id'] ?>">✏️</button>
+                                <button class="server-quick-action" title="Eliminar servidor" data-action="delete" data-server-id="<?= $server['id'] ?>" data-server-name="<?= htmlspecialchars($server['label']) ?>">🗑️</button>
+                                <button class="toggle-server-btn" title="Expandir/Colapsar">▶</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Body (Colapsable) -->
+                        <div class="server-body">
+                            <div class="server-content">
+                                <!-- Tabs -->
+                                <div class="server-tabs">
+                                    <button class="server-tab active" data-tab="info-<?= $server['id'] ?>">📋 Información</button>
+                                    <button class="server-tab" data-tab="services-<?= $server['id'] ?>">⚙️ Servicios (<?= count($server['services'] ?? []) ?>)</button>
+                                    <button class="server-tab" data-tab="network-<?= $server['id'] ?>">🌐 Red</button>
+                                </div>
+                                
+                                <!-- Tab: Información -->
+                                <div id="info-<?= $server['id'] ?>" class="server-tab-content active">
+                                    <div class="info-grid">
+                                        <?php if (!empty($server['hw_model'])): ?><div class="info-item"><span class="info-label">Modelo</span><span class="info-value"><?= htmlspecialchars($server['hw_model']) ?></span></div><?php endif; ?>
+                                        <?php if (!empty($server['hw_cpu'])): ?><div class="info-item"><span class="info-label">CPU</span><span class="info-value"><?= htmlspecialchars($server['hw_cpu']) ?></span></div><?php endif; ?>
+                                        <?php if (!empty($server['hw_ram'])): ?><div class="info-item"><span class="info-label">RAM</span><span class="info-value"><?= htmlspecialchars($server['hw_ram']) ?></span></div><?php endif; ?>
+                                        <?php if (!empty($server['hw_disk'])): ?><div class="info-item"><span class="info-label">Disco</span><span class="info-value"><?= htmlspecialchars($server['hw_disk']) ?></span></div><?php endif; ?>
+                                        <?php if (!empty($server['location_name'])): ?><div class="info-item"><span class="info-label">Ubicación</span><span class="info-value"><?= htmlspecialchars($server['location_name']) ?></span></div><?php endif; ?>
+                                    </div>
+                                    <?php if (!empty($server['username'])): ?>
+                                    <div class="info-item info-item-spaced">
+                                        <span class="info-label">🔑 Credencial Principal</span>
+                                        <div class="cred-row cred-row-styled">
+                                            <div class="cred-info">
+                                                <span class="cred-username">👤 <?= htmlspecialchars($server['username']) ?></span>
+                                            </div>
+                                            <?php if (!empty($server['password'])): ?>
+                                            <button type="button" class="copy-cred-btn" data-type="server_main" data-id="<?= $server['id'] ?>" title="Copiar contraseña">📋</button>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
+                                    <?php require 'templates/notes_section.php'; ?>
+                                </div>
+                                
+                                <!-- Tab: Servicios -->
+                                <div id="services-<?= $server['id'] ?>" class="server-tab-content">
+                                    <?php if (!empty($server['services'])): ?>
+                                    <div class="services-list">
+                                        <?php foreach ($server['services'] as $service): ?>
+                                        <div class="service-item">
+                                            <div class="service-header">
+                                                <div class="service-title">
+                                                    <div class="service-icon">⚙️</div>
+                                                    <span><?= htmlspecialchars($service['name']) ?></span>
+                                                </div>
+                                                <div class="service-actions">
+                                                    <?php if (!empty($service['url_internal'])): ?><a href="<?= htmlspecialchars($service['url_internal']) ?>" target="_blank" class="service-action-btn">🏠 LAN</a><?php endif; ?>
+                                                    <?php if (!empty($service['url_external'])): ?><a href="<?= htmlspecialchars($service['url_external']) ?>" target="_blank" class="service-action-btn">🌍 WAN</a><?php endif; ?>
+                                                </div>
+                                            </div>
+                                            <?php require 'templates/credentials_list.php'; ?>
+                                        </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <?php else: ?>
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">📭</div>
+                                        <div class="empty-state-text">No hay servicios configurados</div>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <!-- Tab: Red -->
+                                <div id="network-<?= $server['id'] ?>" class="server-tab-content">
+                                    <div class="info-grid">
+                                        <div class="info-item"><span class="info-label">IP LAN</span><span class="info-value"><code><?= htmlspecialchars($server['net_ip_lan'] ?: 'N/A') ?></code></span></div>
+                                        <div class="info-item"><span class="info-label">IP WAN</span><span class="info-value"><code><?= htmlspecialchars($server['net_ip_wan'] ?: 'N/A') ?></code></span></div>
+                                        <div class="info-item"><span class="info-label">Gateway</span><span class="info-value"><code><?= htmlspecialchars($server['net_gateway'] ?: 'N/A') ?></code></span></div>
+                                        <div class="info-item"><span class="info-label">Host Externo</span><span class="info-value"><code><?= htmlspecialchars($server['net_host_external'] ?: 'N/A') ?></code></span></div>
+                                        <div class="info-item"><span class="info-label">DNS</span><span class="info-value"><code><?= htmlspecialchars(is_array($server['net_dns']) ? implode(', ', $server['net_dns']) : 'N/A') ?></code></span></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </section>
+                    <?php endforeach; ?>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
     </div>
 
     <a href="./index2.php" class="back-btn">← Volver al Portal</a>
+    
+    <?php require_once 'templates/footer.php'; 
 
-    <?php require_once 'templates/footer.php'; ?>
+    // ========================================================================
+    // DEFINICIÓN DEL MODAL DE SERVIDOR (Refactorizado a Mejora #3)
+    // ========================================================================
+    ob_start(); // Tab General
+    ?>
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="serverLabel">Etiqueta del Servidor *</label>
+            <input type="text" id="serverLabel" name="server[label]" required form="serverForm">
+        </div>
+        <div class="form-group">
+            <label for="serverLocation">Ubicación</label>
+            <select id="serverLocation" name="server[location_id]" form="serverForm">
+                <option value="">-- Sin Ubicación --</option>
+                <?php foreach ($locations as $loc): ?>
+                    <option value="<?= $loc['id'] ?>"><?= htmlspecialchars($loc['name']) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="serverType">Tipo de Servidor</label>
+            <select id="serverType" name="server[type]" form="serverForm">
+                <option value="physical">Físico</option>
+                <option value="virtual">Virtual</option>
+                <option value="container">Contenedor</option>
+                <option value="cloud">Cloud</option>
+                <option value="isp">ISP</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="serverStatus">Estado</label>
+            <select id="serverStatus" name="server[status]" form="serverForm">
+                <option value="active">Activo</option>
+                <option value="inactive">Inactivo</option>
+                <option value="maintenance">Mantenimiento</option>
+            </select>
+        </div>
+    </div>
+    <fieldset>
+        <legend>Credencial Principal (Opcional)</legend>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="serverUsername">Usuario</label>
+                <input type="text" id="serverUsername" name="server[username]" autocomplete="off" form="serverForm">
+            </div>
+            <div class="form-group">
+                <label for="serverPassword">Contraseña</label>
+                <input type="password" id="serverPassword" name="server[password]" placeholder="Dejar en blanco para no cambiar" autocomplete="new-password" form="serverForm">
+            </div>
+        </div>
+    </fieldset>
+    <?php $tab_general = ob_get_clean();
 
-    <!-- Modal para Agregar/Editar Servidor -->
-    <?php require_once 'templates/server_modal.php'; ?>
+    ob_start(); // Tab Hardware
+    ?>
+    <div class="form-grid"><div class="form-group"><label for="hwModel">Modelo</label><input type="text" id="hwModel" name="server[hw_model]" form="serverForm"></div><div class="form-group"><label for="hwCpu">CPU</label><input type="text" id="hwCpu" name="server[hw_cpu]" form="serverForm"></div><div class="form-group"><label for="hwRam">RAM</label><input type="text" id="hwRam" name="server[hw_ram]" form="serverForm"></div><div class="form-group"><label for="hwDisk">Disco</label><input type="text" id="hwDisk" name="server[hw_disk]" form="serverForm"></div></div>
+    <?php $tab_hardware = ob_get_clean();
 
+    ob_start(); // Tab Red
+    ?>
+    <div class="form-grid"><div class="form-group"><label for="netIpLan">IP LAN</label><input type="text" id="netIpLan" name="server[net_ip_lan]" form="serverForm"></div><div class="form-group"><label for="netIpWan">IP WAN</label><input type="text" id="netIpWan" name="server[net_ip_wan]" form="serverForm"></div></div><div class="form-grid"><div class="form-group"><label for="netHostExt">Host Externo</label><input type="text" id="netHostExt" name="server[net_host_external]" form="serverForm"></div><div class="form-group"><label for="netGateway">Gateway</label><input type="text" id="netGateway" name="server[net_gateway]" form="serverForm"></div></div><div class="form-group"><label for="netDns">Servidores DNS (separados por coma)</label><input type="text" id="netDns" name="server[net_dns]" form="serverForm"></div>
+    <?php $tab_network = ob_get_clean();
+
+    ob_start(); // Tab Servicios
+    ?>
+    <h3>⚙️ Servicios del Servidor</h3><div id="servicesContainer"></div><button type="button" id="addServiceModalBtn" class="add-btn">+ Agregar Servicio</button>
+    <?php $tab_services = ob_get_clean();
+
+    ob_start(); // Tab Notas
+    ?>
+    <div class="form-group"><label for="serverNotes">Notas Adicionales</label><textarea id="serverNotes" name="server[notes]" rows="6" form="serverForm"></textarea></div>
+    <?php $tab_notes = ob_get_clean();
+
+    ?>
+    <form id="serverForm" method="POST" action="datacenter_view.php">
+        <input type="hidden" name="action" value="save_server">
+        <?= csrf_field() ?>
+        <input type="hidden" name="server[id]" id="serverId">
+        <?php
+        echo render_modal([
+            'id' => 'serverModal',
+            'title' => 'Gestionar Servidor',
+            'size' => 'large',
+            'tabs' => [
+                ['id' => 'tab-general', 'label' => 'General', 'content' => $tab_general],
+                ['id' => 'tab-hardware', 'label' => 'Hardware', 'content' => $tab_hardware],
+                ['id' => 'tab-network', 'label' => 'Red', 'content' => $tab_network],
+                ['id' => 'tab-services', 'label' => 'Servicios', 'content' => $tab_services],
+                ['id' => 'tab-notes', 'label' => 'Notas', 'content' => $tab_notes],
+            ],
+            'form_id' => 'serverForm',
+            'submit_text' => '💾 Guardar'
+        ]);
+        ?>
+    </form>
+
+    <script src="assets/js/modal-system.js" nonce="<?= htmlspecialchars($nonce) ?>"></script>
     <script src="assets/js/datacenter_view.js" nonce="<?= htmlspecialchars($nonce) ?>"></script>
 </body>
 </html>

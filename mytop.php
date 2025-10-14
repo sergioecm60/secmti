@@ -95,20 +95,15 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
 // ============================================================================
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['kill_process'])) {
-    
-    // Verificar token CSRF
-    if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
-        http_response_code(403);
-        die('Token CSRF inválido');
-    }
-    
-    // Validar ID de proceso
-    $id = filter_input(INPUT_POST, 'process_id', FILTER_VALIDATE_INT);
-    if ($id === false || $id < 1) {
-        die('ID de proceso inválido');
-    }
-    
     try {
+        validate_request_csrf();
+        
+        // Validar ID de proceso
+        $id = filter_input(INPUT_POST, 'process_id', FILTER_VALIDATE_INT);
+        if ($id === false || $id < 1) {
+            throw new Exception('ID de proceso inválido');
+        }
+
         // Obtener información del proceso antes de matarlo (para logging)
         $stmt = $pdo->prepare("SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE ID = ?");
         $stmt->execute([$id]);
@@ -131,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['kill_process'])) {
         header("Location: mytop.php");
         exit;
         
-    } catch (PDOException $e) {
+    } catch (Exception $e) {
         error_log("Error al matar proceso {$id}: " . $e->getMessage());
         
         log_security_event(
@@ -476,8 +471,8 @@ try {
                             </td>
                             <td data-label="Acción">
                                 <?php if ($p['Command'] !== 'Sleep' && $p['Id'] != $pdo->query("SELECT CONNECTION_ID()")->fetchColumn()): ?>
-                                    <form method="POST" style="display:inline;" onsubmit="return confirm('¿Terminar proceso #<?= $p['Id'] ?>?');">
-                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+                                    <form method="POST" style="display:inline;" class="kill-process-form">
+                                        <?= csrf_field() ?>
                                         <input type="hidden" name="process_id" value="<?= htmlspecialchars($p['Id']) ?>">
                                         <button type="submit" name="kill_process" class="kill-btn" title="Terminar proceso">
                                             ✕ Kill
@@ -576,7 +571,7 @@ try {
                         <td data-label="Consulta"><code>${escapeHTML(p.Info)}</code></td>
                         <td data-label="Acción">
                             ${canKill ? `
-                                <form method="POST" style="display:inline;" onsubmit="return confirm('¿Terminar proceso #${p.Id}?');">
+                                <form method="POST" style="display:inline;" class="kill-process-form" action="mytop.php">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                                     <input type="hidden" name="process_id" value="${p.Id}">
                                     <button type="submit" name="kill_process" class="kill-btn" title="Terminar proceso">
@@ -636,6 +631,17 @@ try {
                     stopAutoRefresh();
                 }
             });
+
+            // Event delegation para los formularios de "kill"
+            tbody.addEventListener('submit', function(e) {
+                if (e.target.classList.contains('kill-process-form')) {
+                    const processId = e.target.querySelector('input[name="process_id"]').value;
+                    if (!confirm(`¿Estás seguro de que quieres terminar el proceso #${processId}?`)) {
+                        e.preventDefault();
+                    }
+                }
+            });
+
 
             // Inicial
             fetchAndUpdate();

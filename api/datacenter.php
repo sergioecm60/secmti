@@ -6,7 +6,6 @@
  */
 
 require_once '../bootstrap.php';
-use SecMTI\Util\Encryption;
 
 header('Content-Type: application/json');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
@@ -19,20 +18,28 @@ if (empty($_SESSION['user_id'])) {
 }
 
 try {
-    $action = $_GET['action'] ?? null;
+    // Determinar la acción desde GET o POST
+    $action = $_REQUEST['action'] ?? null;
     $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
+    // Validar CSRF solo para acciones que no son de lectura (no-GET)
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+        validate_request_csrf();
+    }
+    
+    // Obtener la conexión a la BD aquí para asegurar su disponibilidad
+    $pdo = get_database_connection($config, false);
     if (!$pdo) {
         throw new Exception('Error de conexión a base de datos', 500);
     }
-
+    
     switch ($action) {
         case 'get_password':
             if ($id <= 0) {
                 throw new Exception('ID de credencial inválido', 400);
             }
 
-            $type = $_GET['type'] ?? 'dc_credential'; // Obtener el tipo de credencial
+            $type = $_REQUEST['type'] ?? 'dc_credential'; // Obtener el tipo de credencial
             $encrypted_password = null;
 
             if ($type === 'server_main') {
@@ -52,17 +59,8 @@ try {
             }
 
             // Descifrar la contraseña
-            if (empty($config['security']['encryption_key']) || strlen(base64_decode($config['security']['encryption_key'])) !== 32) {
-                throw new Exception('Error de configuración de cifrado', 500);
-            }
-            
-            $encryption = new Encryption(base64_decode($config['security']['encryption_key']));
-            $decrypted_password = $encryption->decrypt($encrypted_password);
-            
-            if ($decrypted_password === false) {
-                throw new Exception('Error al descifrar contraseña', 500);
-            }
-
+            $decrypted_password = decrypt_password($encrypted_password, $config);
+            if ($decrypted_password === false) { throw new Exception('Error al descifrar contraseña', 500); }
             echo json_encode(['success' => true, 'password' => $decrypted_password]);
             break;
 
@@ -76,7 +74,13 @@ try {
             }
 
             // Obtener servidor
-            $stmt = $pdo->prepare("SELECT * FROM dc_servers WHERE id = ?");
+            // Excluimos explícitamente la contraseña de la consulta
+            $stmt = $pdo->prepare("
+                SELECT id, server_id, label, type, location_id, status, hw_model, hw_cpu, hw_ram, 
+                       hw_disk, net_ip_lan, net_ip_wan, net_host_external, net_gateway, net_dns, 
+                       notes, username, created_at, updated_at, created_by 
+                FROM dc_servers WHERE id = ?
+            ");
             $stmt->execute([$id]);
             $server = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -87,7 +91,11 @@ try {
             $server['net_dns'] = json_decode($server['net_dns'] ?? '[]', true);
 
             // Cargar servicios y sus credenciales asociadas (N+1 optimizado)
-            $stmt_services = $pdo->prepare("SELECT * FROM dc_services WHERE server_id = ? ORDER BY name");
+            // Excluimos la contraseña de las credenciales
+            $stmt_services = $pdo->prepare("
+                SELECT id, server_id, service_id, name, url_internal, url_external, port, protocol, notes, created_at, updated_at 
+                FROM dc_services WHERE server_id = ? ORDER BY name
+            ");
             $stmt_services->execute([$id]);
             $services = $stmt_services->fetchAll(PDO::FETCH_ASSOC);
 
@@ -97,10 +105,9 @@ try {
             if (!empty($service_ids)) {
                 $in_sql = implode(',', array_fill(0, count($service_ids), '?'));
                 $stmt_creds = $pdo->prepare("
-                    SELECT id, service_id, username, role, notes, password 
+                    SELECT id, service_id, username, role, notes
                     FROM dc_credentials 
-                    WHERE service_id IN ($in_sql) 
-                    ORDER BY role DESC
+                    WHERE service_id IN ($in_sql)
                 ");
                 $stmt_creds->execute($service_ids);
                 
@@ -115,7 +122,7 @@ try {
             }
             $server['services'] = $services;
 
-            echo json_encode(['success' => true, 'data' => $server]);
+            echo json_encode(['success' => true, 'server' => $server]);
             break;
 
         default:

@@ -6,8 +6,6 @@
 
 require_once '../bootstrap.php';
 
-use SecMTI\Util\Encryption;
-
 header('Content-Type: application/json');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 
@@ -48,13 +46,12 @@ if ($action === 'get_password' && $id > 0 && in_array($type, ['hosting_account',
 
     if ($encrypted_password) {
         // Inicializar el servicio de cifrado para descifrar la contraseña
-        if (empty($config['security']['encryption_key']) || strlen(base64_decode($config['security']['encryption_key'])) !== 32) {
+        $decrypted_password = decrypt_password($encrypted_password, $config);
+        if ($decrypted_password === false) {
             http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error de configuración del servidor.']);
+            echo json_encode(['success' => false, 'message' => 'Error al descifrar credencial.']);
             exit;
         }
-        $encryption = new Encryption(base64_decode($config['security']['encryption_key']));
-        $decrypted_password = $encryption->decrypt($encrypted_password);
 
         echo json_encode(['success' => true, 'password' => $decrypted_password]);
     } else {

@@ -15,11 +15,9 @@ $status_message = '';
 
 // --- MANEJO DE ACCIONES POST ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-        $status_message = '<div class="status-message error">Error de validación CSRF.</div>';
-    } else {
-        try {
-            $pdo->beginTransaction();
+    try {
+        validate_request_csrf();
+        $pdo->beginTransaction();
             $action = $_POST['action'] ?? '';
 
             if ($action === 'save_location') {
@@ -57,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->rollBack();
             $status_message = '<div class="status-message error">❌ Error: ' . htmlspecialchars($e->getMessage()) . '</div>';
         }
-    }
 }
 
 if (isset($_GET['status'])) {
@@ -67,6 +64,28 @@ if (isset($_GET['status'])) {
 // --- CARGA DE DATOS ---
 $locations = $pdo->query("SELECT * FROM dc_locations ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 
+ob_start();
+?>
+<form method="POST" id="locationForm">
+    <input type="hidden" name="action" value="save_location">
+    <?= csrf_field() ?>
+    <input type="hidden" name="id" id="locationId">
+
+    <div class="form-group">
+        <label for="locationName">Nombre *</label>
+        <input type="text" name="name" id="locationName" required>
+    </div>
+    <div class="form-group">
+        <label for="locationAddress">Dirección</label>
+        <input type="text" name="address" id="locationAddress">
+    </div>
+    <div class="form-group">
+        <label for="locationNotes">Notas</label>
+        <textarea name="notes" id="locationNotes" rows="3"></textarea>
+    </div>
+</form>
+<?php
+$location_form_content = ob_get_clean();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -124,67 +143,40 @@ $locations = $pdo->query("SELECT * FROM dc_locations ORDER BY name")->fetchAll(P
 
     <a href="datacenter_view.php" class="back-btn">← Volver a Infraestructura</a>
 
-    <!-- Modal -->
-    <div id="locationModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2 id="modalTitle">Agregar Ubicación</h2>
-            <form method="POST" id="locationForm">
-                <input type="hidden" name="action" value="save_location">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-                <input type="hidden" name="id" id="locationId">
+    <?php
+    echo render_modal([
+        'id' => 'locationModal',
+        'title' => 'Gestionar Ubicación',
+        'size' => 'medium',
+        'content' => $location_form_content,
+        'form_id' => 'locationForm',
+        'submit_text' => '💾 Guardar'
+    ]);
+    ?>
 
-                <div class="form-group">
-                    <label for="locationName">Nombre *</label>
-                    <input type="text" name="name" id="locationName" required>
-                </div>
-                <div class="form-group">
-                    <label for="locationAddress">Dirección</label>
-                    <input type="text" name="address" id="locationAddress">
-                </div>
-                <div class="form-group">
-                    <label for="locationNotes">Notas</label>
-                    <textarea name="notes" id="locationNotes" rows="3"></textarea>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="save-btn">💾 Guardar</button>
-                    <button type="button" class="cancel-btn">Cancelar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+    <script src="assets/js/modal-system.js" nonce="<?= htmlspecialchars($nonce) ?>"></script>
     <script nonce="<?= htmlspecialchars($nonce) ?>">
     document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('locationModal');
         const form = document.getElementById('locationForm');
         const addBtn = document.getElementById('addLocationBtn');
-        const closeBtn = modal.querySelector('.close');
-        const cancelBtn = modal.querySelector('.cancel-btn');
 
         function openModal(locationData = null) {
             form.reset();
+            const modalTitle = document.querySelector('#locationModal .modal-title');
             if (locationData) {
-                document.getElementById('modalTitle').textContent = 'Editar Ubicación';
+                modalTitle.textContent = 'Editar Ubicación';
                 document.getElementById('locationId').value = locationData.id;
                 document.getElementById('locationName').value = locationData.name;
                 document.getElementById('locationAddress').value = locationData.address || '';
                 document.getElementById('locationNotes').value = locationData.notes || '';
             } else {
-                document.getElementById('modalTitle').textContent = 'Agregar Ubicación';
+                modalTitle.textContent = 'Agregar Ubicación';
                 document.getElementById('locationId').value = 'new_' + Date.now();
             }
-            modal.classList.add('active');
-        }
-
-        function closeModal() {
-            modal.classList.remove('active');
+            modalManager.open('locationModal');
         }
 
         addBtn.addEventListener('click', () => openModal());
-        closeBtn.addEventListener('click', closeModal);
-        cancelBtn.addEventListener('click', closeModal);
 
         document.getElementById('locations-table').addEventListener('click', function(e) {
             const editBtn = e.target.closest('.edit-btn');

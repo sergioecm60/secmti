@@ -124,9 +124,8 @@ $schema_org = [
     <meta name="twitter:image" content="<?= htmlspecialchars($canonical_url . ($config['landing_page']['logo_path'] ?? 'assets/images/logo.png')) ?>">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
+    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="assets/images/favicon.ico" type="image/x-icon">
     
     <!-- DNS Prefetch & Preconnect -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">

@@ -1,11 +1,11 @@
 # Portal de Servicios SECMTI
 
 **Creado por Sergio Cabrera**  
-📧 [sergiomiers@gmail.com](mailto:sergiomiers@gmail.com)  
-🤖 Asistencia técnica: **Claude (Anthropic)**, Gemini (Google), ChatGPT (OpenAI) y Qwen (Alibaba)
+📧 [sergiomiers@gmail.com](mailto:sergiomiers@gmail.com)
+🤖 Asistencia técnica: **Gemini (Google)**, Claude (Anthropic), ChatGPT (OpenAI) y Qwen (Alibaba)
 
 [![PHP Version](https://img.shields.io/badge/PHP-%3E%3D8.0-8892BF.svg?style=for-the-badge)](https://php.net)
-[![License](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](license.txt)
+[![License](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](license.php)
 [![Version](https://img.shields.io/badge/Version-1.0.0-green.svg?style=for-the-badge)](https://github.com/sergioecm60/secmti/releases)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/sergioecm60/secmti)
 [![Database](https://img.shields.io/badge/Database-MySQL%2FMariaDB-4479A1.svg?style=for-the-badge&logo=mysql)](https://www.mysql.com)
@@ -14,7 +14,7 @@
 
 ## 📄 Descripción
 
-Un **portal de servicios profesional y completo** para **gestión de infraestructura TI**, escrito en **PHP puro** sin frameworks. Diseñado para ser **ligero, seguro y fácil de administrar**, ideal para empresas que necesitan centralizar el acceso a servicios internos y gestionar su datacenter de forma eficiente.
+Un **portal de servicios profesional y completo** para **gestión de infraestructura TI**, escrito en **PHP puro** sin frameworks. Diseñado para ser **ligero, seguro y fácil de administrar**, con una **interfaz de usuario moderna y responsive**, ideal para empresas que necesitan centralizar el acceso a servicios internos y gestionar su datacenter de forma eficiente.
 
 ### Características Principales
 
@@ -37,7 +37,7 @@ Un **portal de servicios profesional y completo** para **gestión de infraestruc
 ### 🌐 Página de Aterrizaje (`index.php`)
 - Página pública de presentación profesional
 - Información de contacto, sucursales y redes sociales
-- Diseño moderno con gradientes y animaciones
+- Diseño moderno y responsive con animaciones sutiles
 - Totalmente personalizable desde el panel de administración
 
 ### 🔐 Portal de Servicios (`index2.php`)
@@ -45,20 +45,20 @@ Un **portal de servicios profesional y completo** para **gestión de infraestruc
 - Acceso organizado por categorías (LAN, WAN, Sucursales)
 - **Drag & Drop** para reorganizar servicios (solo admin)
 - **Secciones colapsables** para mejor organización
-- Vista de actividad reciente del sistema
 - Interfaz moderna y responsive
 
 ### 🏢 Gestión de Infraestructura (`datacenter_view.php`)
-- **Inventario completo** de servidores físicos y virtuales
+- **Vista de "Cards" moderna** con acordeones expandibles para cada servidor
 - Información detallada de hardware (CPU, RAM, discos)
 - **Gestión de red** (IPs LAN/WAN, hostnames, DNS, gateway)
 - **Servicios por servidor** (Proxmox, Webmin, SSH, etc.)
 - **Credenciales seguras** con roles (admin/user)
-- Vista expandible/colapsable por servidor
+- **Pestañas internas** para organizar la información de cada servidor (General, Servicios, Red)
 - Buscador de infraestructura
 
 ### 🌐 Gestión de Hosting (`hosting_manager.php`)
 - Administración de servidores cPanel/WHM
+- **Sistema de modales moderno y reutilizable** para crear y editar servidores
 - **Cuentas de hosting** con dominios
 - **Cuentas de email** organizadas por servidor
 - **Cuentas FTP** con credenciales
@@ -67,8 +67,9 @@ Un **portal de servicios profesional y completo** para **gestión de infraestruc
 ### 🔒 Sistema de Seguridad
 - **Login con captcha matemático** (protección anti-bots)
 - **Bloqueo automático** tras intentos fallidos (anti fuerza bruta)
-- **Contraseñas hasheadas** con `password_hash()` (bcrypt)
+- **Cifrado de contraseñas de extremo a extremo** (AES-256-CBC en la base de datos)
 - **Tokens CSRF** en todos los formularios
+- **Política de Seguridad de Contenido (CSP)** estricta para prevenir ataques XSS
 - **Auditoría de accesos** (logs de actividad)
 - **Gestión de sesiones** con timeout automático
 - **Roles de usuario** (admin/user)
@@ -76,7 +77,7 @@ Un **portal de servicios profesional y completo** para **gestión de infraestruc
 ### 🛠️ Panel de Administración
 - **`manage.php`**: Configuración general del portal
 - **`users_manager.php`**: Gestión de usuarios y roles
-- **`datacenter_manage.php`**: CRUD completo de infraestructura
+- **`datacenter_view.php`**: CRUD completo de infraestructura a través de modales
 - **`hosting_manager.php`**: Gestión de servicios de hosting
 - Interfaz web intuitiva sin necesidad de editar archivos
 
@@ -107,51 +108,51 @@ Un **portal de servicios profesional y completo** para **gestión de infraestruc
 
 ---
 
-## 📦 Instalación en Servidor (Ubuntu con Apache/Nginx)
+## 📦 Instalación
 
-Esta guía te mostrará cómo instalar el portal en un servidor Ubuntu. El proceso se basa en el uso de variables de entorno (`.env`) para una máxima seguridad.
+Sigue estos pasos para desplegar el portal en un servidor Linux (Ubuntu/Debian).
 
-### 1. Instalar Prerrequisitos (Pila LAMP/LEMP)
+### Paso 1: Prerrequisitos del Servidor
 
-Abre una terminal en tu servidor y ejecuta los siguientes comandos para instalar el servidor web, la base de datos, PHP y las herramientas necesarias.
+Asegúrate de tener una pila LAMP o LEMP funcional con `git` y `composer`.
 
 ```bash
-# Actualizar la lista de paquetes del sistema
+# 1. Actualiza tu sistema
 sudo apt update && sudo apt upgrade -y
 
-# Instalar Apache, MariaDB, PHP, Git y Composer
+# 2. Instala Apache, MariaDB, PHP y herramientas adicionales
 sudo apt install -y apache2 mariadb-server php libapache2-mod-php php-mysql php-mbstring php-xml php-json git composer
 
-# Opcional: Si prefieres Nginx en lugar de Apache (pila LEMP)
+# (Opcional) Si prefieres Nginx (LEMP)
 # sudo apt install -y nginx mariadb-server php-fpm php-mysql php-mbstring php-xml php-json git composer
 ```
 
-### 2. Configurar la Base de Datos
+### Paso 2: Configuración de la Base de Datos
 
-Vamos a crear una base de datos y un usuario dedicado para la aplicación.
+Crea la base de datos y un usuario dedicado para la aplicación.
 
 ```bash
-# 1. Accede a la consola de MariaDB/MySQL como root
+# 1. Accede a la consola de MariaDB/MySQL
 sudo mysql -u root
 
-# 2. Dentro de la consola de MySQL, ejecuta estos comandos:
+# 2. Ejecuta los siguientes comandos SQL:
 CREATE DATABASE portal_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER 'secmti_user'@'localhost' IDENTIFIED BY 'UNA_CONTRASENA_MUY_SEGURA';
 GRANT ALL PRIVILEGES ON portal_db.* TO 'secmti_user'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
 ```
-> ⚠️ **Importante**: Reemplaza `UNA_CONTRASENA_MUY_SEGURA` por una contraseña real y guárdala para el siguiente paso.
+> ⚠️ **Importante**: Reemplaza `UNA_CONTRASENA_MUY_SEGURA` por una contraseña fuerte y guárdala.
 
-### 3. Clonar y Configurar el Proyecto
+### Paso 3: Despliegue del Código
 
-Ahora descargaremos el código del portal y lo configuraremos.
+Clona el repositorio y configura el entorno.
 
 ```bash
-# 1. Clona el repositorio en el directorio web
+# 1. Clona el proyecto en el directorio web
 sudo git clone https://github.com/sergioecm60/secmti.git /var/www/secmti
 
-# 2. Navega al directorio del proyecto
+# 2. Entra al directorio del proyecto
 cd /var/www/secmti
 
 # 3. Instala las dependencias de PHP (como phpdotenv)
@@ -160,132 +161,57 @@ sudo composer install --no-dev --optimize-autoloader
 # 4. Crea tu archivo de configuración .env a partir del ejemplo
 sudo cp .env.example .env
 
-# 5. Genera una clave de encriptación única y segura
-php -r "echo base64_encode(random_bytes(32));"
-# Copia la clave generada.
+# 5. Genera una clave de encriptación única y segura (¡CRÍTICO!)
+php -r "echo 'APP_ENCRYPTION_KEY=' . base64_encode(random_bytes(32)) . PHP_EOL;"
+# Copia la línea completa que se genera (ej: APP_ENCRYPTION_KEY=...=)
 
-# 6. Edita el archivo .env con tus datos
+# 6. Edita el archivo .env para añadir la clave y los datos de la BD
 sudo nano .env
 ```
 
-Dentro del editor `nano`, actualiza las siguientes líneas con los datos que configuraste:
+Dentro del editor `nano`, asegúrate de que tu archivo `.env` se vea así, reemplazando los valores correspondientes:
 
 ```ini
 # .env
 APP_ENV=production
-APP_URL=http://tu-dominio.com
-APP_ENCRYPTION_KEY="PEGA_AQUI_LA_CLAVE_GENERADA_EN_EL_PASO_ANTERIOR"
+APP_URL="http://tu-dominio.com"
+
+# Pega aquí la clave generada en el paso anterior
+APP_ENCRYPTION_KEY="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx="
 
 DB_HOST=localhost
+DB_PORT=3306
 DB_NAME=portal_db
 DB_USER=secmti_user
 DB_PASS="LA_CONTRASENA_QUE_CREASTE_EN_EL_PASO_2"
 ```
-> Pulsa `Ctrl+X`, luego `Y` y `Enter` para guardar y salir de `nano`.
+> Pulsa `Ctrl+X`, luego `Y` y `Enter` para guardar y salir.
 
-### 4. Importar la Estructura de la Base de Datos
-
-Con la configuración lista, importa el esquema de la base de datos.
+### Paso 4: Importar Esquema de la Base de Datos
 
 ```bash
-# Ejecuta el script de instalación usando las credenciales que creaste
+# Ejecuta el script de instalación usando las credenciales del .env
 mysql -u secmti_user -p portal_db < database/install.sql
 ```
-> Te pedirá la contraseña que definiste para `secmti_user`.
+> Te pedirá la contraseña de `secmti_user` que definiste.
 
-### 5. Configurar Permisos
-
-Asegúrate de que el servidor web (Apache/Nginx) tenga permisos para escribir en los directorios necesarios.
+### Paso 5: Permisos Finales y Configuración Web
 
 ```bash
-# Asigna la propiedad de los archivos al usuario del servidor web (www-data en Ubuntu)
+# 1. Asigna la propiedad de los archivos al usuario del servidor web (www-data en Debian/Ubuntu)
 sudo chown -R www-data:www-data /var/www/secmti
 
-# Asegura que los directorios tengan los permisos correctos
+# 2. Establece los permisos correctos para directorios y archivos
+sudo find /var/www/secmti -type d -exec chmod 755 {} \;
+sudo find /var/www/secmti -type f -exec chmod 644 {} \;
+
+# 3. Da permisos de escritura específicos para el directorio de logs
 sudo chmod -R 775 /var/www/secmti/logs
 ```
 
-### 6. Configurar el Servidor Web
+Finalmente, configura tu servidor web (Apache o Nginx) para que apunte a `/var/www/secmti`. Puedes encontrar ejemplos de configuración en la sección `docs/` del repositorio.
 
-Finalmente, crea un archivo de host virtual para que tu dominio apunte al portal.
-
-<details>
-<summary>🔵 <strong>Configuración para Apache</strong></summary>
-
-```bash
-# 1. Crea un nuevo archivo de configuración para tu sitio
-sudo nano /etc/apache2/sites-available/secmti.conf
-```
-
-Pega el siguiente contenido, reemplazando `tu-dominio.com`:
-
-```apache
-<VirtualHost *:80>
-    ServerName tu-dominio.com
-    DocumentRoot /var/www/secmti
-
-    <Directory /var/www/secmti>
-        Options Indexes FollowSymLinks
-        AllowOverride All
-        Require all granted
-    </Directory>
-
-    ErrorLog ${APACHE_LOG_DIR}/secmti_error.log
-    CustomLog ${APACHE_LOG_DIR}/secmti_access.log combined
-</VirtualHost>
-```
-
-```bash
-# 2. Habilita el nuevo sitio, el módulo de reescritura y reinicia Apache
-sudo a2ensite secmti.conf
-sudo a2enmod rewrite
-sudo systemctl restart apache2
-```
-
-</details>
-
-<details>
-<summary>⚫ <strong>Configuración para Nginx</strong></summary>
-
-```bash
-# 1. Crea un nuevo archivo de configuración para tu sitio
-sudo nano /etc/nginx/sites-available/secmti
-```
-
-Pega el siguiente contenido, reemplazando `tu-dominio.com` y asegurándote de que la versión de PHP coincida con la tuya (ej. `php8.1-fpm.sock`):
-
-```nginx
-server {
-    listen 80;
-    server_name tu-dominio.com;
-    root /var/www/secmti;
-
-    index index.php index.html;
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock; # Verifica tu versión de PHP
-    }
-
-    location ~ /\.ht {
-        deny all;
-    }
-}
-```
-
-```bash
-# 2. Habilita el sitio creando un enlace simbólico y reinicia Nginx
-sudo ln -s /etc/nginx/sites-available/secmti /etc/nginx/sites-enabled/
-sudo systemctl restart nginx
-```
-
-</details>
-
-### 7. ¡Listo!
+### Paso 6: Primer Inicio de Sesión
 
 Ahora puedes acceder a tu portal a través de `http://tu-dominio.com`. El usuario por defecto creado por el script `install.sql` es:
 - **Usuario**: `admin`
@@ -372,10 +298,12 @@ secmti/
 │   │   ├── main.css
 │   │   ├── landing.css
 │   │   ├── index2.css
-│   │   └── datacenter.css
+│   │   ├── datacenter.css
+│   │   └── manage.css
 │   └── js/
-│       ├── datacenter_manager.js
-│       └── datacenter_view.js
+│       ├── datacenter_view.js
+│       ├── manage.js
+│       └── modal-system.js
 │
 ├── manage.php             # Panel de administración
 ├── users_manager.php      # Gestión de usuarios
@@ -397,7 +325,7 @@ secmti/
 ### Para Administradores
 
 1. **Acceder al portal**: `http://tu-servidor/secmti/index2.php`
-2. **Gestión de infraestructura**: Click en "🏢 Gestión de Infraestructura"
+2. **Gestión de infraestructura**: Clic en "🏢 Gestión de Infraestructura"
 3. **Agregar servidor**: Click en "Agregar Servidor"
 4. **Organizar servicios**: Click en "✏️ Organizar Botones" (modo drag & drop)
 5. **Ver estadísticas**: Dashboard en la página principal
@@ -414,7 +342,7 @@ secmti/
 
 ### Mejores Prácticas Implementadas
 
-✅ **Contraseñas**: Hasheadas con `password_hash()` (bcrypt)  
+✅ **Contraseñas**: Cifrado AES-256-CBC para datos sensibles y `password_hash()` (bcrypt) para logins  
 ✅ **SQL Injection**: Queries preparadas con PDO  
 ✅ **XSS**: `htmlspecialchars()` en todas las salidas  
 ✅ **CSRF**: Tokens en todos los formularios  

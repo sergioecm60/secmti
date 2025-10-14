@@ -112,4 +112,13 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCounter();
     });
     
+    // --- Lógica para el botón de guardar ---
+    const saveConfigBtn = document.getElementById('saveConfigBtn');
+    if (saveConfigBtn) {
+        saveConfigBtn.addEventListener('click', function() {
+            if (confirm('¿Guardar todos los cambios? Esta acción sobreescribirá el archivo de configuración.')) {
+                document.getElementById('configForm').submit();
+            }
+        });
+    }
 });

@@ -33,10 +33,10 @@ backups/
 dumps/
 
 # EXCEPCIONES: Permitir scripts de instalación
-!db/install.sql
-!db/seed_data.sql
-!db/fix_dashboard_stats.sql
-!db/verify_dashboard.sql
+!database/install.sql
+!database/seed_data.sql
+!database/fix_dashboard_stats.sql
+!database/verify_dashboard.sql
 
 # ============================================================================
 # LOGS Y ARCHIVOS TEMPORALES

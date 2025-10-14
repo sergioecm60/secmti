@@ -168,12 +168,8 @@ function create_backup($file) {
 // ============================================================================
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    
-    // Verificar CSRF
-    if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
-        $status_message = '<div class="status-message error">❌ Token de seguridad inválido. Recarga la página e intenta de nuevo.</div>';
-    } else {
-        
+    try {
+        validate_request_csrf();
         // Crear copia profunda del config para modificar
         $new_config = $config;
         
@@ -484,6 +480,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $status_message .= '</ul></div>';
         }
+    } catch (Exception $e) {
+        $status_message = '<div class="status-message error">❌ Error de seguridad: ' . htmlspecialchars($e->getMessage()) . '</div>';
+        log_security_event('csrf_validation_failed', 'Token inválido en manage.php');
     }
 }
 ?>
@@ -509,7 +508,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form method="POST" action="manage.php" id="configForm">
                 <!-- Sección de Ajustes Generales -->
                 <div class="section">
-                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+                    <?= csrf_field() ?>
                     <div class="section-header">Ajustes Generales</div>
                     <div class="section-body">
                         <div class="section-body-inner">
@@ -681,7 +680,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div class="form-actions">
-                    <button type="button" onclick="if(confirm('¿Guardar todos los cambios?')) document.getElementById('configForm').submit();" class="save-btn">
+                    <button type="button" id="saveConfigBtn" class="save-btn">
                         💾 Guardar Cambios
                     </button>
                     <a href="index2.php" class="cancel-btn">❌ Cancelar</a>
