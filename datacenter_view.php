@@ -1,7 +1,6 @@
 <?php
 // datacenter_view.php - Vista de infraestructura optimizada
 require_once 'bootstrap.php';
-require_once 'database.php';
 
 $nonce = base64_encode(random_bytes(16));
 header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self'; img-src 'self' data:;");
@@ -25,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     } else {
         try {
             $pdo->beginTransaction();
-            $encryption = new \SecMTI\Util\Encryption(base64_decode($config['encryption_key']));
+            $encryption = new \SecMTI\Util\Encryption(base64_decode($config['security']['encryption_key']));
             
             switch ($_POST['action']) {
                 case 'save_server':

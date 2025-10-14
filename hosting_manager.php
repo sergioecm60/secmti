@@ -3,10 +3,9 @@
 use SecMTI\Util\Encryption;
 
 require_once 'bootstrap.php';
-require_once 'database.php';
 
 $nonce = base64_encode(random_bytes(16));
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self';");
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self'; img-src 'self' data:;");
 
 // Verificar autenticación y rol de administrador.
 if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
@@ -18,10 +17,10 @@ $pdo = get_database_connection($config, true);
 $status_message = '';
 
 // Inicializar el servicio de cifrado
-if (empty($config['encryption_key']) || strlen(base64_decode($config['encryption_key'])) !== 32) {
+if (empty($config['security']['encryption_key']) || strlen(base64_decode($config['security']['encryption_key'])) !== 32) {
     die("Error Crítico: La clave de cifrado ('encryption_key') no está definida en config.php o no es válida.");
 }
-$encryption = new Encryption(base64_decode($config['encryption_key']));
+$encryption = new Encryption(base64_decode($config['security']['encryption_key']));
 
 
 // --- MANEJO DE ACCIONES POST (GUARDAR, ELIMINAR) ---
@@ -285,25 +284,25 @@ try {
                 <!-- Contenido de las pestañas -->
                 <div id="tab-general" class="tab-content active">
                     <div class="form-group">
-                        <label for="label">Etiqueta Descriptiva *</label>
+                        <label for="hostLabel">Etiqueta Descriptiva *</label>
                         <input type="text" name="label" id="hostLabel" required placeholder="Ej: Hosting Clientes A">
                     </div>
                     <div class="form-group">
-                        <label for="hostname">Hostname (Dominio del servidor) *</label>
+                        <label for="hostHostname">Hostname (Dominio del servidor) *</label>
                         <input type="text" name="hostname" id="hostHostname" required placeholder="Ej: vps.midominio.com">
                     </div>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="cpanel_port">Puerto cPanel/WHM</label>
+                            <label for="hostCpanelPort">Puerto cPanel/WHM</label>
                             <input type="number" name="cpanel_port" id="hostCpanelPort" value="2083">
                         </div>
                         <div class="form-group">
-                            <label for="webmail_port">Puerto Webmail</label>
+                            <label for="hostWebmailPort">Puerto Webmail</label>
                             <input type="number" name="webmail_port" id="hostWebmailPort" value="2096">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="notes">Notas</label>
+                        <label for="hostNotes">Notas</label>
                         <textarea name="notes" id="hostNotes" rows="3"></textarea>
                     </div>
                 </div>
@@ -398,7 +397,10 @@ try {
         function setReadOnly(isReadOnly) {
             const form = document.getElementById('hostForm');
             form.querySelectorAll('input, textarea, select, button').forEach(el => {
-                if (!el.classList.contains('cancel-btn') && !el.classList.contains('close')) {
+                // No deshabilitar los botones de las pestañas, el de cancelar o el de cerrar.
+                if (!el.classList.contains('tab-link') && 
+                    !el.classList.contains('cancel-btn') && 
+                    !el.classList.contains('close')) {
                     el.disabled = isReadOnly;
                 }
             });

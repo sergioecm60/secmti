@@ -48,12 +48,12 @@ if ($action === 'get_password' && $id > 0 && in_array($type, ['hosting_account',
 
     if ($encrypted_password) {
         // Inicializar el servicio de cifrado para descifrar la contraseña
-        if (empty($config['encryption_key']) || strlen(base64_decode($config['encryption_key'])) !== 32) {
+        if (empty($config['security']['encryption_key']) || strlen(base64_decode($config['security']['encryption_key'])) !== 32) {
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Error de configuración del servidor.']);
             exit;
         }
-        $encryption = new Encryption(base64_decode($config['encryption_key']));
+        $encryption = new Encryption(base64_decode($config['security']['encryption_key']));
         $decrypted_password = $encryption->decrypt($encrypted_password);
 
         echo json_encode(['success' => true, 'password' => $decrypted_password]);

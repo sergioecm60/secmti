@@ -6,7 +6,6 @@
  */
 
 require_once '../bootstrap.php';
-require_once '../database.php'; // Asegurar que la función de conexión a BD esté disponible
 use SecMTI\Util\Encryption;
 
 header('Content-Type: application/json');
@@ -23,7 +22,6 @@ try {
     $action = $_GET['action'] ?? null;
     $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-    $pdo = get_database_connection($config, false);
     if (!$pdo) {
         throw new Exception('Error de conexión a base de datos', 500);
     }
@@ -54,11 +52,11 @@ try {
             }
 
             // Descifrar la contraseña
-            if (empty($config['encryption_key']) || strlen(base64_decode($config['encryption_key'])) !== 32) {
+            if (empty($config['security']['encryption_key']) || strlen(base64_decode($config['security']['encryption_key'])) !== 32) {
                 throw new Exception('Error de configuración de cifrado', 500);
             }
             
-            $encryption = new Encryption(base64_decode($config['encryption_key']));
+            $encryption = new Encryption(base64_decode($config['security']['encryption_key']));
             $decrypted_password = $encryption->decrypt($encrypted_password);
             
             if ($decrypted_password === false) {

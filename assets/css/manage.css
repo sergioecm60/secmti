@@ -1,0 +1,60 @@
+/* ============================================================================
+   Estilos para el Panel de Administración (manage.php)
+   ============================================================================ */
+
+.validation-errors {
+    background: #fee;
+    border: 2px solid #c33;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.validation-errors ul {
+    margin: 0.5rem 0 0 0;
+    padding-left: 1.5rem;
+}
+
+.validation-errors li {
+    color: #c33;
+    margin: 0.25rem 0;
+}
+
+.status-message {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.status-message.success {
+    background: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.status-message.error {
+    background: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.form-help {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 0.25rem;
+}
+
+.char-counter {
+    font-size: 0.8rem;
+    color: #999;
+    float: right;
+}
+
+.char-counter.warning {
+    color: #ff9800;
+}
+
+.char-counter.danger {
+    color: #f44336;
+}

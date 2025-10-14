@@ -1,128 +1,488 @@
 <?php
-// manage.php - Página para administrar la configuración del sitio.
+/**
+ * manage.php - Panel de Administración del Sitio
+ * 
+ * Permite a los administradores configurar todos los aspectos del portal.
+ * 
+ * SEGURIDAD:
+ * - Solo accesible por admins
+ * - CSRF protection
+ * - Validación estricta de todos los inputs
+ * - Backups múltiples con timestamps
+ * - Logging completo de cambios
+ * - Rollback automático en caso de error
+ */
 
-// Incluir el archivo de inicialización central.
 require_once 'bootstrap.php';
 
-$config_file = 'config.php';
-$nonce = base64_encode(random_bytes(16));
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self' 'nonce-{$nonce}';");
+// ============================================================================
+// CONTROL DE ACCESO
+// ============================================================================
 
-// Verificar autenticación y rol de administrador.
 if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-    // Si no es admin, redirigir a la página de login (o a index2.php si prefieres)
-    header('Location: login.php');
+    log_security_event('unauthorized_manage_access', 'Intento de acceso a manage.php sin permisos');
+    header('Location: index2.php');
     exit;
 }
 
+// Rate limiting
+if (!check_rate_limit('manage_access', 10, 60)) {
+    http_response_code(429);
+    die('Demasiadas solicitudes. Espera un momento.');
+}
+
+$nonce = base64_encode(random_bytes(16));
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;");
+
 $status_message = '';
 
-// --- MANEJO DEL GUARDADO DE LA CONFIGURACIÓN ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Validar token CSRF primero
-    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-        $status_message = '<div class="status-message error">Error de validación de seguridad. Por favor, intente guardar de nuevo.</div>';
+// ============================================================================
+// FUNCIONES DE VALIDACIÓN
+// ============================================================================
+
+/**
+ * Valida que una cadena tenga una longitud permitida
+ */
+function validate_string_length($value, $min, $max, $field_name) {
+    $len = mb_strlen($value);
+    if ($len < $min || $len > $max) {
+        return "El campo '{$field_name}' debe tener entre {$min} y {$max} caracteres (actual: {$len})";
+    }
+    return null;
+}
+
+/**
+ * Valida una URL
+ */
+function validate_url($url, $field_name, $allow_relative = false) {
+    if (empty($url)) return null;
+    
+    // Bloquear esquemas peligrosos
+    $dangerous_schemes = ['javascript:', 'data:', 'vbscript:', 'file:'];
+    foreach ($dangerous_schemes as $scheme) {
+        if (stripos($url, $scheme) === 0) {
+            return "El campo '{$field_name}' contiene un esquema de URL no permitido";
+        }
+    }
+    
+    // Si es relativa y está permitido, aceptar
+    if ($allow_relative && !preg_match('/^https?:\/\//', $url)) {
+        return null;
+    }
+    
+    // Validar URL completa
+    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        return "El campo '{$field_name}' no es una URL válida";
+    }
+    
+    return null;
+}
+
+/**
+ * Valida un número de teléfono
+ */
+function validate_phone($phone, $field_name) {
+    // Remover espacios, guiones, paréntesis
+    $clean = preg_replace('/[\s\-\(\)]/', '', $phone);
+    
+    // Debe tener entre 8 y 15 dígitos (puede incluir +)
+    if (!preg_match('/^\+?\d{8,15}$/', $clean)) {
+        return "El campo '{$field_name}' no es un teléfono válido";
+    }
+    
+    return null;
+}
+
+/**
+ * Valida un SVG path
+ */
+function validate_svg_path($path, $field_name) {
+    if (empty($path)) return null;
+    
+    // Bloquear eventos JS
+    $dangerous_patterns = [
+        '/on\w+\s*=/i',           // onclick, onload, etc.
+        '/<script/i',             // <script>
+        '/javascript:/i',         // javascript:
+        '/data:text\/html/i',     // data URLs
+    ];
+    
+    foreach ($dangerous_patterns as $pattern) {
+        if (preg_match($pattern, $path)) {
+            return "El campo '{$field_name}' contiene código potencialmente peligroso";
+        }
+    }
+    
+    // Validar que parezca un path SVG válido
+    if (!preg_match('/^[MmLlHhVvCcSsQqTtAaZz0-9\s,\.\-]+$/', $path)) {
+        return "El campo '{$field_name}' no parece un path SVG válido";
+    }
+    
+    return null;
+}
+
+/**
+ * Sanitiza una cadena para usar en var_export
+ */
+function safe_var_export($var, $indent = '') {
+    if (is_array($var)) {
+        $output = "[\n";
+        foreach ($var as $key => $value) {
+            $output .= $indent . '    ' . var_export($key, true) . ' => ';
+            $output .= safe_var_export($value, $indent . '    ') . ",\n";
+        }
+        $output .= $indent . ']';
+        return $output;
+    } elseif (is_string($var)) {
+        // Escapar caracteres especiales
+        return "'" . addslashes($var) . "'";
     } else {
-        $can_save = true;
+        return var_export($var, true);
+    }
+}
 
-        $lp_config =& $config['landing_page'];
-        $lp_config['company_name'] = trim($_POST['company_name'] ?? $lp_config['company_name']);
+/**
+ * Crea un backup con timestamp
+ */
+function create_backup($file) {
+    $timestamp = date('Y-m-d_H-i-s');
+    $backup_file = $file . '.backup_' . $timestamp;
+    
+    if (copy($file, $backup_file)) {
+        // Mantener solo los últimos 10 backups
+        $backups = glob($file . '.backup_*');
+        rsort($backups);
+        
+        foreach (array_slice($backups, 10) as $old_backup) {
+            @unlink($old_backup);
+        }
+        
+        return $backup_file;
+    }
+    
+    return false;
+}
 
-        // --- Contenido de la Página Principal ---
-        $lp_config['sales_title'] = trim($_POST['sales_title'] ?? $lp_config['sales_title']);
-        $lp_config['locations_title'] = trim($_POST['locations_title'] ?? $lp_config['locations_title']);
-        $lp_config['social_title'] = trim($_POST['social_title'] ?? $lp_config['social_title']);
-        $lp_config['main_sites_title'] = trim($_POST['main_sites_title'] ?? $lp_config['main_sites_title']);
+// ============================================================================
+// PROCESAMIENTO DEL FORMULARIO
+// ============================================================================
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    
+    // Verificar CSRF
+    if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+        $status_message = '<div class="status-message error">❌ Token de seguridad inválido. Recarga la página e intenta de nuevo.</div>';
+    } else {
+        
+        // Crear copia profunda del config para modificar
+        $new_config = $config;
+        
+        // ================================================================
+        // VALIDAR Y PROCESAR: Ajustes Generales
+        // ================================================================
+        
+        $company_name = trim($_POST['company_name'] ?? '');
+        if ($error = validate_string_length($company_name, 3, 100, 'Nombre de Empresa')) {
+            $validation_errors[] = $error;
+        } else {
+            $new_config['landing_page']['company_name'] = $company_name;
+        }
+        
+        // ================================================================
+        // VALIDAR Y PROCESAR: Página Principal
+        // ================================================================
+        
+        // Títulos
+        $titles = [
+            'sales_title' => 'Título de Ventas',
+            'locations_title' => 'Título de Sucursales',
+            'social_title' => 'Título de Redes Sociales',
+            'main_sites_title' => 'Título de Sitios Principales'
+        ];
+        
+        foreach ($titles as $key => $label) {
+            $value = trim($_POST[$key] ?? '');
+            if ($error = validate_string_length($value, 3, 50, $label)) {
+                $validation_errors[] = $error;
+            } else {
+                $new_config['landing_page'][$key] = $value;
+            }
+        }
+        
         // Teléfonos
-        $lp_config['phone_numbers'] = [];
+        $new_config['landing_page']['phone_numbers'] = [];
         if (isset($_POST['phone_numbers']) && is_array($_POST['phone_numbers'])) {
-            foreach (array_map('trim', $_POST['phone_numbers']) as $phone) {
-                if (!empty($phone)) $lp_config['phone_numbers'][] = $phone;
+            foreach ($_POST['phone_numbers'] as $phone) {
+                $phone = trim($phone);
+                if (empty($phone)) continue;
+                
+                if (count($new_config['landing_page']['phone_numbers']) >= 10) {
+                    $validation_errors[] = "Máximo 10 teléfonos permitidos";
+                    break;
+                }
+                
+                if ($error = validate_phone($phone, 'Teléfono')) {
+                    $validation_errors[] = $error;
+                } else {
+                    $new_config['landing_page']['phone_numbers'][] = $phone;
+                }
             }
         }
-
+        
         // Sucursales
-        $lp_config['branches'] = [];
+        $new_config['landing_page']['branches'] = [];
         if (isset($_POST['branches']) && is_array($_POST['branches'])) {
-            foreach (array_map('trim', $_POST['branches']) as $branch) {
-                if (!empty($branch)) $lp_config['branches'][] = $branch;
+            foreach ($_POST['branches'] as $branch) {
+                $branch = trim($branch);
+                if (empty($branch)) continue;
+                
+                if (count($new_config['landing_page']['branches']) >= 20) {
+                    $validation_errors[] = "Máximo 20 sucursales permitidas";
+                    break;
+                }
+                
+                if ($error = validate_string_length($branch, 5, 200, 'Sucursal')) {
+                    $validation_errors[] = $error;
+                } else {
+                    $new_config['landing_page']['branches'][] = $branch;
+                }
             }
         }
-
-        // Redes Sociales (dinámico)
-        $lp_config['social_links'] = [];
+        
+        // Redes Sociales
+        $new_config['landing_page']['social_links'] = [];
         if (isset($_POST['social_links']) && is_array($_POST['social_links'])) {
             foreach ($_POST['social_links'] as $link_data) {
                 $id = trim($link_data['id'] ?? '');
                 if (empty($id)) continue;
-                $lp_config['social_links'][$id] = [
-                    'label' => trim($link_data['label'] ?? 'Sin Etiqueta'),
-                    'url' => trim($link_data['url'] ?? '#'),
-                    'svg_path' => trim($link_data['svg_path'] ?? ''),
+                
+                if (count($new_config['landing_page']['social_links']) >= 10) {
+                    $validation_errors[] = "Máximo 10 redes sociales permitidas";
+                    break;
+                }
+                
+                // Validar ID
+                if (!preg_match('/^[a-z0-9_]+$/', $id)) {
+                    $validation_errors[] = "ID de red social '{$id}' inválido (solo minúsculas, números y guiones bajos)";
+                    continue;
+                }
+                
+                $label = trim($link_data['label'] ?? '');
+                $url = trim($link_data['url'] ?? '');
+                $svg_path = trim($link_data['svg_path'] ?? '');
+                
+                // Validaciones
+                if ($error = validate_string_length($label, 2, 30, "Etiqueta de '{$id}'")) {
+                    $validation_errors[] = $error;
+                    continue;
+                }
+                
+                if ($error = validate_url($url, "URL de '{$id}'", false)) {
+                    $validation_errors[] = $error;
+                    continue;
+                }
+                
+                if ($error = validate_svg_path($svg_path, "SVG path de '{$id}'")) {
+                    $validation_errors[] = $error;
+                    continue;
+                }
+                
+                $new_config['landing_page']['social_links'][$id] = [
+                    'label' => $label,
+                    'url' => $url,
+                    'svg_path' => $svg_path,
                 ];
             }
         }
-
-        // Sitios Principales (se mantiene estático por ahora)
+        
+        // Sitios Principales
         if (isset($_POST['main_sites']) && is_array($_POST['main_sites'])) {
             foreach ($_POST['main_sites'] as $key => $url) {
-                if (isset($lp_config['main_sites'][$key])) $lp_config['main_sites'][$key]['url'] = trim($url);
+                if (isset($new_config['landing_page']['main_sites'][$key])) {
+                    $url = trim($url);
+                    
+                    if ($error = validate_url($url, "URL de '{$key}'", true)) {
+                        $validation_errors[] = $error;
+                    } else {
+                        $new_config['landing_page']['main_sites'][$key]['url'] = $url;
+                    }
+                }
             }
         }
-
-        // Actualizar configuración del pie de página
-        $footer_config =& $config['footer'];
-        $footer_config['line1'] = trim($_POST['footer_line1'] ?? $footer_config['line1'] ?? '');
-        $footer_config['line2'] = trim($_POST['footer_line2'] ?? $footer_config['line2'] ?? '');
-        $footer_config['whatsapp_number'] = trim($_POST['footer_whatsapp_number'] ?? $footer_config['whatsapp_number'] ?? '');
-        $footer_config['license_url'] = trim($_POST['footer_license_url'] ?? $footer_config['license_url'] ?? '');
-        $footer_config['whatsapp_svg_path'] = trim($_POST['footer_whatsapp_svg_path'] ?? $footer_config['whatsapp_svg_path'] ?? '');
-
-        // 3. Actualizar la lista de servicios
-        $config['services'] = []; // Limpiar para reconstruir desde el POST
+        
+        // ================================================================
+        // VALIDAR Y PROCESAR: Footer
+        // ================================================================
+        
+        $footer_fields = [
+            'footer_line1' => ['label' => 'Línea 1 del footer', 'min' => 5, 'max' => 200],
+            'footer_line2' => ['label' => 'Línea 2 del footer', 'min' => 5, 'max' => 200],
+            'footer_license_url' => ['label' => 'URL de licencia', 'min' => 0, 'max' => 500],
+        ];
+        
+        foreach ($footer_fields as $key => $rules) {
+            $field_key = str_replace('footer_', '', $key);
+            $value = trim($_POST[$key] ?? '');
+            
+            if ($rules['min'] > 0 && empty($value)) {
+                $validation_errors[] = "{$rules['label']} es obligatorio";
+                continue;
+            }
+            
+            if (!empty($value)) {
+                if ($error = validate_string_length($value, $rules['min'], $rules['max'], $rules['label'])) {
+                    $validation_errors[] = $error;
+                    continue;
+                }
+            }
+            
+            $new_config['footer'][$field_key] = $value;
+        }
+        
+        // WhatsApp
+        $whatsapp = trim($_POST['footer_whatsapp_number'] ?? '');
+        if (!empty($whatsapp)) {
+            if ($error = validate_phone($whatsapp, 'WhatsApp')) {
+                $validation_errors[] = $error;
+            } else {
+                $new_config['footer']['whatsapp_number'] = $whatsapp;
+            }
+        }
+        
+        $whatsapp_svg = trim($_POST['footer_whatsapp_svg_path'] ?? '');
+        if (!empty($whatsapp_svg)) {
+            if ($error = validate_svg_path($whatsapp_svg, 'SVG de WhatsApp')) {
+                $validation_errors[] = $error;
+            } else {
+                $new_config['footer']['whatsapp_svg_path'] = $whatsapp_svg;
+            }
+        }
+        
+        // ================================================================
+        // VALIDAR Y PROCESAR: Servicios
+        // ================================================================
+        
+        $new_config['services'] = [];
         if (isset($_POST['services']) && is_array($_POST['services'])) {
             foreach ($_POST['services'] as $key => $service_data) {
-                // Para servicios existentes, la clave ($key) y el id del campo son iguales.
-                // Para servicios nuevos, la clave es 'nuevo_...' y el id lo define el usuario en el campo de texto.
                 $service_id = trim($service_data['id'] ?? $key);
-
-                if (empty($service_id)) {
-                    continue; // Ignorar servicios sin un ID válido
+                
+                if (empty($service_id)) continue;
+                
+                if (count($new_config['services']) >= 50) {
+                    $validation_errors[] = "Máximo 50 servicios permitidos";
+                    break;
                 }
-
-                // Usamos el ID (del campo de texto para los nuevos, o la clave para los existentes)
-                // como la clave final en el array de configuración.
-                $config['services'][$service_id] = [
-                    'label'          => trim($service_data['label'] ?? 'Sin Etiqueta'),
-                    'url'            => trim($service_data['url'] ?? '#'),
-                    // Se añade la categoría, con 'Otros Servicios' como valor por defecto si está vacío.
-                    'category'       => trim($service_data['category'] ?? 'Otros Servicios'),
-                    'requires_login' => isset($service_data['requires_login']), // checkbox value is '1' if checked
-                    'redirect'       => isset($service_data['redirect']),       // checkbox value is '1' if checked
+                
+                // Validar ID
+                if (!preg_match('/^[a-z0-9_-]+$/i', $service_id)) {
+                    $validation_errors[] = "ID de servicio '{$service_id}' inválido (solo letras, números, guiones y guiones bajos)";
+                    continue;
+                }
+                
+                $label = trim($service_data['label'] ?? '');
+                $url = trim($service_data['url'] ?? '');
+                $category = trim($service_data['category'] ?? 'Otros Servicios');
+                
+                // Validaciones
+                if ($error = validate_string_length($label, 2, 50, "Etiqueta de '{$service_id}'")) {
+                    $validation_errors[] = $error;
+                    continue;
+                }
+                
+                if ($error = validate_url($url, "URL de '{$service_id}'", true)) {
+                    $validation_errors[] = $error;
+                    continue;
+                }
+                
+                if ($error = validate_string_length($category, 2, 50, "Categoría de '{$service_id}'")) {
+                    $validation_errors[] = $error;
+                    continue;
+                }
+                
+                $new_config['services'][$service_id] = [
+                    'label' => $label,
+                    'url' => $url,
+                    'category' => $category,
+                    'requires_login' => isset($service_data['requires_login']),
+                    'redirect' => isset($service_data['redirect']),
                 ];
             }
         }
-
-        // Ya no necesitamos la sección 'login' en el archivo de configuración.
-        unset($config['login']);
-
-        // 4. Escribir la nueva configuración de vuelta al archivo
-        $new_config_content = "<?php\n" .
-            "/**\n * /config.php - Archivo de Configuración Central\n * Este archivo debe devolver un array con toda la configuración de la aplicación.\n * No debe ejecutar lógica, solo definir datos.\n */\n\n" .
-            "return " . var_export($config, true) . ";\n";
-
-        if ($can_save) {
-            if (file_exists($config_file)) {
-                copy($config_file, $config_file . '.bak');
-            }
-
-            // Escribir el nuevo contenido
-            if (file_put_contents($config_file, $new_config_content)) {
-                $status_message = '<div class="status-message success">¡Configuración guardada con éxito!</div>';
+        
+        // ================================================================
+        // GUARDAR CONFIGURACIÓN (solo si no hay errores)
+        // ================================================================
+        
+        if (empty($validation_errors)) {
+            $config_file = __DIR__ . '/config.php';
+            
+            // Verificar permisos
+            if (!is_writable($config_file)) {
+                $status_message = '<div class="status-message error">❌ El archivo de configuración no es escribible. Verifica los permisos.</div>';
             } else {
-                $status_message = '<div class="status-message error">Error: No se pudo escribir en el archivo de configuración (<code>' . htmlspecialchars($config_file) . '</code>). Verifique los permisos.</div>';
+                // Crear backup
+                $backup_file = create_backup($config_file);
+                
+                if (!$backup_file) {
+                    $status_message = '<div class="status-message error">❌ No se pudo crear el backup. Operación cancelada.</div>';
+                } else {
+                    // Preparar contenido
+                    $new_config_content = "<?php\n" .
+                        "/**\n" .
+                        " * config.php - Configuración Central\n" .
+                        " * Generado automáticamente por manage.php\n" .
+                        " * Fecha: " . date('Y-m-d H:i:s') . "\n" .
+                        " * Usuario: " . $_SESSION['username'] . "\n" .
+                        " */\n\n" .
+                        "return " . safe_var_export($new_config) . ";\n";
+                    
+                    // Intentar escribir
+                    if (file_put_contents($config_file, $new_config_content, LOCK_EX)) {
+                        
+                        // Verificar que el archivo sea válido
+                        try {
+                            $test_config = require $config_file;
+                            
+                            if (!is_array($test_config)) {
+                                throw new Exception('Config no es un array');
+                            }
+                            
+                            // Éxito
+                            $config = $test_config;
+                            
+                            log_security_event(
+                                'config_updated',
+                                "Usuario {$_SESSION['username']} actualizó la configuración del sitio"
+                            );
+                            
+                            $status_message = '<div class="status-message success">✅ ¡Configuración guardada con éxito! Backup creado: ' . basename($backup_file) . '</div>';
+                            
+                        } catch (Exception $e) {
+                            // Rollback
+                            copy($backup_file, $config_file);
+                            
+                            log_security_event(
+                                'config_save_failed',
+                                "Fallo al guardar configuración. Rollback ejecutado. Error: " . $e->getMessage()
+                            );
+                            
+                            $status_message = '<div class="status-message error">❌ Error al validar la configuración guardada. Se restauró el backup.</div>';
+                        }
+                        
+                    } else {
+                        $status_message = '<div class="status-message error">❌ No se pudo escribir en el archivo de configuración.</div>';
+                    }
+                }
             }
+        } else {
+            // Hay errores de validación
+            $status_message = '<div class="status-message error">';
+            $status_message .= '<strong>❌ Se encontraron los siguientes errores:</strong><ul>';
+            foreach ($validation_errors as $error) {
+                $status_message .= '<li>' . htmlspecialchars($error) . '</li>';
+            }
+            $status_message .= '</ul></div>';
         }
     }
 }
@@ -132,21 +492,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administrar Sitio</title>
-    <base href="/secmti/">
+    <title>⚙️ Panel de Administración - <?= htmlspecialchars($config['landing_page']['company_name'] ?? 'Portal') ?></title>
     <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/manage.css">
 </head>
 <body class="page-manage">
     <div class="admin-container">
         <header class="admin-header">
-            <h1>⚙️ Administrar Configuración</h1>
-            <p>Edita los parámetros principales de tu portal.</p>
+            <h1>⚙️ Panel de Administración</h1>
+            <p>Usuario: <strong><?= htmlspecialchars($_SESSION['username']) ?></strong> | Rol: <strong><?= htmlspecialchars($_SESSION['user_role']) ?></strong></p>
         </header>
 
         <div class="content">
             <?= $status_message ?>
 
-            <form method="POST" action="manage.php">
+            <form method="POST" action="manage.php" id="configForm">
                 <!-- Sección de Ajustes Generales -->
                 <div class="section">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
@@ -321,129 +681,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="save-btn">Guardar Cambios</button>
+                    <button type="button" onclick="if(confirm('¿Guardar todos los cambios?')) document.getElementById('configForm').submit();" class="save-btn">
+                        💾 Guardar Cambios
+                    </button>
+                    <a href="index2.php" class="cancel-btn">❌ Cancelar</a>
                 </div>
             </form>
         </div>
     </div>
 
-    <a href="index2.php" class="back-btn">
-        ← Volver al Portal de Servicios
-    </a>
+    <a href="index2.php" class="back-btn">← Volver al Portal</a>
 
-    <footer class="footer">
-        <strong><?= htmlspecialchars($config['footer']['line1'] ?? '') ?></strong><br>
-        <div class="footer-contact-line">
-            <span><?= htmlspecialchars($config['footer']['line2'] ?? '') ?></span>
-            <?php if (!empty($config['footer']['whatsapp_number']) && !empty($config['footer']['whatsapp_svg_path'])): ?>
-                <a href="https://wa.me/<?= htmlspecialchars($config['footer']['whatsapp_number']) ?>" target="_blank" rel="noopener noreferrer" class="footer-whatsapp-link" aria-label="Contactar por WhatsApp" tabindex="0">
-                    <svg class="icon" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="<?= $config['footer']['whatsapp_svg_path'] ?>"/>
-                    </svg>
-                    <span><?= htmlspecialchars($config['footer']['whatsapp_number']) ?></span>
-                </a>
-            <?php endif; ?>
-        </div>
-        <a href="<?= htmlspecialchars($config['footer']['license_url'] ?? '#') ?>" target="_blank" rel="license">Términos y Condiciones (Licencia GNU GPL v3)</a>
-    </footer>
+    <?php require_once 'templates/footer.php'; ?>
 
-    <script nonce="<?= htmlspecialchars($nonce) ?>">
-    document.addEventListener('DOMContentLoaded', function() {
-        // --- Lógica para secciones colapsables (acordeón) ---
-        document.querySelectorAll('.section-header').forEach(header => {
-            header.addEventListener('click', () => {
-                header.classList.toggle('active');
-                const body = header.nextElementSibling;
-                if (body.style.maxHeight) {
-                    body.style.maxHeight = null;
-                } else {
-                    body.style.maxHeight = body.scrollHeight + "px";
-                }
-            });
-        });
-
-        // --- Lógica para listas dinámicas ---
-        const contentDiv = document.querySelector('.content');
-        document.querySelectorAll('.add-item-btn').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const targetListId = this.dataset.target;
-                const inputName = this.dataset.name;
-                const placeholder = this.dataset.placeholder || '';
-                const list = document.getElementById(targetListId);
-                
-                const newItem = document.createElement('div');
-                newItem.classList.add('repeatable-item');
-                newItem.innerHTML = `
-                    <input type="text" name="${inputName}" value="" placeholder="${placeholder}" />
-                    <button type="button" class="delete-item-btn">Eliminar</button>
-                `;
-                list.insertBefore(newItem, this);
-                newItem.querySelector('input').focus();
-            });
-        });
-
-        contentDiv.addEventListener('click', function(e) {
-            if (e.target && e.target.classList.contains('delete-item-btn')) {
-                e.preventDefault();
-                e.target.closest('.repeatable-item').remove();
-            }
-        });
-
-        // --- Lógica para la tabla de servicios ---
-        const servicesTableBody = document.querySelector('#services-table tbody');
-        servicesTableBody.addEventListener('click', function(e) {
-            if (e.target && e.target.classList.contains('delete-service-btn')) {
-                e.preventDefault();
-                e.target.closest('tr').remove();
-            }
-        });
-
-        const addServiceBtn = document.getElementById('add-service-btn');
-        addServiceBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const newId = 'nuevo_' + Date.now();
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td><input type="text" name="services[${newId}][id]" placeholder="ej: miBoton" required></td>
-                <td><input type="text" name="services[${newId}][label]" placeholder="ej: Mi Botón" required></td>
-                <td><input type="text" name="services[${newId}][url]" placeholder="https://... o info.php" required></td>
-                <td><input type="text" name="services[${newId}][category]" placeholder="Ej: Accesos WAN" required></td>
-                <td class="checkbox-cell"><input type="checkbox" name="services[${newId}][requires_login]" value="1" checked></td>
-                <td class="checkbox-cell"><input type="checkbox" name="services[${newId}][redirect]" value="1"></td>
-                <td><button type="button" class="delete-service-btn">Eliminar</button></td>
-            `;
-            servicesTableBody.appendChild(newRow);
-            newRow.querySelector('input').focus();
-        });
-
-        // --- Lógica para la tabla de redes sociales ---
-        const socialLinksTableBody = document.querySelector('#social-links-table tbody');
-        socialLinksTableBody.addEventListener('click', function(e) {
-            if (e.target && e.target.classList.contains('delete-item-btn')) {
-                e.preventDefault();
-                e.target.closest('tr').remove();
-            }
-        });
-
-        const addSocialLinkBtn = document.getElementById('add-social-link-btn');
-        addSocialLinkBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const newId = 'nuevo_' + Date.now();
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td><input type="text" name="social_links[${newId}][id]" placeholder="ej: tiktok" required></td>
-                <td><input type="text" name="social_links[${newId}][label]" placeholder="TikTok" required></td>
-                <td><input type="text" name="social_links[${newId}][url]" placeholder="https://www.tiktok.com/..." required></td>
-                <td><textarea name="social_links[${newId}][svg_path]" rows="2" placeholder="<path d='...' />"></textarea></td>
-                <td><button type="button" class="delete-item-btn">Eliminar</button></td>
-            `;
-            socialLinksTableBody.appendChild(newRow);
-            newRow.querySelector('input').focus();
-        });
-
-
-    });
-    </script>
+    <script src="assets/js/manage.js" nonce="<?= htmlspecialchars($nonce) ?>"></script>
 </body>
 </html>

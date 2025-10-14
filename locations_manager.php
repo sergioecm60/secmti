@@ -1,7 +1,6 @@
 <?php
 // locations_manager.php - Gestor de Ubicaciones
 require_once 'bootstrap.php';
-require_once 'database.php';
 
 $nonce = base64_encode(random_bytes(16));
 header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self';");
@@ -136,15 +135,15 @@ $locations = $pdo->query("SELECT * FROM dc_locations ORDER BY name")->fetchAll(P
                 <input type="hidden" name="id" id="locationId">
 
                 <div class="form-group">
-                    <label for="name">Nombre *</label>
+                    <label for="locationName">Nombre *</label>
                     <input type="text" name="name" id="locationName" required>
                 </div>
                 <div class="form-group">
-                    <label for="address">Dirección</label>
+                    <label for="locationAddress">Dirección</label>
                     <input type="text" name="address" id="locationAddress">
                 </div>
                 <div class="form-group">
-                    <label for="notes">Notas</label>
+                    <label for="locationNotes">Notas</label>
                     <textarea name="notes" id="locationNotes" rows="3"></textarea>
                 </div>
 

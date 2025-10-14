@@ -4,7 +4,10 @@
  * Endpoint para autenticación: login y generación de captcha.
  */
 
-require_once '../bootstrap.php'; // bootstrap.php inicia la sesión
+// bootstrap.php se encarga de:
+// 1. Cargar configuración y variables de entorno.
+// 2. Iniciar la sesión de forma segura.
+require_once '../bootstrap.php';
 use SecMTI\Model\UserModel;
 
 header('Content-Type: application/json');
@@ -56,8 +59,7 @@ try {
             throw new Exception('Usuario o contraseña incorrectos.', 401);
         }
 
-        require_once '../database.php';
-        $pdo = get_database_connection($config, false);
+        $pdo = get_database_connection($config, false); // La función está disponible desde bootstrap.php
 
         if (!$pdo) {
             throw new Exception('Error del servidor al conectar con la base de datos.', 500);

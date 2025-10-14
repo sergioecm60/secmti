@@ -107,82 +107,191 @@ Un **portal de servicios profesional y completo** para **gestión de infraestruc
 
 ---
 
-## 📦 Instalación
+## 📦 Instalación en Servidor (Ubuntu con Apache/Nginx)
 
-### Opción 1: Instalación Rápida con Scripts SQL
+Esta guía te mostrará cómo instalar el portal en un servidor Ubuntu. El proceso se basa en el uso de variables de entorno (`.env`) para una máxima seguridad.
 
-#### 1. Clonar el repositorio
+### 1. Instalar Prerrequisitos (Pila LAMP/LEMP)
 
-```bash
-cd /var/www/html
-git clone https://github.com/sergioecm60/secmti.git
-cd secmti
-```
-
-#### 2. Configurar credenciales
-
-Copiar y editar el archivo de configuración:
+Abre una terminal en tu servidor y ejecuta los siguientes comandos para instalar el servidor web, la base de datos, PHP y las herramientas necesarias.
 
 ```bash
-cp config.example.php config.php
-nano config.php
+# Actualizar la lista de paquetes del sistema
+sudo apt update && sudo apt upgrade -y
+
+# Instalar Apache, MariaDB, PHP, Git y Composer
+sudo apt install -y apache2 mariadb-server php libapache2-mod-php php-mysql php-mbstring php-xml php-json git composer
+
+# Opcional: Si prefieres Nginx en lugar de Apache (pila LEMP)
+# sudo apt install -y nginx mariadb-server php-fpm php-mysql php-mbstring php-xml php-json git composer
 ```
 
-Editar la sección de base de datos:
+### 2. Configurar la Base de Datos
 
-```php
-'database' => [
-    'host' => 'localhost',
-    'name' => 'portal_db',
-    'user' => 'tu_usuario',
-    'pass' => 'tu_password',
-]
-```
-
-#### 3. Crear la base de datos
-
-Ejecutar los scripts en orden desde phpMyAdmin o línea de comandos:
+Vamos a crear una base de datos y un usuario dedicado para la aplicación.
 
 ```bash
-# 1. Crear estructura completa
-mysql -u root -p < database/install.sql
+# 1. Accede a la consola de MariaDB/MySQL como root
+sudo mysql -u root
 
-# 2. (Opcional) Cargar datos de ejemplo
-mysql -u root -p < database/seed_data.sql
+# 2. Dentro de la consola de MySQL, ejecuta estos comandos:
+CREATE DATABASE portal_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'secmti_user'@'localhost' IDENTIFIED BY 'UNA_CONTRASENA_MUY_SEGURA';
+GRANT ALL PRIVILEGES ON portal_db.* TO 'secmti_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
 ```
+> ⚠️ **Importante**: Reemplaza `UNA_CONTRASENA_MUY_SEGURA` por una contraseña real y guárdala para el siguiente paso.
 
-#### 4. Acceder al portal
+### 3. Clonar y Configurar el Proyecto
 
-```
-http://tu-servidor/secmti/
-```
-
-**Usuarios de prueba** (si usaste `seed_data.sql`):
-- Usuario: `admin` / Password: `password`
-
----
-
-### Opción 2: Instalación con Asistente Web
-
-#### 1. Acceder al instalador
-
-```
-http://tu-servidor/secmti/install.php
-```
-
-#### 2. Seguir el asistente
-
-El instalador te guiará para:
-- Configurar conexión a MySQL
-- Crear la base de datos automáticamente
-- Crear usuario administrador
-- Generar archivo `config.php`
-
-#### 3. ⚠️ Eliminar instalador (IMPORTANTE)
+Ahora descargaremos el código del portal y lo configuraremos.
 
 ```bash
-rm /var/www/html/secmti/install.php
+# 1. Clona el repositorio en el directorio web
+sudo git clone https://github.com/sergioecm60/secmti.git /var/www/secmti
+
+# 2. Navega al directorio del proyecto
+cd /var/www/secmti
+
+# 3. Instala las dependencias de PHP (como phpdotenv)
+sudo composer install --no-dev --optimize-autoloader
+
+# 4. Crea tu archivo de configuración .env a partir del ejemplo
+sudo cp .env.example .env
+
+# 5. Genera una clave de encriptación única y segura
+php -r "echo base64_encode(random_bytes(32));"
+# Copia la clave generada.
+
+# 6. Edita el archivo .env con tus datos
+sudo nano .env
 ```
+
+Dentro del editor `nano`, actualiza las siguientes líneas con los datos que configuraste:
+
+```ini
+# .env
+APP_ENV=production
+APP_URL=http://tu-dominio.com
+APP_ENCRYPTION_KEY="PEGA_AQUI_LA_CLAVE_GENERADA_EN_EL_PASO_ANTERIOR"
+
+DB_HOST=localhost
+DB_NAME=portal_db
+DB_USER=secmti_user
+DB_PASS="LA_CONTRASENA_QUE_CREASTE_EN_EL_PASO_2"
+```
+> Pulsa `Ctrl+X`, luego `Y` y `Enter` para guardar y salir de `nano`.
+
+### 4. Importar la Estructura de la Base de Datos
+
+Con la configuración lista, importa el esquema de la base de datos.
+
+```bash
+# Ejecuta el script de instalación usando las credenciales que creaste
+mysql -u secmti_user -p portal_db < database/install.sql
+```
+> Te pedirá la contraseña que definiste para `secmti_user`.
+
+### 5. Configurar Permisos
+
+Asegúrate de que el servidor web (Apache/Nginx) tenga permisos para escribir en los directorios necesarios.
+
+```bash
+# Asigna la propiedad de los archivos al usuario del servidor web (www-data en Ubuntu)
+sudo chown -R www-data:www-data /var/www/secmti
+
+# Asegura que los directorios tengan los permisos correctos
+sudo chmod -R 775 /var/www/secmti/logs
+```
+
+### 6. Configurar el Servidor Web
+
+Finalmente, crea un archivo de host virtual para que tu dominio apunte al portal.
+
+<details>
+<summary>🔵 <strong>Configuración para Apache</strong></summary>
+
+```bash
+# 1. Crea un nuevo archivo de configuración para tu sitio
+sudo nano /etc/apache2/sites-available/secmti.conf
+```
+
+Pega el siguiente contenido, reemplazando `tu-dominio.com`:
+
+```apache
+<VirtualHost *:80>
+    ServerName tu-dominio.com
+    DocumentRoot /var/www/secmti
+
+    <Directory /var/www/secmti>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/secmti_error.log
+    CustomLog ${APACHE_LOG_DIR}/secmti_access.log combined
+</VirtualHost>
+```
+
+```bash
+# 2. Habilita el nuevo sitio, el módulo de reescritura y reinicia Apache
+sudo a2ensite secmti.conf
+sudo a2enmod rewrite
+sudo systemctl restart apache2
+```
+
+</details>
+
+<details>
+<summary>⚫ <strong>Configuración para Nginx</strong></summary>
+
+```bash
+# 1. Crea un nuevo archivo de configuración para tu sitio
+sudo nano /etc/nginx/sites-available/secmti
+```
+
+Pega el siguiente contenido, reemplazando `tu-dominio.com` y asegurándote de que la versión de PHP coincida con la tuya (ej. `php8.1-fpm.sock`):
+
+```nginx
+server {
+    listen 80;
+    server_name tu-dominio.com;
+    root /var/www/secmti;
+
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock; # Verifica tu versión de PHP
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+```
+
+```bash
+# 2. Habilita el sitio creando un enlace simbólico y reinicia Nginx
+sudo ln -s /etc/nginx/sites-available/secmti /etc/nginx/sites-enabled/
+sudo systemctl restart nginx
+```
+
+</details>
+
+### 7. ¡Listo!
+
+Ahora puedes acceder a tu portal a través de `http://tu-dominio.com`. El usuario por defecto creado por el script `install.sql` es:
+- **Usuario**: `admin`
+- **Contraseña**: `password`
+
+> 🔐 **¡MUY IMPORTANTE!** Cambia esta contraseña inmediatamente después de tu primer inicio de sesión desde el panel de "Gestión de Usuarios".
 
 ---
 
@@ -190,13 +299,13 @@ rm /var/www/html/secmti/install.php
 
 ### Scripts SQL Incluidos
 
-En la carpeta `/database/` encontrarás:
+En la carpeta `database/` encontrarás:
 
 1. **`install.sql`** - Instalador completo
    - Crea todas las tablas, vistas, procedures y triggers
    - Zona horaria: Argentina (UTC-3)
    - Charset: utf8mb4_spanish_ci
-   - Usuario admin por defecto
+   - Crea un usuario `admin` con contraseña `password` (¡cambiar inmediatamente!).
 
 2. **`seed_data.sql`** - Datos de ejemplo
    - Usuarios de prueba

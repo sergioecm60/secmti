@@ -1,0 +1,17 @@
+{
+    "name": "secmti/portal",
+    "description": "Portal de servicios y gestión de infraestructura TI.",
+    "type": "project",
+    "require": {
+        "php": ">=8.0",
+        "vlucas/phpdotenv": "^5.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "SecMTI\\": "src/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

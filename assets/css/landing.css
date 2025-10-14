@@ -3,75 +3,129 @@
    Sistema de Gestión de Infraestructura TI para PYMEs
    ============================================================================ */
 
-.page-info-theme {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.page-landing {
+    background: linear-gradient(135deg, #667eea 0%, #5568d3 50%, #4b6cb7 100%);
     min-height: 100vh;
-    padding: 2rem 1rem;
+    padding: 2rem 1rem 0 1rem;
     font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
 }
 
-.page-info-theme .container {
-    max-width: 1200px;
+.page-landing .container {
+    max-width: 1400px;
+    width: 100%;
     margin: 0 auto;
+    flex: 1;
+    padding-bottom: 2rem;
 }
 
 /* ============================================================================
-   Header Principal - Hero Section
+   Accesibilidad: Skip Link (SOLO visible al hacer focus)
    ============================================================================ */
-.page-info-theme .header {
-    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%);
-    padding: 3rem 2rem;
-    border-radius: 24px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    text-align: center;
-    margin-bottom: 2rem;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.5);
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 10px;    background: #4b6cb7;
+    color: #fff;
+    padding: 12px 20px;
+    text-decoration: none;
+    z-index: 9999;
+    border-radius: 4px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: top 0.3s ease;
 }
 
-.page-info-theme .header h1 {
-    font-size: 3rem;
-    font-weight: 700;
-    color: #3e4c9b; /* Color sólido y legible */
+.skip-link:focus {
+    top: 10px;
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+}
+
+/* Screen Reader Only Text */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* ============================================================================
+   Header Principal - Hero Section COMPACTO
+   ============================================================================ */
+.page-landing .header {
+    background: rgba(255, 255, 255, 0.97);
+    padding: 1.25rem 2rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    margin-bottom: 1.5rem;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    display: flex;
+    flex-direction: row; /* Logo y título en línea */
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+/* Logo - PEQUEÑO */
+.company-logo {
+    display: block;    width: 45px;
+    height: 45px;
+    object-fit: contain;
     margin: 0;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+.page-landing .header h1 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #3e4c9b;
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 /* ============================================================================
    Secciones de Información - Cards Modernas
    ============================================================================ */
 .info-section {
-    background: rgba(255,255,255,0.95);
-    padding: 2rem;
-    border-radius: 20px;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    background: rgba(255, 255, 255, 0.96);
+    padding: 1.5rem;
+    border-radius: 14px;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255,255,255,0.5);
 }
 
 .info-section:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    transform: translateY(-3px);    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
 }
 
 .info-section h2 {
-    color: #667eea;
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin: 0 0 1.5rem 0;
-    padding-bottom: 0.75rem;
-    border-bottom: 3px solid #667eea;
+    color: #4b6cb7;
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #4b6cb7;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
 }
 
 .info-section h2::before {
     content: "▶";
-    font-size: 1.2rem;
-    color: #667eea;
+    font-size: 0.95rem;
+    color: #4b6cb7;
 }
 
 /* ============================================================================
@@ -79,19 +133,19 @@
    ============================================================================ */
 .contact p,
 .locations p {
-    font-size: 1.1rem;
-    color: #333;
-    margin: 0.75rem 0;
-    padding: 0.75rem 1rem;
-    background: rgba(102, 126, 234, 0.05);
-    border-radius: 10px;
-    border-left: 4px solid #667eea;
+    font-size: 0.98rem;
+    color: #2d3748;
+    margin: 0.5rem 0;
+    padding: 0.6rem 1rem;
+    background: rgba(75, 108, 183, 0.06);
+    border-radius: 8px;
+    border-left: 3px solid #4b6cb7;
     transition: all 0.2s ease;
 }
 
 .contact p:hover,
 .locations p:hover {
-    background: rgba(102, 126, 234, 0.1);
+    background: rgba(75, 108, 183, 0.12);
     transform: translateX(5px);
 }
 
@@ -99,60 +153,61 @@
     font-style: normal;
 }
 
+/* Links de teléfono */
+.contact a {
+    color: #4b6cb7;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.contact a:hover {
+    color: #667eea;
+    text-decoration: underline;
+}
+
 /* ============================================================================
-   Iconos Sociales y Sites - Grid Moderno
+   Iconos Sociales y Sites - Estilo Profesional
    ============================================================================ */
 .icon-wrapper {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-    gap: 1.5rem;
-    margin-top: 1.5rem;
-    justify-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    justify-content: center;
 }
 
 .icon-wrapper a {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 20px;
+    justify-content: center;    width: 54px;
+    height: 54px;
+    background: #fff;
+    border-radius: 11px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
     position: relative;
-    overflow: hidden;
-}
-
-/* Efecto de brillo */
-.icon-wrapper a::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    transition: left 0.5s ease;
-}
-
-.icon-wrapper a:hover::before {
-    left: 100%;
+    text-decoration: none;
+    border: 2px solid transparent;
 }
 
 .icon-wrapper a:hover {
-    transform: translateY(-8px) scale(1.1);
-    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.6);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
 }
 
 .icon-wrapper a:active {
-    transform: translateY(-4px) scale(1.05);
+    transform: translateY(-1px);
+}
+
+.icon-wrapper a:focus {
+    outline: 3px solid #4b6cb7;
+    outline-offset: 3px;
 }
 
 .icon-wrapper .icon {
-    width: 40px;
-    height: 40px;
-    fill: white;
+    width: 26px;
+    height: 26px;
     transition: all 0.3s ease;
 }
 
@@ -160,169 +215,234 @@
     transform: scale(1.1);
 }
 
-/* Colores específicos para redes sociales */
-.social-icons .icon-wrapper a:nth-child(1) { /* Facebook */
-    background: linear-gradient(135deg, #1877f2 0%, #0c63d4 100%);
+/* ============================================================================
+   Colores Específicos para Redes Sociales
+   ============================================================================ */
+
+/* Facebook */
+.social-icons .icon-wrapper a:nth-child(1) {
+    border-color: #1877f2;
+}
+.social-icons .icon-wrapper a:nth-child(1):hover {
+    background: #1877f2;
+}
+.social-icons .icon-wrapper a:nth-child(1) .icon {
+    fill: #1877f2;
+}
+.social-icons .icon-wrapper a:nth-child(1):hover .icon {
+    fill: #fff;
 }
 
-.social-icons .icon-wrapper a:nth-child(2) { /* Instagram */
+/* Instagram */
+.social-icons .icon-wrapper a:nth-child(2) {
+    border-color: #E4405F;
+}
+.social-icons .icon-wrapper a:nth-child(2):hover {
     background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
 }
-
-.social-icons .icon-wrapper a:nth-child(3) { /* Twitter */
-    background: linear-gradient(135deg, #1da1f2 0%, #0c85d0 100%);
+.social-icons .icon-wrapper a:nth-child(2) .icon {
+    fill: #E4405F;
+}
+.social-icons .icon-wrapper a:nth-child(2):hover .icon {
+    fill: #fff;
 }
 
-.social-icons .icon-wrapper a:nth-child(4) { /* YouTube */
-    background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+/* Twitter/X */
+.social-icons .icon-wrapper a:nth-child(3) {
+    border-color: #1da1f2;
+}
+.social-icons .icon-wrapper a:nth-child(3):hover {
+    background: #1da1f2;
+}
+.social-icons .icon-wrapper a:nth-child(3) .icon {
+    fill: #1da1f2;
+}
+.social-icons .icon-wrapper a:nth-child(3):hover .icon {
+    fill: #fff;
 }
 
-.social-icons .icon-wrapper a:nth-child(5) { /* Email */
-    background: linear-gradient(135deg, #ea4335 0%, #c5221f 100%);
+/* YouTube */
+.social-icons .icon-wrapper a:nth-child(4) {
+    border-color: #ff0000;
+}
+.social-icons .icon-wrapper a:nth-child(4):hover {
+    background: #ff0000;
+}
+.social-icons .icon-wrapper a:nth-child(4) .icon {
+    fill: #ff0000;
+}
+.social-icons .icon-wrapper a:nth-child(4):hover .icon {
+    fill: #fff;
+}
+
+/* Email */
+.social-icons .icon-wrapper a:nth-child(5) {
+    border-color: #ea4335;
+}
+.social-icons .icon-wrapper a:nth-child(5):hover {
+    background: #ea4335;
+}
+.social-icons .icon-wrapper a:nth-child(5) .icon {
+    fill: #ea4335;
+}
+.social-icons .icon-wrapper a:nth-child(5):hover .icon {
+    fill: #fff;
 }
 
 /* ============================================================================
-   Sitios Principales - Destacados
+   Sitios Principales
    ============================================================================ */
-.main-sites .icon-wrapper {
-    justify-content: center; /* Centra los botones en el contenedor */
-}
-
 .main-sites .icon-wrapper a {
-    border-radius: 16px;
+    width: 115px;
+    height: 95px;
+    border-radius: 11px;
     flex-direction: column;
     gap: 0.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    position: relative;
-    overflow: hidden;
-}
-/* Ajuste para que los botones de "Sites" sean más pequeños */
-.main-sites .icon-wrapper a {
-    width: 120px; /* Ancho fijo más pequeño */
+    border: 2px solid #4b6cb7;
+    background: #fff;
+    padding: 0.5rem;
 }
 
-/* Efecto de partículas en el fondo */
-.main-sites .icon-wrapper a::after {
-    content: "";
-    position: absolute;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-    background-size: 20px 20px;
-    animation: particlesMove 20s linear infinite;
-    opacity: 0.5;
-}
-
-@keyframes particlesMove {
-    from { transform: translate(0, 0); }
-    to { transform: translate(50px, 50px); }
+.main-sites .icon-wrapper a:hover {
+    background: #4b6cb7;
 }
 
 .main-sites .icon-wrapper .icon {
-    width: 48px;
-    height: 48px;
-    z-index: 1;
+    width: 34px;
+    height: 34px;
+    fill: #4b6cb7;
+    transition: fill 0.3s ease;
+}
+
+.main-sites .icon-wrapper a:hover .icon {
+    fill: #fff;
+}
+
+/* Etiquetas de texto */
+.main-sites .icon-wrapper a::after {
+    content: attr(aria-label);    font-size: 0.72rem;
+    font-weight: 600;
+    color: #4b6cb7;
+    text-align: center;
+    line-height: 1.2;
+    transition: color 0.3s ease;
+}
+
+.main-sites .icon-wrapper a:hover::after {
+    color: #fff;
 }
 
 /* ============================================================================
-   Footer - Profesional y Centrado
+   Secciones Paralelas
    ============================================================================ */
-.page-info-theme .footer {
-    background: rgba(255,255,255,0.95);
-    padding: 2rem;
-    border-radius: 20px;
-    text-align: center;
-    margin-top: 2rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.5);
+.parallel-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-top: 0;
 }
 
-.page-info-theme .footer strong {
+/* ============================================================================
+   Footer - ESTÁTICO ABAJO (Ancho Completo)
+   ============================================================================ */
+.page-landing .footer {
+    background: linear-gradient(135deg, rgba(75, 108, 183, 0.96) 0%, rgba(85, 104, 211, 0.92) 100%);
+    padding: 1rem 2rem;
+    text-align: center;
+    width: 100%;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+    margin-top: auto;
+}
+
+.page-landing .footer strong {
     display: block;
-    font-size: 1.3rem;
-    color: #667eea;
-    margin-bottom: 0.75rem;
+    font-size: 1rem;
+    color: #fff;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
 }
 
 .footer-contact-line {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    margin: 1rem 0;
+    justify-content: center;    gap: 1rem;
+    margin: 0.5rem 0;
     flex-wrap: wrap;
-    color: #555;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 0.88rem;
 }
 
 .footer-whatsapp-link {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     color: #25D366;
     text-decoration: none;
     font-weight: 600;
-    padding: 0.5rem 1rem;
-    background: rgba(37, 211, 102, 0.1);
-    border-radius: 12px;
+    padding: 0.35rem 0.85rem;
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 7px;
     transition: all 0.3s ease;
     border: 2px solid transparent;
+    font-size: 0.85rem;
 }
 
 .footer-whatsapp-link:hover {
-    background: rgba(37, 211, 102, 0.2);
-    border-color: #25D366;
-    transform: scale(1.05);
+    background: #25D366;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(37, 211, 102, 0.4);
 }
 
 .footer-whatsapp-link .icon {
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
     fill: currentColor;
 }
 
-.page-info-theme .footer a[rel="license"] {
+.page-landing .footer a[rel="license"] {
     display: inline-block;
-    color: #667eea;
+    color: #fff;
     text-decoration: none;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
     font-weight: 500;
-    padding: 0.5rem 1rem;
-    border: 2px solid #667eea;
-    border-radius: 10px;
+    padding: 0.35rem 0.9rem;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    border-radius: 7px;
     transition: all 0.3s ease;
+    font-size: 0.82rem;
 }
 
-.page-info-theme .footer a[rel="license"]:hover {
-    background: #667eea;
-    color: white;
+.page-landing .footer a[rel="license"]:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #fff;
     transform: translateY(-2px);
 }
 
 /* ============================================================================
-   Grid Layout para Desktop
+   Responsive - Desktop
    ============================================================================ */
 @media (min-width: 768px) {
-    .page-info-theme .container {
+    .page-landing .container {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
+        gap: 1.25rem;
     }
 
-    .page-info-theme .header {
+    .page-landing .header {
         grid-column: 1 / -1; /* Asegura que el header ocupe todo el ancho */
-    }
-
-    .page-info-theme .footer {
-        grid-column: 1 / -1;
-    }
-
-    .main-sites {
-        grid-column: 1 / -1;
     }
 
     .parallel-sections {
         grid-column: 1 / -1; /* Ocupa todo el ancho del grid principal */
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 1024px) and (min-width: 768px) {
+    .page-landing .container {
+        max-width: 900px;
     }
 }
 
@@ -330,47 +450,80 @@
    Responsive - Mobile
    ============================================================================ */
 @media (max-width: 767px) {
-    .page-info-theme {
-        padding: 1rem 0.5rem;
+    .page-landing {
+        padding: 1rem 0.5rem 0 0.5rem;
     }
 
-    .page-info-theme .header {
-        padding: 2rem 1rem;
+    .page-landing .header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
-    .page-info-theme .header h1 {
-        font-size: 2rem;
+    .company-logo {
+        width: 38px;
+        height: 38px;
+    }
+
+    .page-landing .header h1 {
+        font-size: 1.3rem;
     }
 
     .info-section {
-        padding: 1.5rem;
+        padding: 1.2rem;
     }
 
     .info-section h2 {
-        font-size: 1.5rem;
+        font-size: 1.15rem;
     }
 
     .icon-wrapper {
-        grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-        gap: 1rem;
+        gap: 0.75rem;
     }
 
     .icon-wrapper a {
-        width: 70px;
-        height: 70px;
+        width: 48px;
+        height: 48px;
     }
 
-    .main-sites .icon-wrapper {
-        grid-template-columns: 1fr;
+    .icon-wrapper .icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .main-sites .icon-wrapper a {
+        width: 95px;
+        height: 85px;
+    }
+
+    .main-sites .icon-wrapper .icon {
+        width: 30px;
+        height: 30px;
     }
 
     .contact p,
     .locations p {
-        font-size: 1rem;
+        font-size: 0.92rem;
+        padding: 0.5rem 0.75rem;
     }
 
     .parallel-sections {
         grid-template-columns: 1fr; /* En móvil, una sección debajo de la otra */
+        gap: 1rem;
+    }
+
+    .page-landing .footer {
+        padding: 0.85rem 1rem;
+    }
+
+    .footer-contact-line {
+        flex-direction: column;
+        gap: 0.6rem;
+        font-size: 0.82rem;
+    }
+
+    .page-landing .footer strong {
+        font-size: 0.95rem;
     }
 }
 
@@ -388,42 +541,40 @@
 /* ============================================================================
    Animaciones de Entrada
    ============================================================================ */
-.page-info-theme .header, .info-section {
-    animation: fadeInUp 0.6s ease-out;
+.page-landing .header,
+.info-section {
+    animation: fadeInUp 0.5s ease-out;
     opacity: 0;
     animation-fill-mode: forwards;
 }
 
-.info-section:nth-child(2) { animation-delay: 0.1s; }
-.info-section:nth-child(3) { animation-delay: 0.2s; }
-.info-section:nth-child(4) { animation-delay: 0.3s; }
-.info-section:nth-child(5) { animation-delay: 0.4s; }
-.info-section:nth-child(6) { animation-delay: 0.5s; }
+.info-section:nth-child(2) { animation-delay: 0.08s; }
+.info-section:nth-child(3) { animation-delay: 0.12s; }
+.info-section:nth-child(4) { animation-delay: 0.16s; }
+.info-section:nth-child(5) { animation-delay: 0.2s; }
+.info-section:nth-child(6) { animation-delay: 0.24s; }
 
-.page-info-theme .footer {
-    animation: fadeInUp 0.6s ease-out 0.6s;
+.page-landing .footer {
+    animation: fadeInUp 0.5s ease-out 0.3s;
     animation-fill-mode: forwards;
     opacity: 0;
 }
 
 /* ============================================================================
-   Accesibilidad
+   Accesibilidad y Preferencias del Usuario
    ============================================================================ */
-.icon-wrapper a:focus {
-    outline: 3px solid #667eea;
-    outline-offset: 4px;
-}
 
 /* Reducir animaciones para usuarios sensibles */
 @media (prefers-reduced-motion: reduce) {
-    .page-info-theme .header,
+    .page-landing .header,
     .info-section,
-    .page-info-theme .footer,
+    .page-landing .footer,
     .icon-wrapper a,
     .contact p,
     .locations p {
         animation: none;
         transition: none;
+        opacity: 1;
     }
 
     .icon-wrapper a:hover,
@@ -439,6 +590,40 @@
     }
 
     .icon-wrapper a {
-        border: 2px solid #fff;
+        border-width: 3px;
+    }
+
+    .page-landing .header h1 {
+        color: #000;
+    }
+}
+
+/* Modo oscuro del sistema (opcional) */
+@media (prefers-color-scheme: dark) {
+    .page-landing {
+        background: linear-gradient(135deg, #1a1f3a 0%, #2a2d4a 50%, #2d3a5a 100%);
+    }
+    
+    .info-section,
+    .page-landing .header {
+        background: rgba(30, 30, 50, 0.96);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .info-section h2,
+    .page-landing .header h1,
+    .page-landing .footer strong {
+        color: #8b9bff;
+    }
+    
+    .contact p,
+    .locations p {
+        color: #e0e0e0;
+        background: rgba(102, 126, 234, 0.15);
+        border-left-color: #8b9bff;
+    }
+    
+    .page-landing .footer {
+        background: linear-gradient(135deg, rgba(42, 45, 74, 0.96) 0%, rgba(45, 58, 90, 0.96) 100%);
     }
 }

@@ -19,8 +19,7 @@ $nonce = base64_encode(random_bytes(16));
 // Se elimina 'unsafe-inline' de style-src para cumplir con las mejores prácticas de CSP cuando se usa un nonce.
 header("Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'nonce-{$nonce}'; style-src 'self' 'nonce-{$nonce}';");
 
-// --- Conexión a la Base de Datos ---
-require_once 'database.php';
+// La conexión a la base de datos se obtiene a través de bootstrap.php
 $pdo = get_database_connection($config, false); // false: no es crítico si falla, la página puede mostrarse parcialmente.
 
 ?>
