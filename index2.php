@@ -81,10 +81,10 @@ $pdo = get_database_connection($config, false); // false: no es crítico si fall
         uksort($grouped_services, function($a, $b) {
             // Prioridad para LAN y WAN
             // Usar slugs (identificadores) es más robusto que nombres completos
+            // Puedes añadir más categorías prioritarias aquí.
             $priority = [
                 'accesos-lan' => 1,
                 'accesos-wan' => 2,
-                'pedraza-datacenter' => 3,
             ];
             
             $slugA = strtolower(str_replace(' ', '-', $a));
