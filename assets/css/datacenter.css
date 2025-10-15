@@ -1276,6 +1276,60 @@
     }
 }
 
+/* ============================================================================
+   SECCIONES POR UBICACIÓN
+   ============================================================================ */
+
+.location-section {
+    margin-bottom: 2.5rem;
+}
+
+.location-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.location-title {
+    color: white;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.location-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Estilo alternativo para ubicaciones */
+.location-section:nth-child(even) .location-header {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.location-section:nth-child(3n) .location-header {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.location-section:nth-child(4n) .location-header {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+/* Servers container dentro de cada ubicación */
+.location-section .servers-container {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+
 /* Controles globales de vista (Expandir/Colapsar) */
 .global-view-controls {
     display: flex;
@@ -1289,14 +1343,23 @@
     color: #4a5568;
 }
 
-/* Clases para reemplazar estilos en línea y cumplir con CSP */
+/* Clases de utilidad para reemplazar estilos en línea y cumplir con CSP */
 .info-item-spaced {
-    margin-bottom: 1rem;
+    margin-top: 1rem;
 }
 
 .cred-row-styled {
+    margin-top: 0.5rem;
     padding: 0.5rem;
     background: #f7fafc;
+    border-radius: 6px;
+}
+
+.notes-box {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: #fffbeb;
+    border-left: 4px solid #fbbf24;
     border-radius: 6px;
 }
 
