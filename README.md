@@ -697,7 +697,6 @@ Las contribuciones son bienvenidas. Por favor:
 Este proyecto está bajo la **Licencia GNU GPL v3**.
 
 - [`license.php`](license.php) - Versión web interactiva
-- [`license.txt`](license.txt) - Texto completo de la licencia
 
 ### En Resumen
 
@@ -777,4 +776,4 @@ Para reportar bugs o solicitar features:
 ---
 
 *Última actualización: Octubre 2025*
-*Versión del documento: 1.1*
+*Versión del documento: 1.0.2*
