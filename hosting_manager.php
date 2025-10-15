@@ -69,13 +69,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 // Eliminar cuentas FTP que ya no están en el formulario
                 if (!empty($host_id) && strpos($host_id, 'new_') !== 0) {
-                    if (empty($submitted_ftp_ids)) {
-                        $stmt_del = $pdo->prepare("DELETE FROM dc_hosting_ftp_accounts WHERE server_id = ?");
-                        $stmt_del->execute([$host_id]);
-                    } else {
+                    // Obtener todos los IDs de FTP para este servidor ANTES de borrar
+                    $stmt_current_ids = $pdo->prepare("SELECT id FROM dc_hosting_ftp_accounts WHERE server_id = ?");
+                    $stmt_current_ids->execute([$host_id]);
+                    $current_ids = $stmt_current_ids->fetchAll(PDO::FETCH_COLUMN);
+                    $ids_to_delete = array_diff($current_ids, $submitted_ftp_ids);
+
+                    if (!empty($ids_to_delete)) {
                         $placeholders = implode(',', array_fill(0, count($submitted_ftp_ids), '?'));
-                        $stmt_del = $pdo->prepare("DELETE FROM dc_hosting_ftp_accounts WHERE server_id = ? AND id NOT IN ($placeholders)");
-                        $stmt_del->execute(array_merge([$host_id], $submitted_ftp_ids));
+                        $stmt_del = $pdo->prepare("DELETE FROM dc_hosting_ftp_accounts WHERE id IN ($placeholders)");
+                        $stmt_del->execute($ids_to_delete);
                     }
                 }
 
@@ -442,7 +445,10 @@ $tab_email_content = ob_get_clean();
 
             // Deshabilitar todos los inputs y textareas
             form.querySelectorAll('input, textarea, select').forEach(el => {
-                el.disabled = isReadOnly;
+                // No deshabilitar el campo de búsqueda de emails
+                if (el.id !== 'emailSearchInput') {
+                    el.disabled = isReadOnly;
+                }
             });
 
             // Ocultar/mostrar botones de acción específicos
@@ -561,6 +567,13 @@ $tab_email_content = ob_get_clean();
                 const isVisible = emailAddress.includes(searchTerm) || emailNotes.includes(searchTerm);
                 item.classList.toggle('hidden', !isVisible);
             });
+        });
+
+        // Prevenir que "Enter" en el buscador de email envíe el formulario
+        emailSearchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+            }
         });
 
         // Event delegation for dynamic delete buttons
