@@ -1,28 +1,43 @@
 <?php
-// license.php - Muestra el archivo de licencia con la codificación correcta.
+/**
+ * license.php - Muestra el archivo de licencia de forma segura y eficiente.
+ *
+ * CARACTERÍSTICAS:
+ * - Envía el contenido como texto plano para evitar la interpretación de HTML/JS.
+ * - Utiliza cabeceras de caché (ETag, Last-Modified) para optimizar la entrega.
+ * - Responde con 304 Not Modified si el cliente ya tiene la versión más reciente.
+ * - Usa readfile() para ser más eficiente en el uso de memoria.
+ */
 
-// 1. Especificar que el contenido es texto plano y está en UTF-8.
-header('Content-Type: text/plain; charset=utf-8');
-
-// 2. Definir la ruta al archivo de licencia.
+// 1. Definir la ruta al archivo de licencia.
 $licenseFile = __DIR__ . '/LICENSE.txt';
 
-// 3. Comprobar si el archivo existe antes de intentar leerlo.
-if (file_exists($licenseFile)) {
-    // 4. Leer el contenido del archivo.
-    $content = file_get_contents($licenseFile);
-
-    // 5. [MEJORA] Detectar y convertir la codificación a UTF-8 si es necesario.
-    if (function_exists('mb_check_encoding') && !mb_check_encoding($content, 'UTF-8')) {
-        $content = mb_convert_encoding($content, 'UTF-8', 'ISO-8859-1');
-    }
-
-    // 6. Mostrar el contenido ya corregido.
-    echo $content;
-} else {
-    // 7. Si el archivo no se encuentra, mostrar un error.
-    header("HTTP/1.0 404 Not Found");
+// 2. Comprobar si el archivo existe y es legible.
+if (!file_exists($licenseFile) || !is_readable($licenseFile)) {
+    http_response_code(404);
+    header('Content-Type: text/plain; charset=utf-8');
     echo "Error: El archivo LICENSE.txt no se encontró en el servidor.";
+    exit;
 }
 
-exit();
+// 3. Obtener información para el caché.
+$lastModified = filemtime($licenseFile);
+$etag = md5_file($licenseFile);
+
+// 4. Comprobar las cabeceras del cliente para ver si podemos usar el caché.
+$ifModifiedSince = $_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? '';
+$ifNoneMatch = $_SERVER['HTTP_IF_NONE_MATCH'] ?? '';
+
+if ((!empty($ifModifiedSince) && strtotime($ifModifiedSince) >= $lastModified) ||
+    (!empty($ifNoneMatch) && trim($ifNoneMatch, '"') === $etag)) {
+    http_response_code(304); // Not Modified
+    exit;
+}
+
+// 5. Si no se puede usar el caché, enviar el archivo con las cabeceras correctas.
+header('Content-Type: text/plain; charset=utf-8');
+header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $lastModified) . ' GMT');
+header('ETag: "' . $etag . '"');
+
+// 6. Usar readfile() para enviar el contenido directamente al buffer de salida.
+readfile($licenseFile);
