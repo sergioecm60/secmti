@@ -449,9 +449,6 @@ secmti/
 │
 ├── database/              # Scripts SQL
 │   ├── install.sql       # Instalación completa
-│   ├── seed_data.sql     # Datos de ejemplo
-│   ├── fix_dashboard_stats.sql
-│   └── verify_dashboard.sql
 │
 ├── templates/             # Componentes reutilizables
 │   ├── navbar.php
@@ -476,8 +473,6 @@ secmti/
 │   │   └── modal-system.js     # Sistema de modales reutilizable
 │   └── images/
 │       ├── favicon.ico
-│       ├── favicon-16x16.png
-│       ├── favicon-32x32.png
 │       └── logo.png
 │
 ├── manage.php             # Panel de administración
