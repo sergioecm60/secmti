@@ -1,43 +1,101 @@
 <?php
-/**
- * license.php - Muestra el archivo de licencia de forma segura y eficiente.
- *
- * CARACTERÍSTICAS:
- * - Envía el contenido como texto plano para evitar la interpretación de HTML/JS.
- * - Utiliza cabeceras de caché (ETag, Last-Modified) para optimizar la entrega.
- * - Responde con 304 Not Modified si el cliente ya tiene la versión más reciente.
- * - Usa readfile() para ser más eficiente en el uso de memoria.
- */
+// license.php - Versión mejorada: segura, con estilo y cambio de idioma
 
-// 1. Definir la ruta al archivo de licencia.
-$licenseFile = __DIR__ . '/LICENSE.txt';
+// Determinar idioma (por parámetro o por cookie)
+$lang = $_GET['lang'] ?? $_COOKIE['license_lang'] ?? 'es';
+if (!in_array($lang, ['es', 'en'])) {
+    $lang = 'es';
+}
+setcookie('license_lang', $lang, time() + 31536000, '/', '', true, true); // HTTP-only, secure
 
-// 2. Comprobar si el archivo existe y es legible.
+// Ruta al archivo corto (solo aviso de licencia)
+$licenseFile = __DIR__ . '/LICENSE.' . $lang . '.txt';
+
 if (!file_exists($licenseFile) || !is_readable($licenseFile)) {
     http_response_code(404);
-    header('Content-Type: text/plain; charset=utf-8');
-    echo "Error: El archivo LICENSE.txt no se encontró en el servidor.";
-    exit;
+    die('Archivo de licencia no encontrado.');
 }
 
-// 3. Obtener información para el caché.
-$lastModified = filemtime($licenseFile);
-$etag = md5_file($licenseFile);
+$content = htmlspecialchars(file_get_contents($licenseFile), ENT_QUOTES, 'UTF-8');
+?>
+<!DOCTYPE html>
+<html lang="<?= $lang ?>">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Licencia - SECMTI</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #212529;
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 2rem;
+            margin-top: 1rem;
+        }
+        h1 {
+            color: #0d6efd;
+            margin-bottom: 1.5rem;
+        }
+        pre {
+            white-space: pre-wrap;
+            background: #f1f3f5;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .btn-group {
+            margin: 1.5rem 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #e9ecef;
+            color: #495057;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-right: 0.5rem;
+            transition: all 0.2s;
+        }
+        .btn.active {
+            background: #0d6efd;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        footer {
+            margin-top: 2rem;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>📜 Licencia del Software</h1>
 
-// 4. Comprobar las cabeceras del cliente para ver si podemos usar el caché.
-$ifModifiedSince = $_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? '';
-$ifNoneMatch = $_SERVER['HTTP_IF_NONE_MATCH'] ?? '';
+    <div class="btn-group">
+        <a href="?lang=es" class="btn <?= $lang === 'es' ? 'active' : '' ?>">Español</a>
+        <a href="?lang=en" class="btn <?= $lang === 'en' ? 'active' : '' ?>">English</a>
+    </div>
 
-if ((!empty($ifModifiedSince) && strtotime($ifModifiedSince) >= $lastModified) ||
-    (!empty($ifNoneMatch) && trim($ifNoneMatch, '"') === $etag)) {
-    http_response_code(304); // Not Modified
-    exit;
-}
+    <div class="card">
+        <pre><?= $content ?></pre>
+    </div>
 
-// 5. Si no se puede usar el caché, enviar el archivo con las cabeceras correctas.
-header('Content-Type: text/plain; charset=utf-8');
-header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $lastModified) . ' GMT');
-header('ETag: "' . $etag . '"');
-
-// 6. Usar readfile() para enviar el contenido directamente al buffer de salida.
-readfile($licenseFile);
+    <footer>
+        <p>SECMTI &copy; 2025 — Software Libre bajo <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">GNU GPL v3</a></p>
+    </footer>
+</body>
+</html>
