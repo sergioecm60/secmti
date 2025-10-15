@@ -289,48 +289,67 @@ $tab_email_content = ob_get_clean();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Hosting</title>
-    <link rel="stylesheet" href="assets/css/main.css">
-    <link rel="stylesheet" href="assets/css/datacenter.css"> <!-- Reutilizamos estilos -->
+    <link rel="stylesheet" href="./assets/css/main.css">
+    <link rel="stylesheet" href="./assets/css/hosting.css">
 </head>
 <body class="page-manage">
-    <div class="admin-container">
-        <header class="admin-header">
+    <div class="hosting-container">
+        <header class="hosting-header">
             <h1>🌐 Gestión de Hosting (cPanel/WHM)</h1>
             <p>Administra tus servidores de hosting y sus cuentas.</p>
         </header>
 
-        <div class="content">
-            <?= $status_message ?>
+        <?= $status_message ?>
 
-            <div class="server-list">
-                <?php if (empty($hosting_servers)): ?>
-                    <p>No hay servidores de hosting configurados. ¡Añade el primero!</p>
-                <?php else: ?>
-                    <?php foreach ($hosting_servers as $server): ?>
-                    <div class="server-card">
-                        <div class="server-header">
-                            <div class="server-title">
-                                <span class="server-icon">🌐</span>
-                                <strong><?= htmlspecialchars($server['label']) ?></strong>
-                                <small>(<?= htmlspecialchars($server['hostname']) ?>)</small>
-                            </div>
-                            <div class="server-actions">
-                                <button type="button" class="action-btn view-btn" data-host-data='<?= htmlspecialchars(json_encode($server)) ?>'>👁️ Ver</button>
-                                <button type="button" class="action-btn edit-btn" data-host-data='<?= htmlspecialchars(json_encode($server)) ?>'>✏️ Editar</button>
-                                <form method="POST" class="delete-form">
-                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-                                    <input type="hidden" name="action" value="delete_host">
-                                    <input type="hidden" name="host_id" value="<?= $server['id'] ?>">
-                                    <button type="submit" class="action-btn delete-btn">Eliminar</button>
-                                </form>
-                            </div>
+        <?php if (empty($hosting_servers)): ?>
+            <div class="hosting-empty-state">
+                <div class="hosting-empty-icon">🗃️</div>
+                <p class="hosting-empty-text">No hay servidores de hosting configurados.</p>
+            </div>
+        <?php else: ?>
+            <div class="hosting-servers-grid">
+                <?php foreach ($hosting_servers as $server): ?>
+                <div class="hosting-server-card">
+                    <div class="hosting-card-header">
+                        <div class="hosting-icon">🌐</div>
+                        <div class="hosting-card-title-area">
+                            <h3 class="hosting-card-title"><?= htmlspecialchars($server['label']) ?></h3>
+                            <p class="hosting-card-subtitle"><?= htmlspecialchars($server['hostname']) ?></p>
                         </div>
                     </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+                    <div class="hosting-card-body">
+                        <div class="hosting-stats">
+                            <div class="hosting-stat-item">
+                                <span class="hosting-stat-number"><?= count($server['accounts']) ?></span>
+                                <span class="hosting-stat-label">cPanel</span>
+                            </div>
+                            <div class="hosting-stat-item">
+                                <span class="hosting-stat-number"><?= count($server['ftp_accounts']) ?></span>
+                                <span class="hosting-stat-label">FTP</span>
+                            </div>
+                            <div class="hosting-stat-item">
+                                <span class="hosting-stat-number"><?= count($server['emails']) ?></span>
+                                <span class="hosting-stat-label">Email</span>
+                            </div>
+                        </div>
+                        <div class="hosting-card-actions">
+                            <button type="button" class="hosting-btn hosting-btn-view view-btn" data-host-data='<?= htmlspecialchars(json_encode($server)) ?>'>👁️ Ver</button>
+                            <button type="button" class="hosting-btn hosting-btn-edit edit-btn" data-host-data='<?= htmlspecialchars(json_encode($server)) ?>'>✏️ Editar</button>
+                            <form method="POST" class="delete-form">
+                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+                                <input type="hidden" name="action" value="delete_host">
+                                <input type="hidden" name="host_id" value="<?= $server['id'] ?>">
+                                <button type="submit" class="hosting-btn hosting-btn-delete">🗑️ Eliminar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
             </div>
+        <?php endif; ?>
 
-            <button type="button" id="addHostBtn" class="add-btn">+ Agregar Servidor de Hosting</button>
+        <div class="hosting-add-container">
+            <button type="button" id="addHostBtn" class="hosting-btn-add">+ Agregar Servidor de Hosting</button>
         </div>
     </div>
 
@@ -363,7 +382,7 @@ $tab_email_content = ob_get_clean();
     <script nonce="<?= htmlspecialchars($nonce) ?>">
     document.addEventListener('DOMContentLoaded', function() {
         const addHostBtn = document.getElementById('addHostBtn');
-        const serverList = document.querySelector('.server-list');
+        const serverList = document.querySelector('.hosting-servers-grid');
 
         window.openHostModal = function(hostData = null, isReadOnly = false) {
             const form = document.getElementById('hostForm');
@@ -415,20 +434,30 @@ $tab_email_content = ob_get_clean();
         
         // Función para establecer el modo de solo lectura en el modal
         function setReadOnly(isReadOnly) {
+            const modal = document.getElementById('hostModal');
             const form = document.getElementById('hostForm');
-            form.querySelectorAll('input, textarea, select, button').forEach(el => {
-                // No deshabilitar los botones de las pestañas, el de cancelar o el de cerrar.
-                if (!el.classList.contains('modal-tab') && !el.closest('.modal-footer .cancel-btn')) {
-                    el.disabled = isReadOnly;
-                }
+            
+            // Añadir o quitar una clase para controlar los estilos en modo lectura
+            form.classList.toggle('readonly-mode', isReadOnly);
+
+            // Deshabilitar todos los inputs y textareas
+            form.querySelectorAll('input, textarea, select').forEach(el => {
+                el.disabled = isReadOnly;
             });
-            document.querySelector('#hostModal .save-btn').style.display = isReadOnly ? 'none' : '';
+
+            // Ocultar/mostrar botones de acción específicos
+            modal.querySelectorAll('.add-btn, .delete-btn, .save-btn, .ftp-delete-btn, .cpanel-delete-btn, .email-delete-btn').forEach(btn => {
+                btn.classList.toggle('hidden', isReadOnly);
+            });
+            const cancelButton = modal.querySelector('.cancel-btn');
+            if (cancelButton) cancelButton.classList.remove('hidden'); // Asegurarse que cancelar siempre sea visible
+
         }
 
         // --- Asignación de Eventos ---
         addHostBtn.addEventListener('click', () => openHostModal());
 
-        serverList.addEventListener('click', function(e) {
+        serverList?.addEventListener('click', function(e) {
             const editBtn = e.target.closest('.edit-btn');
             const viewBtn = e.target.closest('.view-btn');
 
@@ -530,7 +559,7 @@ $tab_email_content = ob_get_clean();
                 const emailNotes = item.querySelector('input[name*="[notes]"]').value.toLowerCase();
                 
                 const isVisible = emailAddress.includes(searchTerm) || emailNotes.includes(searchTerm);
-                item.style.display = isVisible ? '' : 'none';
+                item.classList.toggle('hidden', !isVisible);
             });
         });
 

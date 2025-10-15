@@ -286,8 +286,8 @@ try {
         $stmt->execute([$search]);
         $servers_raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
-        // Cargar todos
-        $stmt = $pdo->query($base_query . " WHERE s.status = 'active' ORDER BY s.label");
+        // Cargar todos, ordenando por ubicación y luego por etiqueta
+        $stmt = $pdo->query($base_query . " WHERE s.status = 'active' ORDER BY l.name, s.label");
         $servers_raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -358,12 +358,19 @@ try {
 
 // Calcular estadísticas
 $total_servers = count($servers);
-$total_services = array_sum(array_map(function($s) { return count($s['services']); }, $servers));
-$total_credentials = array_sum(array_map(function($s) { 
-    return array_sum(array_map(function($sv) { 
-        return count($sv['credentials']); 
-    }, $s['services']));
-}, $servers));
+$total_locations = count($grouped_servers);
+
+$total_services = 0;
+foreach ($servers as $server) {
+    $total_services += count($server['services'] ?? []);
+}
+
+$total_credentials = 0;
+foreach ($servers as $server) {
+    foreach ($server['services'] ?? [] as $service) {
+        $total_credentials += count($service['credentials'] ?? []);
+    }
+}
 
 // TEMPORAL: Solo para depuración - ELIMINAR en producción
 if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
@@ -390,9 +397,10 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
             <div class="header-left">
                 <h1>🏢 Gestión de Infraestructura</h1>
                 <span class="stats-compact">
-                    <span class="stat-badge">📦 <?= $total_servers ?></span>
-                    <span class="stat-badge">⚙️ <?= $total_services ?></span>
-                    <span class="stat-badge">🔑 <?= $total_credentials ?></span>
+                    <span class="stat-badge">📍 <?= $total_locations ?> Ubicaciones</span>
+                    <span class="stat-badge">📦 <?= $total_servers ?> Servidores</span>
+                    <span class="stat-badge">⚙️ <?= $total_services ?> Servicios</span>
+                    <span class="stat-badge">🔓 <?= $total_credentials ?> Credenciales</span>
                 </span>
             </div>
             <div class="header-actions">
@@ -421,14 +429,24 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
         <?php else: ?>
             <!-- Controles Globales de Vista -->
             <div class="global-view-controls">
-                <button class="btn-action expand-all-btn" title="Expandir todos">⬇️ Expandir Todos</button>
-                <button class="btn-action collapse-all-btn" title="Colapsar todos">⬆️ Colapsar Todos</button>
+                <button type="button" id="expandAllBtn" class="btn-action expand-all-btn">⬇️ Expandir Todo</button>
+                <button type="button" id="collapseAllBtn" class="btn-action collapse-all-btn">⬆️ Contraer Todo</button>
             </div>
 
             <!-- Secciones por ubicación -->
-            <div class="servers-container">
-                <?php foreach ($grouped_servers as $location_id => $group): ?>
-                    <?php foreach ($group['servers'] as $server): ?>
+            <?php foreach ($grouped_servers as $location_id => $group): ?>
+                <div class="location-section">
+                    <!-- Header de la ubicación -->
+                    <div class="location-header">
+                        <h2 class="location-title">
+                            📍 <?= htmlspecialchars($group['name']) ?>
+                            <span class="location-badge"><?= count($group['servers']) ?> servidor<?= count($group['servers']) !== 1 ? 'es' : '' ?></span>
+                        </h2>
+                    </div>
+                    
+                    <!-- Servidores de esta ubicación -->
+                    <div class="servers-container">
+                        <?php foreach ($group['servers'] as $server): ?>
                     <div class="server-card" data-server-id="<?= $server['id'] ?>">
                         <!-- Header -->
                         <div class="server-header">
@@ -548,8 +566,9 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
                         </div>
                     </div>
                     <?php endforeach; ?>
-                <?php endforeach; ?>
-            </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
         <?php endif; ?>
     </div>
 

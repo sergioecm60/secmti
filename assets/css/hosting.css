@@ -1,0 +1,738 @@
+/* ==========================================================================
+   HOSTING.CSS - Gestión de Hosting (cPanel/WHM)
+   ========================================================================== */
+
+:root {
+    --hosting-primary: #0b2fb1;
+    --hosting-success: #28a745;
+    --hosting-danger: #dc3545;
+    --hosting-warning: #ffc107;
+}
+
+/* ==========================================================================
+   CONTENEDOR PRINCIPAL
+   ========================================================================== */
+
+.hosting-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.hosting-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    color: white;
+}
+
+.hosting-header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.hosting-header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* ==========================================================================
+   CARDS DE SERVIDORES DE HOSTING
+   ========================================================================== */
+
+.hosting-servers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.hosting-server-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.hosting-server-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    border-color: var(--hosting-primary);
+}
+
+/* Header del Card */
+.hosting-card-header {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    padding: 1.25rem;
+    border-bottom: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.hosting-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+    color: white;
+}
+
+.hosting-card-title-area {
+    flex: 1;
+    min-width: 0;
+}
+
+.hosting-card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 0 0 0.25rem 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hosting-card-subtitle {
+    font-size: 0.85rem;
+    color: #718096;
+    margin: 0;
+}
+
+/* Body del Card */
+.hosting-card-body {
+    padding: 1.25rem;
+}
+
+.hosting-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.hosting-stat-item {
+    text-align: center;
+    padding: 0.75rem;
+    background: #f7fafc;
+    border-radius: 8px;
+}
+
+.hosting-stat-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--hosting-primary);
+}
+
+.hosting-stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #718096;
+    margin-top: 0.25rem;
+}
+
+/* Acciones del Card */
+.hosting-card-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+/* Asegura que el formulario de borrado ocupe el espacio restante */
+.hosting-card-actions .delete-form {
+    flex: 1;
+}
+
+.hosting-btn {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.hosting-btn-view {
+    background: #e2e8f0;
+    color: #2d3748;
+}
+
+.hosting-btn-view:hover {
+    background: #cbd5e0;
+}
+
+.hosting-btn-edit {
+    background: var(--hosting-warning);
+    color: #000;
+}
+
+.hosting-btn-edit:hover {
+    background: #e0a800;
+}
+
+.hosting-btn-delete {
+    background: var(--hosting-danger);
+    color: white;
+}
+
+.hosting-btn-delete:hover {
+    opacity: 0.9;
+}
+
+/* ==========================================================================
+   BOTÓN DE AGREGAR
+   ========================================================================== */
+
+.hosting-add-container {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.hosting-btn-add {
+    background: var(--hosting-success);
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.hosting-btn-add:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* ==========================================================================
+   ESTADO VACÍO
+   ========================================================================== */
+
+.hosting-empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: #f7fafc;
+    border-radius: 12px;
+    margin: 2rem 0;
+}
+
+.hosting-empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.hosting-empty-text {
+    font-size: 1.2rem;
+    color: #718096;
+    margin-bottom: 1.5rem;
+}
+
+/* ==========================================================================
+   MODAL DE HOSTING
+   ========================================================================== */
+
+.hosting-modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    align-items: center;
+    justify-content: center;
+}
+
+.hosting-modal.active {
+    display: flex;
+}
+
+.hosting-modal-content {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.hosting-modal-header {
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hosting-modal-title {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.hosting-modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.hosting-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.hosting-modal-body {
+    padding: 2rem;
+}
+
+/* Tabs del Modal */
+.hosting-modal-tabs {
+    display: flex;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+}
+
+.hosting-tab-btn {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #718096;
+    transition: all 0.2s;
+}
+
+.hosting-tab-btn.active {
+    color: var(--hosting-primary);
+    border-bottom-color: var(--hosting-primary);
+}
+
+.hosting-tab-content {
+    display: none;
+}
+
+.hosting-tab-content.active {
+    display: block;
+}
+
+/* ==========================================================================
+   FORMULARIOS
+   ========================================================================== */
+
+.hosting-form-group {
+    margin-bottom: 1.25rem;
+}
+
+.hosting-form-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #2d3748;
+}
+
+.hosting-form-input,
+.hosting-form-select,
+.hosting-form-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.hosting-form-input:focus,
+.hosting-form-select:focus,
+.hosting-form-textarea:focus {
+    outline: none;
+    border-color: var(--hosting-primary);
+    box-shadow: 0 0 0 3px rgba(11, 47, 177, 0.1);
+}
+
+.hosting-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+/* Botones del Formulario */
+.hosting-form-actions,
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    justify-content: flex-end;
+}
+
+.modal-actions .save-btn,
+.modal-actions .cancel-btn {
+    padding: 0.75rem 1.5rem;
+    min-width: 120px;
+    flex: 0 0 auto; /* No expandir */
+}
+
+.hosting-btn-save {
+    background: var(--hosting-success);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.hosting-btn-save:hover {
+    transform: translateY(-2px);
+}
+
+/* Estilo para el botón Cancelar en el modal para consistencia */
+.hosting-btn-cancel {
+    /* Hereda el estilo del botón de guardar pero con color gris */
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #6c757d;
+    color: white;
+}
+
+.hosting-btn-cancel:hover {
+    background: #5a6268;
+}
+
+/* ==========================================================================
+   SECCIÓN DE CUENTAS DINÁMICAS
+   ========================================================================== */
+
+.hosting-accounts-section {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #f7fafc;
+    border-radius: 8px;
+}
+
+.hosting-accounts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.hosting-accounts-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--hosting-primary);
+    margin: 0;
+}
+
+.hosting-account-item {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.hosting-account-item:last-child {
+    margin-bottom: 0;
+}
+
+.hosting-btn-add-account {
+    background: var(--hosting-primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.hosting-btn-remove {
+    background: var(--hosting-danger);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+/* ==========================================================================
+   BOTÓN VOLVER
+   ========================================================================== */
+
+.hosting-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: white;
+    color: var(--hosting-primary);
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s;
+    margin-top: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.hosting-back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .hosting-container {
+        padding: 1rem;
+    }
+
+    .hosting-servers-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hosting-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .hosting-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .hosting-card-actions {
+        flex-direction: column;
+    }
+
+    .hosting-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hosting-modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+}
+
+@media (min-width: 1400px) {
+    .hosting-servers-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ==========================================================================
+   NOTIFICACIONES
+   ========================================================================== */
+
+.hosting-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+}
+
+.hosting-notification.success {
+    border-left: 4px solid var(--hosting-success);
+}
+
+.hosting-notification.error {
+    border-left: 4px solid var(--hosting-danger);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ==========================================================================
+   ITEMS DINÁMICOS (FTP, cPanel, Email)
+   ========================================================================== */
+
+.ftp-item,
+.cpanel-item,
+.email-item {
+    display: grid !important;
+    grid-template-columns: 2fr 2fr 2fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.75rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+}
+
+.cpanel-item {
+    grid-template-columns: 1.5fr 1.5fr 2fr 1.5fr auto;
+}
+
+/* Password field wrapper dentro de los items */
+.ftp-item .password-field-wrapper,
+.cpanel-item .password-field-wrapper,
+.email-item .password-field-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.ftp-item .password-field-wrapper input,
+.cpanel-item .password-field-wrapper input,
+.email-item .password-field-wrapper input {
+    width: 100%;
+    padding-right: 35px;
+}
+
+/* Inputs dentro de los items */
+.ftp-item input,
+.cpanel-item input,
+.email-item input {
+    padding: 0.6rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.ftp-item input:focus,
+.cpanel-item input:focus,
+.email-item input:focus {
+    outline: none;
+    border-color: var(--hosting-primary);
+}
+
+/* Botón de eliminar item */
+.ftp-delete-btn,
+.cpanel-delete-btn,
+.email-delete-btn {
+    background: var(--hosting-danger);
+    color: white;
+    border: none;
+    padding: 0.6rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.ftp-delete-btn:hover,
+.cpanel-delete-btn:hover,
+.email-delete-btn:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+
+/* ==========================================================================
+   CORRECCIONES PARA BOTONES DEL MODAL
+   ========================================================================== */
+
+/* Botones del modal - sin flex para evitar expansión excesiva */
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.modal-actions .save-btn,
+.modal-actions .cancel-btn {
+    font-size: 0.9rem;
+    padding: 0.75rem 1.5rem;
+    min-width: 120px;
+    flex: 0 0 auto;
+}
+
+/* Clase de utilidad para ocultar elementos sin usar style en línea */
+.hidden {
+    display: none !important;
+}
+
+/* Modo de solo lectura para el formulario del modal */
+.readonly-mode input,
+.readonly-mode textarea,
+.readonly-mode select {
+    background-color: #f0f2f5 !important;
+    color: #5a6268 !important;
+    cursor: default !important;
+    border-color: #d1d5db !important;
+}
+
+.readonly-mode .password-field-wrapper .copy-cred-btn {
+    pointer-events: all !important;
+}
+
+/* Asegura que el layout de grid se mantenga en modo de solo lectura */
+.readonly-mode .ftp-item,
+.readonly-mode .cpanel-item,
+.readonly-mode .email-item {
+    display: grid !important;
+}
+
+/* Responsive para items dinámicos */
+@media (max-width: 768px) {
+    .ftp-item,
+    .cpanel-item,
+    .email-item {
+        grid-template-columns: 1fr;
+    }
+
+    .ftp-delete-btn,
+    .cpanel-delete-btn,
+    .email-delete-btn {
+        width: 100%;
+    }
+}
