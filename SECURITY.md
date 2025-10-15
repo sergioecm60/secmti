@@ -419,15 +419,13 @@ Para recibir notificaciones de actualizaciones de seguridad:
 
 1. **Watch** el repositorio en GitHub
 2. Configura notificaciones para releases
-3. Sígueme en [LinkedIn](https://linkedin.com/in/sergio-cabrera)
-4. Únete al canal de Telegram: [@secmti_security](https://t.me/secmti_security) *(próximamente)*
+3. Sígueme en [LinkedIn](https://www.linkedin.com/in/sergio-cabrera-miers-71a22615/)
 
 ---
 
 ## 📞 Contacto de Seguridad
 
-**Email principal**: [sergiomiers@gmail.com](mailto:sergiomiers@gmail.com)  
-**PGP Key**: [Descargar clave pública](https://github.com/sergioecm60/secmti/blob/main/security/pgp-key.asc) *(próximamente)*  
+**Email principal**: [sergiomiers@gmail.com](mailto:sergiomiers@gmail.com) 
 **GitHub Security Advisories**: [Ver advisories](https://github.com/sergioecm60/secmti/security/advisories)
 
 ---

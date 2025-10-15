@@ -352,7 +352,7 @@ ORDER BY s.label ASC, sv.name ASC, c.role DESC;
 
 -- Usuario admin por defecto (solo si no existe ningún usuario)
 INSERT INTO `users` (`username`, `email`, `pass_hash`, `role`)
-SELECT 'admin', 'admin@secmti.local', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'
+SELECT 'admin', 'admin@secmti.local', '$2y$10$BiQ/efnBhU9pr4/nDx.l/.brt1e5B2wEHeHqXcga6MenxMl1n/fgG', 'admin'
 WHERE NOT EXISTS (SELECT 1 FROM `users` WHERE `username` = 'admin');
 
 -- Ubicación por defecto

@@ -313,10 +313,6 @@ DB_PASS="LA_CONTRASENA_QUE_CREASTE_EN_EL_PASO_2"
 # Ejecuta el script de instalación usando las credenciales del .env
 mysql -u secmti_user -p portal_db < database/install.sql
 
-# (Opcional) Cargar datos de ejemplo para testing
-mysql -u secmti_user -p portal_db < database/seed_data.sql
-```
-
 > Te pedirá la contraseña de `secmti_user` que definiste.
 
 ### Paso 5: Permisos Finales y Configuración Web
@@ -380,7 +376,7 @@ sudo systemctl reload apache2
 Ahora puedes acceder a tu portal a través de `http://tu-dominio.com`. El usuario por defecto creado por el script `install.sql` es:
 
 - **Usuario**: `admin`
-- **Contraseña**: `password`
+- **Contraseña**: `12345678`
 
 > 🔐 **¡MUY IMPORTANTE!** Cambia esta contraseña inmediatamente después de tu primer inicio de sesión desde el panel de "Gestión de Usuarios".
 
@@ -396,21 +392,7 @@ En la carpeta `database/` encontrarás:
    - Crea todas las tablas, vistas, procedures y triggers
    - Zona horaria: Argentina (UTC-3)
    - Charset: utf8mb4_spanish_ci
-   - Crea un usuario `admin` con contraseña `password` (¡cambiar inmediatamente!)
-
-2. **`seed_data.sql`** - Datos de ejemplo
-   - Usuarios de prueba
-   - Ubicaciones y servidores de ejemplo
-   - Servicios y credenciales de prueba
-   - Datos de hosting de ejemplo
-
-3. **`fix_dashboard_stats.sql`** - Arreglar dashboard
-   - Recrea el procedimiento `sp_get_stats()`
-   - Incluye diagnóstico completo
-
-4. **`verify_dashboard.sql`** - Verificación
-   - Comprueba que todo esté correcto
-   - Diagnóstico de problemas comunes
+   - Crea un usuario `admin` con contraseña `12345678` (¡cambiar inmediatamente!)
 
 ### Tablas Principales
 
@@ -631,13 +613,6 @@ session.cookie_samesite = Strict
 
 ## 🛠 Solución de Problemas
 
-### El dashboard no muestra estadísticas
-
-```bash
-mysql -u root -p portal_db < database/fix_dashboard_stats.sql
-mysql -u root -p portal_db < database/verify_dashboard.sql
-```
-
 ### Error de conexión a la base de datos
 
 1. Verificar credenciales en `.env`
@@ -743,7 +718,7 @@ Este proyecto está bajo la **Licencia GNU GPL v3**.
 **Sergio Cabrera**  
 📧 Email: [sergiomiers@gmail.com](mailto:sergiomiers@gmail.com)  
 🐙 GitHub: [@sergioecm60](https://github.com/sergioecm60)  
-💼 LinkedIn: [Sergio Cabrera](https://linkedin.com/in/sergio-cabrera)
+💼 LinkedIn: [Sergio Cabrera](https://www.linkedin.com/in/sergio-cabrera-miers-71a22615/)
 
 ---
 
@@ -753,7 +728,6 @@ Este proyecto fue desarrollado con la asistencia de:
 
 - **Claude (Anthropic)** - Arquitectura, seguridad, UX/UI y sistema de modales
 - **Gemini (Google)** - Optimización de código y consultas SQL
-- **ChatGPT (OpenAI)** - Diseño de interfaz y experiencia de usuario
 - **Qwen (Alibaba)** - Debugging y mejoras de rendimiento
 
 Un agradecimiento especial a la comunidad de PHP y a todos los desarrolladores que mantienen las librerías utilizadas.
@@ -762,31 +736,6 @@ Un agradecimiento especial a la comunidad de PHP y a todos los desarrolladores q
 
 ## 🗓️ Roadmap
 
-### Versión 1.1 (En Desarrollo)
-- [ ] **API REST completa** con autenticación JWT
-- [ ] **Exportación de inventario** (PDF/Excel)
-- [ ] **Gráficos de estadísticas** con Chart.js
-- [ ] **Sistema de notificaciones** push
-- [ ] **Modo oscuro** con switch
-- [ ] **Búsqueda avanzada** con filtros múltiples
-
-### Versión 1.2
-- [ ] **Integración con Proxmox API** para datos en tiempo real
-- [ ] **Monitoreo de servicios** (ping/uptime)
-- [ ] **Backup automático** de configuraciones
-- [ ] **2FA** (autenticación de dos factores)
-- [ ] **Roles granulares** con permisos personalizados
-- [ ] **Historial de cambios** con versionado
-
-### Versión 2.0
-- [ ] **Multi-tenancy** (múltiples organizaciones)
-- [ ] **Aplicación móvil** (PWA con offline support)
-- [ ] **Dashboard avanzado** con widgets personalizables
-- [ ] **Integración con sistemas de tickets** (osTicket, GLPI)
-- [ ] **Alertas automáticas** por email/Telegram
-- [ ] **Reportes programados** automáticos
-
----
 
 ## 📞 Soporte
 
