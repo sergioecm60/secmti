@@ -1,12 +1,12 @@
 # Portal de Servicios SECMTI
 
-**Creado por Sergio Cabrera**  
-📧 [sergiomiers@gmail.com](mailto:sergiomiers@gmail.com)  
+**Creado por Sergio Cabrera**
+📧 [sergiomiers@gmail.com](mailto:sergiomiers@gmail.com)
 🤖 Asistencia técnica: **Claude (Anthropic)**, Gemini (Google), ChatGPT (OpenAI) y Qwen (Alibaba)
 
 [![PHP Version](https://img.shields.io/badge/PHP-%3E%3D8.0-8892BF.svg?style=for-the-badge)](https://php.net)
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](license.php)
-[![Version](https://img.shields.io/badge/Version-1.0.1-green.svg?style=for-the-badge)](https://github.com/sergioecm60/secmti/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.2-green.svg?style=for-the-badge)](https://github.com/sergioecm60/secmti/releases)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/sergioecm60/secmti)
 [![Database](https://img.shields.io/badge/Database-MySQL%2FMariaDB-4479A1.svg?style=for-the-badge&logo=mysql)](https://www.mysql.com)
 
@@ -18,9 +18,9 @@ Un **portal de servicios profesional y completo** para **gestión de infraestruc
 
 ### Características Principales
 
-- 🖥️ **Gestión de servidores** físicos y virtuales (Proxmox, VMs, containers, cloud)
+- 🖥️ **Gestión de servidores** físicos y virtuales (VMs, containers, cloud)
 - 🔑 **Administración de credenciales** segura y centralizada con cifrado AES-256-CBC
-- 🌐 **Organización de servicios** por categorías (LAN, WAN, Sucursales)
+- 🌐 **Organización de servicios** por categorías personalizables
 - 📊 **Dashboard** con estadísticas en tiempo real
 - 🏢 **Gestión de hosting** (cPanel, emails, FTP, dominios)
 - 🎨 **Sistema de modales modernos** con validación inteligente
@@ -30,9 +30,9 @@ Un **portal de servicios profesional y completo** para **gestión de infraestruc
 
 ## 🚀 Versión Actual
 
-**1.0.1** - Sistema completo con mejoras de UX, seguridad y validación inteligente
+**1.0.2** - Despersonalización y mejoras en plantillas de configuración.
 
-### 🆕 Novedades en v1.0.1
+### 🆕 Novedades
 
 #### **Interfaz de Usuario**
 - ✨ **Sistema de cards expandibles** con acordeones suaves para servidores
@@ -776,5 +776,5 @@ Para reportar bugs o solicitar features:
 
 ---
 
-*Última actualización: Octubre 2025*  
-*Versión del documento: 1.0.1*
+*Última actualización: Octubre 2025*
+*Versión del documento: 1.1*

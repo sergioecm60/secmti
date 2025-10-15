@@ -1,4 +1,4 @@
-Copyleft (C) 2025 Sergio Cabrera Miers
+Copyleft (C) 2024 Sergio Cabrera Miers
 
 Este programa es software libre: puede redistribuirlo y/o modificarlo bajo los términos de la Licencia Pública General GNU publicada por la Free Software Foundation, ya sea la versión 3 de la Licencia, o (a su elección) cualquier versión posterior.
 

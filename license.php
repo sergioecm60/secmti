@@ -95,7 +95,7 @@ $content = htmlspecialchars(file_get_contents($licenseFile), ENT_QUOTES, 'UTF-8'
     </div>
 
     <footer>
-        <p>SECMTI &copy; 2025 — Software Libre bajo <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">GNU GPL v3</a></p>
+        <p>SECMTI &copy; <?= date('Y') ?> — Software Libre bajo <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">GNU GPL v3</a></p>
     </footer>
 </body>
 
