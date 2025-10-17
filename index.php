@@ -92,6 +92,16 @@ $schema_org = [
     'sameAs' => array_column($config['landing_page']['social_links'], 'url')
 ];
 
+// --- Carga dinámica desde .env para teléfonos y sucursales ---
+$phone_numbers_str = $_ENV['PHONE_NUMBERS'] ?? '';
+$config['landing_page']['phone_numbers'] = !empty($phone_numbers_str) ? array_map('trim', explode(',', $phone_numbers_str)) : [];
+
+$branches_str = $_ENV['BRANCHES'] ?? '';
+$config['landing_page']['branches'] = !empty($branches_str) ? array_map('trim', explode(',', $branches_str)) : [];
+
+// Actualizar schema con los datos cargados
+$schema_org['contactPoint']['telephone'] = $config['landing_page']['phone_numbers'][0] ?? '';
+$schema_org['address']['streetAddress'] = $config['landing_page']['branches'][0] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="es" prefix="og: https://ogp.me/ns#">
