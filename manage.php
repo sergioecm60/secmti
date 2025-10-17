@@ -168,6 +168,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // ================================================================
         $new_config = $config; // Start with current config
 
+        // Eliminar la sección 'services' del array de config para que no se guarde en el archivo.
+        // Esta sección ahora se gestiona 100% en la base de datos.
+        unset($new_config['services']);
+
         // Ajustes Generales
         $new_config['landing_page']['company_name'] = trim($_POST['company_name'] ?? '');
 
@@ -230,7 +234,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $new_config_content = "<?php\n" .
-            "/**\n * config.php - Configuración Central\n * Generado automáticamente por manage.php\n * Fecha: " . date('Y-m-d H:i:s') . "\n * Usuario: " . $_SESSION['username'] . "\n */\n\n" .
+            "/**\n * config.php - Configuración Central\n * Generado automáticamente por manage.php\n * Fecha: " . date('Y-m-d H:i:s') . "\n * Usuario: " . ($_SESSION['username'] ?? 'system') . "\n */\n\n" .
             "return " . safe_var_export($new_config) . ";\n";
 
         if (!file_put_contents($config_file, $new_config_content, LOCK_EX)) {
@@ -481,7 +485,7 @@ if (!$pdo) {
 
                 <!-- Sección de Botones de Servicio -->
                 <div class="section">
-                    <div class="section-header">Botones de Servicios, Agregue sitios locales o remotos (Portal)</div>
+                    <div class="section-header">Botones de Servicios (Portal Interno)</div>
                     <div class="section-body">
                         <div class="section-body-inner">
                             <div class="table-container">
