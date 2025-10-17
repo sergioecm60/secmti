@@ -64,8 +64,12 @@ try {
                 throw new Exception('Contraseña no disponible', 404);
             }
 
+            // --- INICIO DE BLOQUE DE DEPURACIÓN ---
+            error_log("DEBUG: Intentando descifrar contraseña para tipo '{$type}', ID '{$id}'. Contraseña cifrada: '{$encrypted_password}'");
+            // --- FIN DE BLOQUE DE DEPURACIÓN ---
+
             // Descifrar la contraseña
-            $decrypted_password = decrypt_password($encrypted_password, $config);
+            $decrypted_password = decrypt_password($encrypted_password);
             if ($decrypted_password === false) { throw new Exception('Error al descifrar contraseña', 500); }
             echo json_encode(['success' => true, 'password' => $decrypted_password]);
             break;

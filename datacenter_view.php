@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                             json_encode(array_filter(array_map('trim', explode(',', $server_data['net_dns'] ?? '')))),
                             $server_data['notes'] ?? '',
                             $server_data['username'] ?? '',                            
-                            encrypt_password($server_data['password'], $config),
+                            encrypt_password($server_data['password']),
                             $_SESSION['user_id']
                         ]);
                         $db_server_id = $pdo->lastInsertId();
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         // Actualizar contraseña solo si se proporcionó una nueva
                         if (!empty($server_data['password'])) {
                             $stmt_pass = $pdo->prepare("UPDATE dc_servers SET password = ? WHERE id = ?");
-                            $stmt_pass->execute([encrypt_password($server_data['password'], $config), $server_data['id']]);
+                            $stmt_pass->execute([encrypt_password($server_data['password']), $server_data['id']]);
                         }
                         $db_server_id = $server_data['id'];
                     }
@@ -182,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                                     $current_service_id,
                                     'cred_' . uniqid(),
                                     $cred_item['username'],
-                                    encrypt_password($cred_item['password'], $config),
+                                    encrypt_password($cred_item['password']),
                                     $cred_item['role'] ?? 'user',
                                     $cred_item['notes'] ?? ''
                                 ]);
@@ -201,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                                 // Actualizar contraseña solo si se proporcionó una nueva.
                                 if (!empty($cred_item['password'])) {
                                     $stmt_pass = $pdo->prepare("UPDATE dc_credentials SET password=? WHERE id=?");
-                                    $stmt_pass->execute([encrypt_password($cred_item['password'], $config), $cred_id_key]);
+                                    $stmt_pass->execute([encrypt_password($cred_item['password']), $cred_id_key]);
                                 }
                                 $submitted_cred_ids[] = $cred_id_key;
                             }
