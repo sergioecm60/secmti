@@ -25,9 +25,7 @@ return array (
   // ============================================================================
   // SEGURIDAD
   // ============================================================================
-  'security' => array (
-    'encryption_key' => 'GENERA_UNA_CLAVE_ALEATORIA_DE_44_CARACTERES_BASE64',
-    // Genera tu propia clave con: base64_encode(random_bytes(32))
+  'security' => array ( // La clave de cifrado ahora se gestiona exclusivamente en .env
     'max_login_attempts' => 5,
     'lockout_minutes' => 15,
   ),
@@ -41,10 +39,10 @@ return array (
   // BASE DE DATOS
   // ============================================================================
   'database' => array (
-    'host' => 'localhost',
-    'name' => 'portal_db',
-    'user' => 'TU_USUARIO_MYSQL',        // ← CAMBIAR
-    'pass' => 'TU_PASSWORD_MYSQL',       // ← CAMBIAR
+    'host' => $_ENV['DB_HOST'] ?? 'localhost',
+    'name' => $_ENV['DB_NAME'] ?? 'portal_db',
+    'user' => $_ENV['DB_USER'] ?? 'root',
+    'pass' => $_ENV['DB_PASS'] ?? '',
     'charset' => 'utf8mb4',
     'collation' => 'utf8mb4_spanish_ci',
   ),

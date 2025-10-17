@@ -443,7 +443,7 @@ require_once __DIR__ . '/database.php';
 // 10. HELPERS DE CIFRADO (Agregado en Mejora #1)
 // ============================================================================
 if (!defined('APP_ENCRYPTION_KEY')) {
-    define('APP_ENCRYPTION_KEY', $_ENV['APP_ENCRYPTION_KEY'] ?? $config['security']['encryption_key'] ?? '');
+    define('APP_ENCRYPTION_KEY', $_ENV['APP_ENCRYPTION_KEY'] ?? ''); // Ahora solo se toma del .env
 }
 
 /**
