@@ -466,6 +466,12 @@ function createServiceElement(serviceData = {}) {
                 <option value="http" ${serviceData.protocol === 'http' ? 'selected' : ''}>HTTP</option>
                 <option value="ssh" ${serviceData.protocol === 'ssh' ? 'selected' : ''}>SSH</option>
                 <option value="rdp" ${serviceData.protocol === 'rdp' ? 'selected' : ''}>RDP</option>
+                <option value="ftp" ${serviceData.protocol === 'ftp' ? 'selected' : ''}>FTP</option>
+                <option value="sftp" ${serviceData.protocol === 'sftp' ? 'selected' : ''}>SFTP</option>
+                <option value="smb" ${serviceData.protocol === 'smb' ? 'selected' : ''}>SMB (Samba)</option>
+                <option value="vnc" ${serviceData.protocol === 'vnc' ? 'selected' : ''}>VNC</option>
+                <option value="mysql" ${serviceData.protocol === 'mysql' ? 'selected' : ''}>MySQL</option>
+                <option value="telnet" ${serviceData.protocol === 'telnet' ? 'selected' : ''}>Telnet</option>
                 <option value="other" ${serviceData.protocol === 'other' ? 'selected' : ''}>Otro</option>
             </select>
         </div>
