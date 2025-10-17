@@ -538,6 +538,6 @@ if (!$pdo) {
 
     <?php require_once 'templates/footer.php'; ?>
 
-    <script src="assets/js/manage.js" nonce="<?= htmlspecialchars($nonce) ?>"></script>
+    <script src="assets/js/manage.js" nonce="<?= htmlspecialchars($nonce) ?>" charset="UTF-8"></script>
 </body>
 </html>
