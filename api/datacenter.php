@@ -39,22 +39,28 @@ try {
                 throw new Exception('ID de credencial inválido', 400);
             }
 
-            $type = $_REQUEST['type'] ?? 'dc_credential'; // Obtener el tipo de credencial
-            $encrypted_password = null;
+            $type = $_REQUEST['type'] ?? null;
+            
+            $table_map = [
+                'server_main'       => 'dc_servers',
+                'dc_credential'     => 'dc_credentials',
+                'hosting_account'   => 'dc_hosting_accounts',
+                'hosting_ftp'       => 'dc_hosting_ftp_accounts',
+                'hosting_email'     => 'dc_hosting_emails',
+            ];
 
-            if ($type === 'server_main') {
-                // Si es la credencial principal del servidor, buscar en dc_servers
-                $stmt = $pdo->prepare("SELECT password FROM dc_servers WHERE id = ?");
-                $stmt->execute([$id]);
-                $encrypted_password = $stmt->fetchColumn();
-            } else {
-                // Por defecto, buscar en dc_credentials (para servicios)
-                $stmt = $pdo->prepare("SELECT password FROM dc_credentials WHERE id = ?");
-                $stmt->execute([$id]);
-                $encrypted_password = $stmt->fetchColumn();
+            if (!isset($table_map[$type])) {
+                throw new Exception('Tipo de credencial no válido', 400);
             }
 
-            if (empty($encrypted_password)) {
+            $table_name = $table_map[$type];
+            $encrypted_password = null;
+
+            $stmt = $pdo->prepare("SELECT password FROM `{$table_name}` WHERE id = ?");
+            $stmt->execute([$id]);
+            $encrypted_password = $stmt->fetchColumn();
+            
+            if ($encrypted_password === false || $encrypted_password === null) {
                 throw new Exception('Contraseña no disponible', 404);
             }
 
