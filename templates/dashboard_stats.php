@@ -31,7 +31,12 @@ try {
         // 1. Obtener estadísticas usando el procedimiento almacenado.
         $stmt_stats = $pdo->query("CALL sp_get_stats()");
         $stats = $stmt_stats->fetch(PDO::FETCH_ASSOC);
-        $stmt_stats->closeCursor(); // Buena práctica al usar CALL.
+        $stmt_stats->closeCursor(); // ¡CORRECCIÓN! Cerrar el cursor inmediatamente después de usarlo.
+
+        // 2. Obtener estadísticas de PCs
+        $stmt_pcs = $pdo->query("SELECT COUNT(*) as total_pcs, SUM(CASE WHEN assigned_to IS NULL THEN 1 ELSE 0 END) as free_pcs FROM pc_equipment");
+        $pc_stats = $stmt_pcs->fetch(PDO::FETCH_ASSOC);
+
     } else {
         $error_message = 'No se pudo conectar a la base de datos para cargar las estadísticas.';
     }
@@ -93,6 +98,20 @@ if (!empty($error_message)): ?>
             <div class="stat-content">
                 <div class="stat-number"><?= htmlspecialchars($stats['servers_maintenance'] ?? 0) ?></div>
                 <div class="stat-label">En Mantenimiento</div>
+            </div>
+        </div>
+        <div class="stat-card stat-card-blue">
+            <div class="stat-icon">💻</div>
+            <div class="stat-content">
+                <div class="stat-number"><?= htmlspecialchars($pc_stats['total_pcs'] ?? 0) ?></div>
+                <div class="stat-label">Total PCs</div>
+            </div>
+        </div>
+        <div class="stat-card stat-card-teal">
+            <div class="stat-icon">🔓</div>
+            <div class="stat-content">
+                <div class="stat-number"><?= htmlspecialchars($pc_stats['free_pcs'] ?? 0) ?></div>
+                <div class="stat-label">PCs Libres</div>
             </div>
         </div>
     </div>

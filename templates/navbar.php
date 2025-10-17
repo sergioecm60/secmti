@@ -18,6 +18,11 @@ $main_nav_links = [
         'url' => 'datacenter_view.php', // Apunta a la página unificada
         'requires_role' => 'admin'
     ],
+    'pc_equipment_manage' => [
+        'label' => '💻 Parque Informático',
+        'url' => 'parque_informatico.php',
+        'requires_role' => 'admin'
+    ],
     'hosting_manage' => [
         'label' => '🌐 Gestión de Hosting',
         'url' => 'hosting_manager.php',
