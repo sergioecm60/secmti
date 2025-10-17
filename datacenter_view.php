@@ -90,6 +90,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         $db_server_id = $server_data['id'];
                     }
                     
+                    // --- LOGGING DE CAMBIOS ---
+                    $log_action = $is_new ? 'create' : 'edit';
+                    $entity_id = $is_new ? $db_server_id : $server_data['id'];
+                    $details = '';
+
+                    if (!$is_new) {
+                        $stmt_before = $pdo->prepare("SELECT * FROM dc_servers WHERE id = ?");
+                        $stmt_before->execute([$entity_id]);
+                        $server_before = $stmt_before->fetch(PDO::FETCH_ASSOC);
+                        
+                        $changes = [];
+                        $fields_map = ['label' => 'Etiqueta', 'type' => 'Tipo', 'status' => 'Estado', 'net_ip_lan' => 'IP LAN', 'net_ip_wan' => 'IP WAN'];
+
+                        foreach ($fields_map as $key => $label) {
+                            $old_value = $server_before[$key] ?? '';
+                            $new_value = $server_data[$key] ?? '';
+                            if ($old_value != $new_value) {
+                                $changes[] = "{$label}: '{$old_value}' -> '{$new_value}'";
+                            }
+                        }
+                        if (!empty($changes)) {
+                            $details = "Cambios: " . implode('; ', $changes);
+                        }
+                    } else {
+                        // Para creaciones, registrar los datos iniciales
+                        $details = "Creado con Etiqueta: '{$server_data['label']}', Tipo: '{$server_data['type']}', IP LAN: '{$server_data['net_ip_lan']}'";
+                    }
+
                     // ========================================================================
                     // PROCESAR SERVICIOS Y CREDENCIALES (PARA NUEVOS Y EXISTENTES)
                     // ========================================================================
@@ -206,6 +234,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         }
                     }
                     $pdo->commit();
+                    
+                    // Registrar en el log DESPUÉS de que la transacción se haya completado
+                    $log_stmt = $pdo->prepare("INSERT INTO dc_access_log (user_id, action, entity_type, entity_id, ip_address, details) VALUES (?, ?, ?, ?, ?, ?)");
+                    $log_stmt->execute([$_SESSION['user_id'], $log_action, 'server', $entity_id, IP_ADDRESS, $details]);
+
                     $status_message = '<div class="status-message success">✅ Servidor guardado exitosamente</div>';
                     break;
                     

@@ -125,7 +125,31 @@ Un **portal de servicios profesional y completo** para **gestión de infraestruc
 - **Validación automática** con cambio de pestañas inteligente
 - Panel de control centralizado
 
-### 🔒 Sistema de Seguridad
+### 💻 Parque Informático (`parque_informatico.php`)
+- **Sistema web para gestión de equipos informáticos** distribuidos en múltiples ubicaciones.
+
+#### **Qué hace**
+- **Ver todos los equipos** de la empresa organizados por ubicación.
+- **Buscar equipos** por usuario, modelo, sector o sistema operativo.
+- **Agregar, editar y eliminar** equipos a través de una interfaz moderna.
+- **Filtrar por estado** (Nueva/Usada/Reacondicionada) y ubicación.
+- **Ver estadísticas** en tiempo real: total de PCs, equipos libres, distribución por estado.
+
+#### **Para quién es**
+Ideal para administradores de sistemas que necesitan:
+- Saber qué equipo tiene cada persona.
+- Identificar equipos disponibles para asignar.
+- Mantener un inventario actualizado del parque informático.
+- Tener toda la información accesible desde cualquier lugar.
+
+#### **Características Principales**
+- **Vista de tarjetas** con detalles expandibles.
+- **Búsqueda y filtros** dinámicos.
+- **Formulario modal** para agregar y editar equipos.
+- **Estadísticas** en el encabezado de la página.
+- **Integración** con las ubicaciones del módulo de Datacenter.
+
+### � Sistema de Seguridad
 
 #### **Autenticación**
 - **Login con captcha matemático** (protección anti-bots)
@@ -745,27 +769,6 @@ Para reportar bugs o solicitar features:
 - [ ] Revisa la sección de "Solución de Problemas"
 - [ ] Busca en issues existentes si ya fue reportado
 - [ ] Incluye logs de error y pasos para reproducir
-
----
-
-## 📊 Estadísticas del Proyecto
-
-- **Líneas de código**: ~15,000
-- **Archivos PHP**: 25+
-- **Tablas de BD**: 10
-- **Endpoints API**: 8
-- **Tiempo de desarrollo**: 6 meses
-- **Commits**: 200+
-
----
-
-## 🏆 Reconocimientos
-
-- Mejor proyecto PHP del mes - Comunidad Desarrolladores Argentinos
-- Mención especial por seguridad - OWASP Argentina Chapter
-- Featured en [Dev.to](https://dev.to) - Trending Projects
-
----
 
 ⭐ **Si este proyecto te resulta útil, considera darle una estrella en GitHub!**
 

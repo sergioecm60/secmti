@@ -34,7 +34,12 @@ if (!check_rate_limit('mytop_access', 60, 60)) { // 60 accesos por minuto
 }
 
 // Logging de acceso
-log_security_event('mytop_access', "Usuario {$_SESSION['username']} accedió al monitor de procesos");
+try {
+    $log_stmt = get_database_connection($config, false)->prepare("INSERT INTO dc_access_log (user_id, action, entity_type, entity_id, ip_address) VALUES (?, 'view', 'mytop', 0, ?)");
+    $log_stmt->execute([$_SESSION['user_id'], IP_ADDRESS]);
+} catch (Exception $e) {
+    error_log("Error al registrar acceso a mytop: " . $e->getMessage());
+}
 
 // Generar nonce para CSP
 $nonce = base64_encode(random_bytes(16));

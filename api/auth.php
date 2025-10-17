@@ -84,12 +84,28 @@ try {
         if (password_verify($pass, $user_data['pass_hash'])) {
             // Éxito
             $userModel->handleSuccessfulLogin($user_data['id']);
+            
+            // REGISTRAR LOGIN EN EL LOG
+            try {
+                $log_stmt = $pdo->prepare("INSERT INTO dc_access_log (user_id, action, entity_type, entity_id, details, ip_address) VALUES (?, ?, ?, ?, ?, ?)");
+                $log_stmt->execute([
+                    $user_data['id'],
+                    'login',
+                    'session',
+                    0,
+                    'Inicio de sesión exitoso',
+                    IP_ADDRESS
+                ]);
+            } catch (Exception $e) {
+                error_log('Error logging login: ' . $e->getMessage());
+            }
+            
             session_regenerate_id(true);
             $_SESSION['user_id'] = $user_data['id'];
             $_SESSION['username'] = $user_data['username'];
             $_SESSION['user_role'] = $user_data['role'];
             $_SESSION['last_activity'] = time();
-            echo json_encode(['success' => true, 'redirect' => 'index2.php']);
+            echo json_encode(['success' => true, 'redirect' => 'index2.php', 'user_id' => $user_data['id']]);
         } else {
             // Fallo
             $userModel->handleFailedLogin($user_data, $max_attempts, $lockout_minutes);

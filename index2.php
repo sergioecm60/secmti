@@ -64,20 +64,24 @@ $pdo = get_database_connection($config, false); // false: no es crítico si fall
 
         <?php
         // Agrupar servicios por categoría, manteniendo el ID como clave
-        $grouped_services = [];
-        foreach ($config['services'] as $id => $service) {
-            // Omitir si el rol no coincide
-            if (isset($service['requires_role']) &&
-                $service['requires_role'] === 'admin' &&
-                ($_SESSION['user_role'] ?? 'user') !== 'admin') {
-                continue;
+        $services_from_db = [];
+        if ($pdo) {
+            $query = "SELECT * FROM services WHERE is_active = 1";
+            if (($_SESSION['user_role'] ?? 'user') !== 'admin') {
+                $query .= " AND (requires_role IS NULL OR requires_role = 'user')";
             }
-            
+            $query .= " ORDER BY category, sort_order";
+            $services_from_db = $pdo->query($query)->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        $grouped_services = [];
+        foreach ($services_from_db as $service) {
             $category = $service['category'] ?? 'Otros Servicios';
-            $grouped_services[$category][$id] = $service;
+            $grouped_services[$category][] = $service;
         }
 
         // Ordenar categorías: LAN primero, WAN segundo, luego sucursales alfabéticamente
+        // Esta lógica de ordenamiento personalizado se puede mover a la tabla `service_categories` en el futuro.
         uksort($grouped_services, function($a, $b) {
             // Prioridad para LAN y WAN
             // Usar slugs (identificadores) es más robusto que nombres completos
@@ -127,13 +131,13 @@ $pdo = get_database_connection($config, false); // false: no es crítico si fall
                     </h2>
                     <nav class="menu section-body"                         
                          data-category="<?= htmlspecialchars($category_slug) ?>">
-                        <?php foreach ($services as $id => $servicio): ?>
+                        <?php foreach ($services as $servicio): ?>
                             <?php
                                 $target = !empty($servicio['redirect']) ? '_self' : '_blank';
                                 echo '<a href="' . htmlspecialchars($servicio['url']) . '" 
                                          class="menu-button" 
                                          target="' . $target . '" 
-                                         data-service-id="' . htmlspecialchars($id) . '">'
+                                         data-service-id="' . htmlspecialchars($servicio['id']) . '">'
                                      . htmlspecialchars($servicio['label']) .
                                      '</a>';
                             ?>

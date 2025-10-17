@@ -31,6 +31,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'save_pc') {
             $pc_data = $_POST['pc'];
             $is_new = empty($pc_data['id']) || strpos($pc_data['id'], 'new_') === 0;
+            $details = '';
+
+            if (!$is_new) {
+                // Para ediciones, generar detalles de cambios
+                $stmt_before = $pdo->prepare("SELECT * FROM pc_equipment WHERE id = ?");
+                $stmt_before->execute([$pc_data['id']]);
+                $pc_before = $stmt_before->fetch(PDO::FETCH_ASSOC);
+
+                $changes = [];
+                $fields_map = [
+                    'asset_tag' => 'Nombre-Tipo', 'assigned_to' => 'Asignado a', 'pc_model' => 'Modelo',
+                    'department' => 'Sector', 'status' => 'Estado', 'os' => 'SO', 'office_suite' => 'Office'
+                ];
+
+                foreach ($fields_map as $key => $label) {
+                    $old_value = $pc_before[$key] ?? '';
+                    $new_value = $pc_data[$key] ?? '';
+                    if ($old_value != $new_value) {
+                        $changes[] = "{$label}: '{$old_value}' -> '{$new_value}'";
+                    }
+                }
+                if (!empty($changes)) {
+                    $details = "Cambios: " . implode('; ', $changes);
+                }
+            }
 
             $sql = $is_new
                 ? "INSERT INTO pc_equipment (asset_tag, location_id, assigned_to, pc_model, department, status, os, office_suite, phone, printer, notes) VALUES (:asset_tag, :location_id, :assigned_to, :pc_model, :department, :status, :os, :office_suite, :phone, :printer, :notes)"
@@ -53,11 +78,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $stmt->execute();
             $status_message = '<div class="status-message success">✅ PC guardada correctamente.</div>';
+
+            // Logging
+            $log_action = $is_new ? 'create' : 'edit';
+            $entity_id = $is_new ? $pdo->lastInsertId() : $pc_data['id'];
+            $log_stmt = $pdo->prepare("INSERT INTO dc_access_log (user_id, action, entity_type, entity_id, ip_address, details) VALUES (?, ?, ?, ?, ?, ?)");
+            $log_stmt->execute([$_SESSION['user_id'], $log_action, 'pc_equipment', $entity_id, IP_ADDRESS, $details]);
+
         } elseif ($action === 'delete_pc') {
             $pc_id = $_POST['pc_id'] ?? 0;
+            $details = '';
+
+            // Obtener datos antes de borrar para el log
+            $stmt_before = $pdo->prepare("SELECT assigned_to, pc_model FROM pc_equipment WHERE id = ?");
+            $stmt_before->execute([$pc_id]);
+            $pc_before = $stmt_before->fetch(PDO::FETCH_ASSOC);
+            if ($pc_before) {
+                $details = "PC eliminada: " . ($pc_before['assigned_to'] ?: 'Equipo Libre') . " (" . $pc_before['pc_model'] . ")";
+            }
+
             $stmt = $pdo->prepare("DELETE FROM pc_equipment WHERE id = ?");
             $stmt->execute([$pc_id]);
             $status_message = '<div class="status-message success">✅ PC eliminada correctamente.</div>';
+
+            // Logging
+            if ($pc_id > 0) {
+                $log_stmt = $pdo->prepare("INSERT INTO dc_access_log (user_id, action, entity_type, entity_id, ip_address, details) VALUES (?, ?, ?, ?, ?, ?)");
+                $log_stmt->execute([$_SESSION['user_id'], 'delete', 'pc_equipment', $pc_id, IP_ADDRESS, $details]);
+            }
         }
         $pdo->commit();
     } catch (Exception $e) {

@@ -1,16 +1,6 @@
 <?php
 /**
  * manage.php - Panel de Administración del Sitio
- * 
- * Permite a los administradores configurar todos los aspectos del portal.
- * 
- * SEGURIDAD:
- * - Solo accesible por admins
- * - CSRF protection
- * - Validación estricta de todos los inputs
- * - Backups múltiples con timestamps
- * - Logging completo de cambios
- * - Rollback automático en caso de error
  */
 
 require_once 'bootstrap.php';
@@ -26,7 +16,7 @@ if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 }
 
 // Rate limiting
-if (!check_rate_limit('manage_access', 10, 60)) {
+if (!check_rate_limit('manage_access', 30, 60)) { // Aumentado a 30 solicitudes por minuto
     http_response_code(429);
     die('Demasiadas solicitudes. Espera un momento.');
 }
@@ -170,320 +160,168 @@ function create_backup($file) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         validate_request_csrf();
-        // Crear copia profunda del config para modificar
-        $new_config = $config;
+        $pdo = get_database_connection($config, true);
+        $validation_errors = [];
         
         // ================================================================
-        // VALIDAR Y PROCESAR: Ajustes Generales
+        // PROCESAR SECCIONES DEL config.php
         // ================================================================
-        
-        $company_name = trim($_POST['company_name'] ?? '');
-        if ($error = validate_string_length($company_name, 3, 100, 'Nombre de Empresa')) {
-            $validation_errors[] = $error;
-        } else {
-            $new_config['landing_page']['company_name'] = $company_name;
-        }
-        
-        // ================================================================
-        // VALIDAR Y PROCESAR: Página Principal
-        // ================================================================
-        
-        // Títulos
-        $titles = [
-            'sales_title' => 'Título de Ventas',
-            'locations_title' => 'Título de Sucursales',
-            'social_title' => 'Título de Redes Sociales',
-            'main_sites_title' => 'Título de Sitios Principales'
-        ];
-        
-        foreach ($titles as $key => $label) {
-            $value = trim($_POST[$key] ?? '');
-            if ($error = validate_string_length($value, 3, 50, $label)) {
-                $validation_errors[] = $error;
-            } else {
-                $new_config['landing_page'][$key] = $value;
-            }
-        }
-        
+        $new_config = $config; // Start with current config
+
+        // Ajustes Generales
+        $new_config['landing_page']['company_name'] = trim($_POST['company_name'] ?? '');
+
+        // Títulos de Página Principal
+        $new_config['landing_page']['sales_title'] = trim($_POST['sales_title'] ?? '');
+        $new_config['landing_page']['locations_title'] = trim($_POST['locations_title'] ?? '');
+        $new_config['landing_page']['social_title'] = trim($_POST['social_title'] ?? '');
+        $new_config['landing_page']['main_sites_title'] = trim($_POST['main_sites_title'] ?? '');
+
         // Teléfonos
         $new_config['landing_page']['phone_numbers'] = [];
         if (isset($_POST['phone_numbers']) && is_array($_POST['phone_numbers'])) {
             foreach ($_POST['phone_numbers'] as $phone) {
-                $phone = trim($phone);
-                if (empty($phone)) continue;
-                
-                if (count($new_config['landing_page']['phone_numbers']) >= 10) {
-                    $validation_errors[] = "Máximo 10 teléfonos permitidos";
-                    break;
-                }
-                
-                if ($error = validate_phone($phone, 'Teléfono')) {
-                    $validation_errors[] = $error;
-                } else {
-                    $new_config['landing_page']['phone_numbers'][] = $phone;
-                }
+                if (!empty(trim($phone))) $new_config['landing_page']['phone_numbers'][] = trim($phone);
             }
         }
-        
+
         // Sucursales
         $new_config['landing_page']['branches'] = [];
         if (isset($_POST['branches']) && is_array($_POST['branches'])) {
             foreach ($_POST['branches'] as $branch) {
-                $branch = trim($branch);
-                if (empty($branch)) continue;
-                
-                if (count($new_config['landing_page']['branches']) >= 20) {
-                    $validation_errors[] = "Máximo 20 sucursales permitidas";
-                    break;
-                }
-                
-                if ($error = validate_string_length($branch, 5, 200, 'Sucursal')) {
-                    $validation_errors[] = $error;
-                } else {
-                    $new_config['landing_page']['branches'][] = $branch;
-                }
+                if (!empty(trim($branch))) $new_config['landing_page']['branches'][] = trim($branch);
             }
         }
-        
+
         // Redes Sociales
         $new_config['landing_page']['social_links'] = [];
         if (isset($_POST['social_links']) && is_array($_POST['social_links'])) {
-            foreach ($_POST['social_links'] as $link_data) {
-                $id = trim($link_data['id'] ?? '');
-                if (empty($id)) continue;
-                
-                if (count($new_config['landing_page']['social_links']) >= 10) {
-                    $validation_errors[] = "Máximo 10 redes sociales permitidas";
-                    break;
+            foreach ($_POST['social_links'] as $id => $link_data) {
+                if (!empty(trim($id))) {
+                    $new_config['landing_page']['social_links'][trim($id)] = [
+                        'label' => trim($link_data['label'] ?? ''),
+                        'url' => trim($link_data['url'] ?? ''),
+                        'svg_path' => trim($link_data['svg_path'] ?? ''),
+                    ];
                 }
-                
-                // Validar ID
-                if (!preg_match('/^[a-z0-9_]+$/', $id)) {
-                    $validation_errors[] = "ID de red social '{$id}' inválido (solo minúsculas, números y guiones bajos)";
-                    continue;
-                }
-                
-                $label = trim($link_data['label'] ?? '');
-                $url = trim($link_data['url'] ?? '');
-                $svg_path = trim($link_data['svg_path'] ?? '');
-                
-                // Validaciones
-                if ($error = validate_string_length($label, 2, 30, "Etiqueta de '{$id}'")) {
-                    $validation_errors[] = $error;
-                    continue;
-                }
-                
-                if ($error = validate_url($url, "URL de '{$id}'", false)) {
-                    $validation_errors[] = $error;
-                    continue;
-                }
-                
-                if ($error = validate_svg_path($svg_path, "SVG path de '{$id}'")) {
-                    $validation_errors[] = $error;
-                    continue;
-                }
-                
-                $new_config['landing_page']['social_links'][$id] = [
-                    'label' => $label,
-                    'url' => $url,
-                    'svg_path' => $svg_path,
-                ];
             }
         }
-        
+
         // Sitios Principales
         if (isset($_POST['main_sites']) && is_array($_POST['main_sites'])) {
             foreach ($_POST['main_sites'] as $key => $url) {
                 if (isset($new_config['landing_page']['main_sites'][$key])) {
-                    $url = trim($url);
-                    
-                    if ($error = validate_url($url, "URL de '{$key}'", true)) {
-                        $validation_errors[] = $error;
-                    } else {
-                        $new_config['landing_page']['main_sites'][$key]['url'] = $url;
-                    }
+                    $new_config['landing_page']['main_sites'][$key]['url'] = trim($url);
                 }
             }
         }
-        
-        // ================================================================
-        // VALIDAR Y PROCESAR: Footer
-        // ================================================================
-        
-        $footer_fields = [
-            'footer_line1' => ['label' => 'Línea 1 del footer', 'min' => 5, 'max' => 200],
-            'footer_line2' => ['label' => 'Línea 2 del footer', 'min' => 5, 'max' => 200],
-            'footer_license_url' => ['label' => 'URL de licencia', 'min' => 0, 'max' => 500],
-        ];
-        
-        foreach ($footer_fields as $key => $rules) {
-            $field_key = str_replace('footer_', '', $key);
-            $value = trim($_POST[$key] ?? '');
-            
-            if ($rules['min'] > 0 && empty($value)) {
-                $validation_errors[] = "{$rules['label']} es obligatorio";
-                continue;
-            }
-            
-            if (!empty($value)) {
-                if ($error = validate_string_length($value, $rules['min'], $rules['max'], $rules['label'])) {
-                    $validation_errors[] = $error;
-                    continue;
-                }
-            }
-            
-            $new_config['footer'][$field_key] = $value;
+
+        // Footer
+        $new_config['footer']['line1'] = trim($_POST['footer_line1'] ?? '');
+        $new_config['footer']['line2'] = trim($_POST['footer_line2'] ?? '');
+        $new_config['footer']['license_url'] = trim($_POST['footer_license_url'] ?? '');
+        $new_config['footer']['whatsapp_number'] = trim($_POST['footer_whatsapp_number'] ?? '');
+        $new_config['footer']['whatsapp_svg_path'] = trim($_POST['footer_whatsapp_svg_path'] ?? '');
+
+        // Guardar el archivo config.php
+        $config_file = __DIR__ . '/config.php';
+        if (!is_writable($config_file)) {
+            throw new Exception('El archivo de configuración no es escribible. Verifica los permisos.');
         }
-        
-        // WhatsApp
-        $whatsapp = trim($_POST['footer_whatsapp_number'] ?? '');
-        if (!empty($whatsapp)) {
-            if ($error = validate_phone($whatsapp, 'WhatsApp')) {
-                $validation_errors[] = $error;
-            } else {
-                $new_config['footer']['whatsapp_number'] = $whatsapp;
-            }
+
+        $new_config_content = "<?php\n" .
+            "/**\n * config.php - Configuración Central\n * Generado automáticamente por manage.php\n * Fecha: " . date('Y-m-d H:i:s') . "\n * Usuario: " . $_SESSION['username'] . "\n */\n\n" .
+            "return " . safe_var_export($new_config) . ";\n";
+
+        if (!file_put_contents($config_file, $new_config_content, LOCK_EX)) {
+            throw new Exception('No se pudo escribir en el archivo de configuración.');
         }
-        
-        $whatsapp_svg = trim($_POST['footer_whatsapp_svg_path'] ?? '');
-        if (!empty($whatsapp_svg)) {
-            if ($error = validate_svg_path($whatsapp_svg, 'SVG de WhatsApp')) {
-                $validation_errors[] = $error;
-            } else {
-                $new_config['footer']['whatsapp_svg_path'] = $whatsapp_svg;
-            }
-        }
-        
+
+        // Recargar la configuración para la sesión actual
+        $config = require $config_file;
+        log_security_event('config_updated', "Usuario {$_SESSION['username']} actualizó la configuración del sitio");
+
         // ================================================================
-        // VALIDAR Y PROCESAR: Servicios
+        // PROCESAR SERVICIOS (Base de Datos)
         // ================================================================
-        
-        $new_config['services'] = [];
         if (isset($_POST['services']) && is_array($_POST['services'])) {
+            $submitted_ids = [];
             foreach ($_POST['services'] as $key => $service_data) {
                 $service_id = trim($service_data['id'] ?? $key);
-                
                 if (empty($service_id)) continue;
-                
-                if (count($new_config['services']) >= 50) {
-                    $validation_errors[] = "Máximo 50 servicios permitidos";
-                    break;
-                }
-                
-                // Validar ID
-                if (!preg_match('/^[a-z0-9_-]+$/i', $service_id)) {
-                    $validation_errors[] = "ID de servicio '{$service_id}' inválido (solo letras, números, guiones y guiones bajos)";
-                    continue;
-                }
-                
+
                 $label = trim($service_data['label'] ?? '');
                 $url = trim($service_data['url'] ?? '');
                 $category = trim($service_data['category'] ?? 'Otros Servicios');
-                
-                // Validaciones
-                if ($error = validate_string_length($label, 2, 50, "Etiqueta de '{$service_id}'")) {
-                    $validation_errors[] = $error;
-                    continue;
-                }
-                
-                if ($error = validate_url($url, "URL de '{$service_id}'", true)) {
-                    $validation_errors[] = $error;
-                    continue;
-                }
-                
-                if ($error = validate_string_length($category, 2, 50, "Categoría de '{$service_id}'")) {
-                    $validation_errors[] = $error;
-                    continue;
-                }
-                
-                $new_config['services'][$service_id] = [
-                    'label' => $label,
-                    'url' => $url,
-                    'category' => $category,
-                    'requires_login' => isset($service_data['requires_login']),
-                    'redirect' => isset($service_data['redirect']),
-                ];
-            }
-        }
-        
-        // ================================================================
-        // GUARDAR CONFIGURACIÓN (solo si no hay errores)
-        // ================================================================
-        
-        if (empty($validation_errors)) {
-            $config_file = __DIR__ . '/config.php';
-            
-            // Verificar permisos
-            if (!is_writable($config_file)) {
-                $status_message = '<div class="status-message error">❌ El archivo de configuración no es escribible. Verifica los permisos.</div>';
-            } else {
-                // Crear backup
-                $backup_file = create_backup($config_file);
-                
-                if (!$backup_file) {
-                    $status_message = '<div class="status-message error">❌ No se pudo crear el backup. Operación cancelada.</div>';
+
+                if (empty($label) || empty($url) || empty($category)) continue;
+
+                $is_new = strpos($service_id, 'new_') === 0;
+
+                if ($is_new) {
+                    $stmt = $pdo->prepare("INSERT INTO services (service_key, label, url, category, requires_login, redirect) VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([
+                        'svc_' . uniqid(),
+                        $label,
+                        $url,
+                        $category,
+                        isset($service_data['requires_login']) ? 1 : 0,
+                        isset($service_data['redirect']) ? 1 : 0
+                    ]);
+                    $submitted_ids[] = $pdo->lastInsertId();
                 } else {
-                    // Preparar contenido
-                    $new_config_content = "<?php\n" .
-                        "/**\n" .
-                        " * config.php - Configuración Central\n" .
-                        " * Generado automáticamente por manage.php\n" .
-                        " * Fecha: " . date('Y-m-d H:i:s') . "\n" .
-                        " * Usuario: " . $_SESSION['username'] . "\n" .
-                        " */\n\n" .
-                        "return " . safe_var_export($new_config) . ";\n";
-                    
-                    // Intentar escribir
-                    if (file_put_contents($config_file, $new_config_content, LOCK_EX)) {
-                        
-                        // Verificar que el archivo sea válido
-                        try {
-                            $test_config = require $config_file;
-                            
-                            if (!is_array($test_config)) {
-                                throw new Exception('Config no es un array');
-                            }
-                            
-                            // Éxito
-                            $config = $test_config;
-                            
-                            log_security_event(
-                                'config_updated',
-                                "Usuario {$_SESSION['username']} actualizó la configuración del sitio"
-                            );
-                            
-                            $status_message = '<div class="status-message success">✅ ¡Configuración guardada con éxito! Backup creado: ' . basename($backup_file) . '</div>';
-                            
-                        } catch (Exception $e) {
-                            // Rollback
-                            copy($backup_file, $config_file);
-                            
-                            log_security_event(
-                                'config_save_failed',
-                                "Fallo al guardar configuración. Rollback ejecutado. Error: " . $e->getMessage()
-                            );
-                            
-                            $status_message = '<div class="status-message error">❌ Error al validar la configuración guardada. Se restauró el backup.</div>';
-                        }
-                        
-                    } else {
-                        $status_message = '<div class="status-message error">❌ No se pudo escribir en el archivo de configuración.</div>';
-                    }
+                    $stmt = $pdo->prepare("UPDATE services SET label=?, url=?, category=?, requires_login=?, redirect=? WHERE id=?");
+                    $stmt->execute([
+                        $label,
+                        $url,
+                        $category,
+                        isset($service_data['requires_login']) ? 1 : 0,
+                        isset($service_data['redirect']) ? 1 : 0,
+                        $service_id
+                    ]);
+                    $submitted_ids[] = $service_id;
                 }
             }
-        } else {
-            // Hay errores de validación
-            $status_message = '<div class="status-message error">';
-            $status_message .= '<strong>❌ Se encontraron los siguientes errores:</strong><ul>';
-            foreach ($validation_errors as $error) {
-                $status_message .= '<li>' . htmlspecialchars($error) . '</li>';
+
+            // Eliminar servicios que no fueron enviados
+            $stmt_current = $pdo->query("SELECT id FROM services");
+            $current_ids = $stmt_current->fetchAll(PDO::FETCH_COLUMN);
+            $ids_to_delete = array_diff($current_ids, $submitted_ids);
+
+            if (!empty($ids_to_delete)) {
+                // ¡CORRECCIÓN CLAVE! Asegurarse de que los valores son enteros
+                $ids_to_delete = array_map('intval', $ids_to_delete);
+                $placeholders = implode(',', array_fill(0, count($ids_to_delete), '?'));
+                $stmt_del = $pdo->prepare("DELETE FROM services WHERE id IN ($placeholders)");
+                $stmt_del->execute(array_values($ids_to_delete));
             }
-            $status_message .= '</ul></div>';
         }
+
+        $status_message = '<div class="status-message success">✅ ¡Configuración guardada con éxito!</div>';
+
     } catch (Exception $e) {
-        $status_message = '<div class="status-message error">❌ Error de seguridad: ' . htmlspecialchars($e->getMessage()) . '</div>';
-        log_security_event('csrf_validation_failed', 'Token inválido en manage.php');
+        $status_message = '<div class="status-message error">❌ Error: ' . htmlspecialchars($e->getMessage()) . '</div>';
+        log_security_event('manage_save_failed', 'Error en manage.php: ' . $e->getMessage());
     }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($validation_errors)) {
+    // No hacer nada aquí, la lógica ya se ejecutó arriba.
+    // Esto previene la ejecución duplicada.
+} else if (!empty($validation_errors)) {
+    $status_message = '<div class="status-message error">';
+    $status_message .= '<strong>❌ Se encontraron los siguientes errores:</strong><ul>';
+    foreach ($validation_errors as $error) {
+        $status_message .= '<li>' . htmlspecialchars($error) . '</li>';
+    }
+    $status_message .= '</ul></div>';
+}
+
+?>
+<?php
+$pdo = get_database_connection($config, true);
+if (!$pdo) {
+    die("Error fatal: No se pudo conectar a la base de datos.");
 }
 ?>
 <!DOCTYPE html>
@@ -660,14 +498,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($config['services'] as $id => $service): ?>
+                                        <?php 
+                                        $db_services = $pdo->query("SELECT * FROM services ORDER BY category, sort_order")->fetchAll(PDO::FETCH_ASSOC);
+                                        foreach ($db_services as $service): 
+                                        ?>
                                         <tr>
-                                            <td><input type="text" name="services[<?= $id ?>][id]" value="<?= htmlspecialchars($id) ?>" readonly class="readonly-id"></td>
-                                            <td><input type="text" name="services[<?= $id ?>][label]" value="<?= htmlspecialchars($service['label']) ?>" required></td>
-                                            <td><input type="text" name="services[<?= $id ?>][url]" value="<?= htmlspecialchars($service['url']) ?>" required></td>
-                                            <td><input type="text" name="services[<?= $id ?>][category]" value="<?= htmlspecialchars($service['category'] ?? '') ?>" placeholder="Ej: Accesos LAN"></td>
-                                            <td class="checkbox-cell"><input type="checkbox" name="services[<?= $id ?>][requires_login]" value="1" <?= !empty($service['requires_login']) ? 'checked' : '' ?>></td>
-                                            <td class="checkbox-cell"><input type="checkbox" name="services[<?= $id ?>][redirect]" value="1" <?= !empty($service['redirect']) ? 'checked' : '' ?>></td>
+                                            <td><input type="text" name="services[<?= $service['id'] ?>][id]" value="<?= htmlspecialchars($service['id']) ?>" readonly class="readonly-id"></td>
+                                            <td><input type="text" name="services[<?= $service['id'] ?>][label]" value="<?= htmlspecialchars($service['label']) ?>" required></td>
+                                            <td><input type="text" name="services[<?= $service['id'] ?>][url]" value="<?= htmlspecialchars($service['url']) ?>" required></td>
+                                            <td><input type="text" name="services[<?= $service['id'] ?>][category]" value="<?= htmlspecialchars($service['category'] ?? '') ?>" placeholder="Ej: Accesos LAN"></td>
+                                            <td class="checkbox-cell"><input type="checkbox" name="services[<?= $service['id'] ?>][requires_login]" value="1" <?= !empty($service['requires_login']) ? 'checked' : '' ?>></td>
+                                            <td class="checkbox-cell"><input type="checkbox" name="services[<?= $service['id'] ?>][redirect]" value="1" <?= !empty($service['redirect']) ? 'checked' : '' ?>></td>
                                             <td><button type="button" class="delete-service-btn">Eliminar</button></td>
                                         </tr>
                                         <?php endforeach; ?>

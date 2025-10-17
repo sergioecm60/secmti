@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $ids_to_delete = array_diff($current_ids, $submitted_ftp_ids);
 
                     if (!empty($ids_to_delete)) {
-                        $placeholders = implode(',', array_fill(0, count($submitted_ftp_ids), '?'));
+                        $placeholders = implode(',', array_fill(0, count($ids_to_delete), '?'));
                         $stmt_del = $pdo->prepare("DELETE FROM dc_hosting_ftp_accounts WHERE id IN ($placeholders)");
                         $stmt_del->execute($ids_to_delete);
                     }

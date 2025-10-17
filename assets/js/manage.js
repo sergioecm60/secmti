@@ -1,123 +1,130 @@
+/**
+ * manage.js - Lógica para el Panel de Administración (manage.php)
+ */
 document.addEventListener('DOMContentLoaded', function() {
-    // --- Lógica para secciones colapsables (acordeón) ---
-    document.querySelectorAll('.section-header').forEach(header => {
-        header.addEventListener('click', () => {
-            header.classList.toggle('active');
-            const body = header.nextElementSibling;
-            if (body.style.maxHeight) {
-                body.style.maxHeight = null;
-            } else {
-                body.style.maxHeight = body.scrollHeight + "px";
+
+    // 1. Funcionalidad de Acordeón para las secciones
+    // ========================================================================
+    const sections = document.querySelectorAll('.page-manage .section');
+    sections.forEach(section => {
+        const header = section.querySelector('.section-header');
+        const body = section.querySelector('.section-body');
+
+        if (header && body) {
+            header.addEventListener('click', () => {
+                const isActive = header.classList.contains('active');
+                
+                // Cerrar todas las demás secciones
+                sections.forEach(s => {
+                    s.querySelector('.section-header')?.classList.remove('active');
+                    s.querySelector('.section-body').style.maxHeight = null;
+                });
+
+                // Abrir o cerrar la sección actual
+                if (!isActive) {
+                    header.classList.add('active');
+                    body.style.maxHeight = body.scrollHeight + 'px';
+                }
+            });
+        }
+    });
+
+    // Abrir la primera sección por defecto
+    const firstSectionHeader = document.querySelector('.page-manage .section .section-header');
+    if (firstSectionHeader) {
+        firstSectionHeader.click();
+    }
+
+    // 2. Funcionalidad para listas dinámicas (Teléfonos, Sucursales)
+    // ========================================================================
+    document.querySelectorAll('.add-item-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.dataset.target;
+            const inputName = this.dataset.name;
+            const placeholder = this.dataset.placeholder;
+            const list = document.getElementById(targetId);
+
+            if (list) {
+                const newItem = document.createElement('div');
+                newItem.className = 'repeatable-item';
+                newItem.innerHTML = `
+                    <input type="text" name="${inputName}" placeholder="${placeholder}">
+                    <button type="button" class="delete-item-btn">Eliminar</button>
+                `;
+                list.insertBefore(newItem, this);
             }
         });
     });
 
-    // --- Lógica para listas dinámicas ---
-    const contentDiv = document.querySelector('.content');
-    document.querySelectorAll('.add-item-btn').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetListId = this.dataset.target;
-            const inputName = this.dataset.name;
-            const placeholder = this.dataset.placeholder || '';
-            const list = document.getElementById(targetListId);
-            
-            const newItem = document.createElement('div');
-            newItem.classList.add('repeatable-item');
-            newItem.innerHTML = `
-                <input type="text" name="${inputName}" value="" placeholder="${placeholder}" />
-                <button type="button" class="delete-item-btn">Eliminar</button>
-            `;
-            list.insertBefore(newItem, this);
-            newItem.querySelector('input').focus();
-        });
-    });
-
-    contentDiv.addEventListener('click', function(e) {
+    // Delegación de eventos para botones de eliminar
+    document.addEventListener('click', function(e) {
         if (e.target && e.target.classList.contains('delete-item-btn')) {
-            e.preventDefault();
             e.target.closest('.repeatable-item').remove();
         }
-    });
-
-    // --- Lógica para la tabla de servicios ---
-    const servicesTableBody = document.querySelector('#services-table tbody');
-    servicesTableBody.addEventListener('click', function(e) {
         if (e.target && e.target.classList.contains('delete-service-btn')) {
-            e.preventDefault();
-            e.target.closest('tr').remove();
+            if (confirm('¿Estás seguro de que quieres eliminar este servicio? El cambio se guardará al hacer clic en "Guardar Cambios".')) {
+                e.target.closest('tr').remove();
+            }
         }
     });
+
+    // 3. Funcionalidad para añadir Redes Sociales y Servicios (tablas)
+    // ========================================================================
+    const addSocialBtn = document.getElementById('add-social-link-btn');
+    if (addSocialBtn) {
+        addSocialBtn.addEventListener('click', function() {
+            const tableBody = document.getElementById('social-links-table').querySelector('tbody');
+            const newId = 'new_social_' + Date.now();
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td><input type="text" name="social_links[${newId}][id]" value="${newId}" placeholder="ID único (ej: tiktok)"></td>
+                <td><input type="text" name="social_links[${newId}][label]" placeholder="Etiqueta" required></td>
+                <td><input type="text" name="social_links[${newId}][url]" placeholder="URL completa" required></td>
+                <td><textarea name="social_links[${newId}][svg_path]" rows="2" placeholder="<path d='...'/>"></textarea></td>
+                <td><button type="button" class="delete-item-btn">Eliminar</button></td>
+            `;
+            tableBody.appendChild(newRow);
+        });
+    }
 
     const addServiceBtn = document.getElementById('add-service-btn');
-    addServiceBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const newId = 'nuevo_' + Date.now();
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td><input type="text" name="services[${newId}][id]" placeholder="ej: miBoton" required></td>
-            <td><input type="text" name="services[${newId}][label]" placeholder="ej: Mi Botón" required></td>
-            <td><input type="text" name="services[${newId}][url]" placeholder="https://... o info.php" required></td>
-            <td><input type="text" name="services[${newId}][category]" placeholder="Ej: Accesos WAN" required></td>
-            <td class="checkbox-cell"><input type="checkbox" name="services[${newId}][requires_login]" value="1" checked></td>
-            <td class="checkbox-cell"><input type="checkbox" name="services[${newId}][redirect]" value="1"></td>
-            <td><button type="button" class="delete-service-btn">Eliminar</button></td>
-        `;
-        servicesTableBody.appendChild(newRow);
-        newRow.querySelector('input').focus();
+    if (addServiceBtn) {
+        addServiceBtn.addEventListener('click', function() {
+            const tableBody = document.getElementById('services-table').querySelector('tbody');
+            const newId = 'new_service_' + Date.now();
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td><input type="text" name="services[${newId}][id]" value="${newId}" readonly class="readonly-id"></td>
+                <td><input type="text" name="services[${newId}][label]" placeholder="Nombre del Botón" required></td>
+                <td><input type="text" name="services[${newId}][url]" placeholder="URL de destino" required></td>
+                <td><input type="text" name="services[${newId}][category]" placeholder="Categoría (ej: LAN)"></td>
+                <td class="checkbox-cell"><input type="checkbox" name="services[${newId}][requires_login]" value="1" checked></td>
+                <td class="checkbox-cell"><input type="checkbox" name="services[${newId}][redirect]" value="1"></td>
+                <td><button type="button" class="delete-service-btn">Eliminar</button></td>
+            `;
+            tableBody.appendChild(newRow);
+        });
+    }
+
+    // Delegación de eventos para eliminar filas de tablas
+    document.addEventListener('click', function(e) {
+        if (e.target && (e.target.matches('#social-links-table .delete-item-btn') || e.target.matches('#services-table .delete-service-btn'))) {
+             if (confirm('¿Estás seguro de que quieres eliminar esta fila? El cambio se guardará al hacer clic en "Guardar Cambios".')) {
+                e.target.closest('tr').remove();
+            }
+        }
     });
 
-    // --- Lógica para la tabla de redes sociales ---
-    const socialLinksTableBody = document.querySelector('#social-links-table tbody');
-    socialLinksTableBody.addEventListener('click', function(e) {
-        if (e.target && e.target.classList.contains('delete-item-btn')) {
+    // 4. Confirmación antes de guardar
+    // ========================================================================
+    const saveBtn = document.getElementById('saveConfigBtn');
+    const configForm = document.getElementById('configForm');
+
+    if (saveBtn && configForm) {
+        saveBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            e.target.closest('tr').remove();
-        }
-    });
-
-    const addSocialLinkBtn = document.getElementById('add-social-link-btn');
-    addSocialLinkBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const newId = 'nuevo_' + Date.now();
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td><input type="text" name="social_links[${newId}][id]" placeholder="ej: tiktok" required></td>
-            <td><input type="text" name="social_links[${newId}][label]" placeholder="TikTok" required></td>
-            <td><input type="text" name="social_links[${newId}][url]" placeholder="https://www.tiktok.com/..." required></td>
-            <td><textarea name="social_links[${newId}][svg_path]" rows="2" placeholder="<path d='...' />"></textarea></td>
-            <td><button type="button" class="delete-item-btn">Eliminar</button></td>
-        `;
-        socialLinksTableBody.appendChild(newRow);
-        newRow.querySelector('input').focus();
-    });
-
-    // --- Lógica para el contador de caracteres ---
-    document.querySelectorAll('input[type="text"], textarea').forEach(input => {
-        const maxLength = parseInt(input.getAttribute('maxlength')) || 500;
-        
-        const counter = document.createElement('span');
-        counter.className = 'char-counter';
-        input.parentNode.appendChild(counter);
-        
-        function updateCounter() {
-            const len = input.value.length;
-            counter.textContent = `${len}/${maxLength}`;
-            counter.className = 'char-counter';
-            if (len > maxLength * 0.9) counter.classList.add('danger');
-            else if (len > maxLength * 0.75) counter.classList.add('warning');
-        }
-        
-        input.addEventListener('input', updateCounter);
-        updateCounter();
-    });
-    
-    // --- Lógica para el botón de guardar ---
-    const saveConfigBtn = document.getElementById('saveConfigBtn');
-    if (saveConfigBtn) {
-        saveConfigBtn.addEventListener('click', function() {
-            if (confirm('¿Guardar todos los cambios? Esta acción sobreescribirá el archivo de configuración.')) {
-                document.getElementById('configForm').submit();
+            if (confirm('¿Estás seguro de que quieres guardar todos los cambios? Esta acción sobreescribirá la configuración actual.')) {
+                configForm.submit();
             }
         });
     }

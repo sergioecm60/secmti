@@ -71,8 +71,8 @@ try {
     
     // Obtener logs paginados
     $stmt = $pdo->prepare("
-        SELECT l.id, l.action, l.entity_type, l.entity_id, l.ip_address, 
-               l.created_at, l.user_agent, u.username
+        SELECT l.id, l.action, l.entity_type, l.entity_id, l.ip_address, l.details,
+               l.created_at, l.user_agent, COALESCE(u.username, 'Sistema') as username
         FROM dc_access_log l
         LEFT JOIN users u ON l.user_id = u.id
         {$where_sql}
@@ -106,12 +106,12 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     header('Content-Disposition: attachment; filename="activity_log_' . date('Y-m-d') . '.csv"');
     
     $output = fopen('php://output', 'w');
-    fputcsv($output, ['Fecha', 'Usuario', 'Acción', 'Entidad', 'ID Entidad', 'IP', 'User Agent']);
+    fputcsv($output, ['Fecha', 'Usuario', 'Acción', 'Entidad', 'ID Entidad', 'Detalles', 'IP', 'User Agent']);
     
     // Para la exportación, obtenemos todos los logs que coinciden con el filtro, sin paginación
     try {
         $export_stmt = $pdo->prepare("
-            SELECT l.created_at, u.username, l.action, l.entity_type, l.entity_id, l.ip_address, l.user_agent
+            SELECT l.created_at, u.username, l.action, l.entity_type, l.entity_id, l.details, l.ip_address, l.user_agent
             FROM dc_access_log l
             LEFT JOIN users u ON l.user_id = u.id
             {$where_sql}
@@ -125,6 +125,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                 $log['action'],
                 $log['entity_type'],
                 $log['entity_id'],
+                $log['details'] ?? '',
                 $log['ip_address'] ?? 'N/A',
                 $log['user_agent'] ?? 'N/A'
             ]);
@@ -279,6 +280,7 @@ function safe_attr($value) {
                             <th scope="col">Acción</th>
                             <th scope="col">Entidad</th>
                             <th scope="col">ID Entidad</th>
+                            <th scope="col">Detalles</th>
                             <th scope="col">IP</th>
                         </tr>
                     </thead>
@@ -286,6 +288,7 @@ function safe_attr($value) {
                         <?php if (empty($logs)): ?>
                             <tr>
                                 <td colspan="6" style="text-align: center;">No hay registros que coincidan con los filtros.</td>
+                                <td colspan="7" style="text-align: center;">No hay registros que coincidan con los filtros.</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($logs as $log): ?>
@@ -307,6 +310,9 @@ function safe_attr($value) {
                                 </td>
                                 <td data-label="ID Entidad">
                                     <?= htmlspecialchars($log['entity_id']) ?>
+                                </td>
+                                <td data-label="Detalles">
+                                    <?= nl2br(htmlspecialchars($log['details'] ?? 'N/A')) ?>
                                 </td>
                                 <td data-label="IP">
                                     <?= htmlspecialchars($log['ip_address'] ?? 'N/A') ?>
