@@ -83,17 +83,24 @@ $pdo = get_database_connection($config, false); // false: no es crítico si fall
         // Ordenar categorías: LAN primero, WAN segundo, luego sucursales alfabéticamente
         // Esta lógica de ordenamiento personalizado se puede mover a la tabla `service_categories` en el futuro.
         uksort($grouped_services, function($a, $b) {
-            // Prioridad para LAN y WAN
-            // Usar slugs (identificadores) es más robusto que nombres completos
-            // Puedes añadir más categorías prioritarias aquí.
+            // Lista de prioridades para categorías. Un número más bajo significa mayor prioridad.
+            // Usar slugs (identificadores) es más robusto que nombres de visualización.
             $priority = [
                 'accesos-lan' => 1,
                 'accesos-wan' => 2,
+                'pedraza-central' => 10,
+                'piso-7' => 11,
+                'hotel-san-miguel' => 20,
+                'hotel-lyon' => 21,
+                'hotel-villa-de-merlo' => 22,
+                'pan-lactal' => 30,
             ];
             
+            // Convertir nombres de categoría a slugs para la comparación
             $slugA = strtolower(str_replace(' ', '-', $a));
             $slugB = strtolower(str_replace(' ', '-', $b));
 
+            // Obtener la prioridad de cada categoría, o 99 si no está en la lista.
             $priorityA = $priority[$slugA] ?? 99;
             $priorityB = $priority[$slugB] ?? 99;
             
@@ -101,6 +108,7 @@ $pdo = get_database_connection($config, false); // false: no es crítico si fall
                 return $priorityA - $priorityB;
             }
             
+            // Si tienen la misma prioridad (o ninguna), ordenar alfabéticamente por el nombre original.
             return strcmp($a, $b);
         });
         ?>
