@@ -312,11 +312,11 @@
 }
 
 .server-type-switch {
-    background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+    background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); /* Celeste a azul claro */
 }
 
 .server-type-router {
-    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    background: linear-gradient(135deg, #f78ca0 0%, #f9748f 19%, #fd868c 60%, #fe9a8b 100%); /* Rosa a coral */
 }
 
 .server-title-area {
