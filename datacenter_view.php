@@ -525,8 +525,16 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
                                 <div class="server-title-area">
                                     <h3 class="server-name"><?= htmlspecialchars($server['label']) ?></h3>
                                     <div class="server-meta">
-                                        <span class="server-badge status-<?= strtolower($server['status'] ?? 'inactive') ?>">
-                                            <?= ($server['status'] ?? 'inactive') === 'active' ? '🟢 Activo' : '🔴 Inactivo' ?>
+                                        <?php
+                                            $status_map = [
+                                                'active' => ['icon' => '🟢', 'text' => 'Activo'],
+                                                'inactive' => ['icon' => '🔴', 'text' => 'Inactivo'],
+                                                'maintenance' => ['icon' => '🟡', 'text' => 'Mantenimiento']
+                                            ];
+                                            $current_status = strtolower($server['status'] ?? 'inactive');
+                                        ?>
+                                        <span class="server-badge status-<?= $current_status ?>">
+                                            <?= $status_map[$current_status]['icon'] ?? '❓' ?> <?= $status_map[$current_status]['text'] ?? 'Desconocido' ?>
                                         </span>
                                         <span class="server-badge">📦 <?= htmlspecialchars(ucfirst($server['type'])) ?></span>
                                         <?php if (!empty($server['net_ip_lan'])): ?>

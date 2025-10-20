@@ -364,6 +364,16 @@
     color: #721c24; 
 }
 
+.server-badge.status-maintenance {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.server-card.status-inactive .server-header,
+.server-card.status-maintenance .server-header {
+    opacity: 0.7;
+}
+
 /* ==========================================================================
    ACCIONES DEL SERVIDOR
    ========================================================================== */
