@@ -515,7 +515,7 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
                         <div class="server-header">
                             <div class="server-main-info">
                                 <?php
-                                    $icons = ['physical' => '🖥️', 'virtual' => '💻', 'container' => '📦', 'cloud' => '☁️', 'isp' => '🌐', 'switch' => '🔌', 'router' => '🧱', 'dvr' => '📹', 'alarmas' => '🚨'];
+                                    $icons = ['physical' => '🖥️', 'virtual' => '🐳', 'container' => '📦', 'cloud' => '☁️', 'isp' => '🌐', 'switch' => '🔀', 'router' => '🧱', 'dvr' => '📼', 'alarmas' => '🚨'];
                                     $icon = $icons[strtolower($server['type'] ?? 'physical')] ?? '⚙️';
                                 ?>
                                 <div class="server-icon server-type-<?= strtolower($server['type'] ?? 'physical') ?>">
