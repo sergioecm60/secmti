@@ -314,10 +314,21 @@ try {
     ";
 
     if (!empty($search)) {
-        // Búsqueda con CALL a procedimiento almacenado
-        $stmt = $pdo->prepare("CALL sp_search_infrastructure(?)");
-        $stmt->execute([$search]);
+        // Búsqueda directa en PHP para no depender de Stored Procedures
+        $query = $base_query . " 
+            WHERE s.label LIKE :search
+               OR s.net_ip_lan LIKE :search
+               OR s.net_ip_wan LIKE :search
+               OR s.net_host_external LIKE :search
+               OR s.hw_model LIKE :search
+               OR s.notes LIKE :search
+               OR l.name LIKE :search
+            ORDER BY l.name, s.label
+        ";
+        $stmt = $pdo->prepare($query);
+        $stmt->execute([':search' => '%' . $search . '%']);
         $servers_raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
     } else {
         // Cargar todos, ordenando por ubicación y luego por etiqueta
         $stmt = $pdo->query($base_query . " WHERE s.status = 'active' ORDER BY l.name, s.label");
