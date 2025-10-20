@@ -66,7 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         ");
                         $stmt->execute([
                             $server_data['label'],
-                            $server_data['type'] ?? 'physical', // Añadido el campo status
+                            $server_data['type'] ?? 'physical',
+                            $server_data['status'] ?? 'active', // ¡CORRECCIÓN: Añadido el valor para 'status'!
                             $server_data['location_id'] ?: null,
                             $server_data['hw_model'] ?? '',
                             $server_data['hw_cpu'] ?? '',
