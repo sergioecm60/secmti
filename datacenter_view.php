@@ -314,19 +314,38 @@ try {
     ";
 
     if (!empty($search)) {
-        // Búsqueda directa en PHP para no depender de Stored Procedures
-        $query = $base_query . " 
-            WHERE s.label LIKE :search
-               OR s.net_ip_lan LIKE :search
-               OR s.net_ip_wan LIKE :search
-               OR s.net_host_external LIKE :search
-               OR s.hw_model LIKE :search
-               OR s.notes LIKE :search
-               OR l.name LIKE :search
-            ORDER BY l.name, s.label
+        // Búsqueda inteligente con relevancia, adaptada de tu sugerencia.
+        $search_param = "%{$search}%";
+        $query = "
+            SELECT s.id, s.server_id, s.label, s.type, s.location_id, s.status, s.hw_model, s.hw_cpu, s.hw_ram, 
+                   s.hw_disk, s.net_ip_lan, s.net_ip_wan, s.net_host_external, s.net_gateway, s.net_dns, s.notes, 
+                   s.username, s.password, l.name as location_name,
+                   CASE 
+                       WHEN s.label LIKE :search1 THEN 1
+                       WHEN s.net_ip_lan LIKE :search2 THEN 2
+                       WHEN s.net_ip_wan LIKE :search3 THEN 3
+                       ELSE 4
+                   END as relevance
+            FROM dc_servers s 
+            LEFT JOIN dc_locations l ON s.location_id = l.id
+            WHERE 
+                s.label LIKE :search4 OR
+                s.net_ip_lan LIKE :search5 OR
+                s.net_ip_wan LIKE :search6 OR
+                s.net_host_external LIKE :search7 OR
+                s.hw_model LIKE :search8 OR
+                s.notes LIKE :search9 OR
+                s.type LIKE :search10 OR
+                l.name LIKE :search11
+            ORDER BY relevance ASC, l.name, s.label ASC
         ";
         $stmt = $pdo->prepare($query);
-        $stmt->execute([':search' => '%' . $search . '%']);
+        
+        // Vincular los 11 parámetros
+        for ($i = 1; $i <= 11; $i++) {
+            $stmt->bindValue(":search{$i}", $search_param);
+        }
+        $stmt->execute();
         $servers_raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     } else {
