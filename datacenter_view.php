@@ -329,16 +329,24 @@ try {
                    END as relevance
             FROM dc_servers s 
             LEFT JOIN dc_locations l ON s.location_id = l.id
-            WHERE 
-                s.label LIKE :search4 OR
-                s.net_ip_lan LIKE :search5 OR
-                s.net_ip_wan LIKE :search6 OR
-                s.net_host_external LIKE :search7 OR
-                s.hw_model LIKE :search8 OR
-                s.notes LIKE :search9 OR
-                s.type LIKE :search10 OR
-                l.name LIKE :search11
-            ORDER BY relevance ASC, l.name, s.label ASC
+            WHERE (
+                s.label LIKE :search4 
+                OR s.net_ip_lan LIKE :search5 
+                OR s.net_ip_wan LIKE :search6 
+                OR s.net_host_external LIKE :search7 
+                OR s.hw_model LIKE :search8 
+                OR s.notes LIKE :search9 
+                OR s.type LIKE :search10 
+                OR l.name LIKE :search11
+            )
+            ORDER BY 
+                relevance ASC, 
+                CASE s.status 
+                    WHEN 'active' THEN 1 
+                    WHEN 'maintenance' THEN 2 
+                    ELSE 3 
+                END, 
+                l.name, s.label ASC
         ";
         $stmt = $pdo->prepare($query);
         
@@ -351,7 +359,15 @@ try {
 
     } else {
         // Cargar todos, ordenando por ubicación y luego por etiqueta
-        $stmt = $pdo->query($base_query . " WHERE s.status = 'active' ORDER BY l.name, s.label");
+        $stmt = $pdo->query($base_query . " ORDER BY 
+            CASE s.status 
+                WHEN 'active' THEN 1 
+                WHEN 'maintenance' THEN 2 
+                ELSE 3 
+            END, 
+            l.name, 
+            s.label
+        ");
         $servers_raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

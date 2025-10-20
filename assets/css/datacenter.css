@@ -374,6 +374,18 @@
     opacity: 0.7;
 }
 
+.server-card.status-active {
+    border-left: 4px solid var(--success-color);
+}
+
+.server-card.status-inactive {
+    border-left: 4px solid var(--danger-color);
+}
+
+.server-card.status-maintenance {
+    border-left: 4px solid var(--warning-color);
+}
+
 /* ==========================================================================
    ACCIONES DEL SERVIDOR
    ========================================================================== */
