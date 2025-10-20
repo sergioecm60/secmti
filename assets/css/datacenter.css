@@ -319,6 +319,14 @@
     background: linear-gradient(135deg, #f78ca0 0%, #f9748f 19%, #fd868c 60%, #fe9a8b 100%); /* Rosa a coral */
 }
 
+.server-type-dvr {
+    background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%); /* Azul oscuro a turquesa */
+}
+
+.server-type-alarmas {
+    background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); /* Rojo intenso */
+}
+
 .server-title-area {
     flex: 1;
     min-width: 0;

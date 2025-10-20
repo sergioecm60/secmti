@@ -7,10 +7,10 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "-03:00";
 
+---
+---
 CREATE DATABASE IF NOT EXISTS `portal_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci;
 USE `portal_db`;
-
--- --------------------------------------------------------
 
 CREATE TABLE `dc_access_log` (
   `id` int(11) NOT NULL,
@@ -288,3 +288,4 @@ ALTER TABLE `pc_equipment`
   ADD CONSTRAINT `pc_equipment_ibfk_1` FOREIGN KEY (`location_id`) REFERENCES `dc_locations` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 COMMIT;
+
