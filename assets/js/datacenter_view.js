@@ -459,9 +459,9 @@ function createServiceElement(serviceData = {}) {
     div.innerHTML = `
         <div class="form-grid">
             <input type="hidden" name="services[${serviceId}][id]" value="${serviceData.id || ''}" form="serverForm">
-            <input type="text" name="services[${serviceId}][name]" placeholder="Nombre del Servicio" value="${serviceData.name || ''}" required form="serverForm">
-            <input type="text" name="services[${serviceId}][port]" placeholder="Puerto" value="${serviceData.port || ''}" form="serverForm">
-            <select name="services[${serviceId}][protocol]" form="serverForm">
+            <div class="form-group"><label for="svc_name_${serviceId}">Nombre *</label><input type="text" id="svc_name_${serviceId}" name="services[${serviceId}][name]" placeholder="Nombre del Servicio" value="${serviceData.name || ''}" required form="serverForm"></div>
+            <div class="form-group"><label for="svc_port_${serviceId}">Puerto</label><input type="text" id="svc_port_${serviceId}" name="services[${serviceId}][port]" placeholder="Puerto" value="${serviceData.port || ''}" form="serverForm"></div>
+            <div class="form-group"><label for="svc_proto_${serviceId}">Protocolo</label><select id="svc_proto_${serviceId}" name="services[${serviceId}][protocol]" form="serverForm">
                 <option value="https" ${serviceData.protocol === 'https' ? 'selected' : ''}>HTTPS</option>
                 <option value="http" ${serviceData.protocol === 'http' ? 'selected' : ''}>HTTP</option>
                 <option value="ssh" ${serviceData.protocol === 'ssh' ? 'selected' : ''}>SSH</option>
@@ -473,10 +473,13 @@ function createServiceElement(serviceData = {}) {
                 <option value="mysql" ${serviceData.protocol === 'mysql' ? 'selected' : ''}>MySQL</option>
                 <option value="telnet" ${serviceData.protocol === 'telnet' ? 'selected' : ''}>Telnet</option>
                 <option value="other" ${serviceData.protocol === 'other' ? 'selected' : ''}>Otro</option>
-            </select>
+            </select></div>
         </div>
-        <div class="form-grid"><input type="text" name="services[${serviceId}][url_internal]" placeholder="URL Interna (LAN)" value="${serviceData.url_internal || ''}" form="serverForm"><input type="text" name="services[${serviceId}][url_external]" placeholder="URL Externa (WAN)" value="${serviceData.url_external || ''}" form="serverForm"></div>
-        <textarea name="services[${serviceId}][notes]" placeholder="Notas del servicio..." form="serverForm">${serviceData.notes || ''}</textarea>
+        <div class="form-grid">
+            <div class="form-group"><label for="svc_url_int_${serviceId}">URL Interna (LAN)</label><input type="text" id="svc_url_int_${serviceId}" name="services[${serviceId}][url_internal]" placeholder="http://192.168.1.10" value="${serviceData.url_internal || ''}" form="serverForm"></div>
+            <div class="form-group"><label for="svc_url_ext_${serviceId}">URL Externa (WAN)</label><input type="text" id="svc_url_ext_${serviceId}" name="services[${serviceId}][url_external]" placeholder="https://dominio.com" value="${serviceData.url_external || ''}" form="serverForm"></div>
+        </div>
+        <div class="form-group"><label for="svc_notes_${serviceId}">Notas del Servicio</label><textarea id="svc_notes_${serviceId}" name="services[${serviceId}][notes]" placeholder="Notas del servicio..." form="serverForm">${serviceData.notes || ''}</textarea></div>
         <div class="credentials-sub-container"><h5>🔑 Credenciales del Servicio</h5><div class="credentials-list-dynamic"></div><button type="button" class="add-btn add-credential-btn">+ Agregar Credencial</button></div>
         <button type="button" class="delete-btn delete-service-btn">Eliminar Servicio</button>
     `;
@@ -493,9 +496,9 @@ function createCredentialElement(credData = {}, serviceId) {
     
     div.innerHTML = `
         <input type="hidden" name="services[${serviceId}][credentials][${credId}][id]" value="${credData.id || ''}" form="serverForm">
-        <input type="text" name="services[${serviceId}][credentials][${credId}][username]" placeholder="Usuario" value="${credData.username || ''}" required autocomplete="username" form="serverForm">
-        <input type="password" name="services[${serviceId}][credentials][${credId}][password]" placeholder="${credData.id ? 'Nueva Contraseña (dejar vacío para mantener)' : 'Contraseña'}" ${credData.id ? '' : 'required'} autocomplete="new-password" form="serverForm">
-        <input type="text" name="services[${serviceId}][credentials][${credId}][role]" placeholder="Rol (ej: admin)" value="${credData.role || ''}" autocomplete="organization-title" form="serverForm">
+        <div class="form-group"><label for="cred_user_${credId}">Usuario *</label><input type="text" id="cred_user_${credId}" name="services[${serviceId}][credentials][${credId}][username]" placeholder="Usuario" value="${credData.username || ''}" required autocomplete="username" form="serverForm"></div>
+        <div class="form-group"><label for="cred_pass_${credId}">Contraseña ${credData.id ? '' : '*'}</label><input type="password" id="cred_pass_${credId}" name="services[${serviceId}][credentials][${credId}][password]" placeholder="${credData.id ? 'Nueva (opcional)' : 'Contraseña'}" ${credData.id ? '' : 'required'} autocomplete="new-password" form="serverForm"></div>
+        <div class="form-group"><label for="cred_role_${credId}">Rol</label><input type="text" id="cred_role_${credId}" name="services[${serviceId}][credentials][${credId}][role]" placeholder="Rol (ej: admin)" value="${credData.role || ''}" autocomplete="organization-title" form="serverForm"></div>
         <button type="button" class="delete-btn credential-delete-btn">✕</button>
     `;
     return div;

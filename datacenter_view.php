@@ -1,23 +1,39 @@
 <?php
 // datacenter_view.php - Vista de infraestructura optimizada
 require_once 'bootstrap.php';
+require_once 'include/permissions_helper.php'; // <-- CORREGIDO: Ruta al helper de permisos
 
 $nonce = base64_encode(random_bytes(16));
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self'; img-src 'self' data:;");
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;");
 
-// Verificar autenticación y rol de administrador
-if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? 'user') !== 'admin') {
+// Verificar autenticación
+if (empty($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
 
-$pdo = get_database_connection($config, true);
+// NUEVO: Obtener las locaciones permitidas para el usuario actual
+$user_id = $_SESSION['user_id'];
+$user_role = $_SESSION['user_role'];
+
+$pdo = get_database_connection($config, true); // Mover la conexión aquí para usarla antes
+
+$allowed_locations = get_user_allowed_locations($pdo, $user_id, $user_role);
+
+// NUEVO: Verificar si es usuario regular (solo lectura)
+$is_readonly = is_regular_user();
+
 $status_message = '';
 
 // ============================================================================
 // GUARDAR CAMBIOS (Lógica movida desde datacenter_manager_mysql.php)
 // ============================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    // Solo los administradores pueden guardar cambios
+    if ($is_readonly) {
+        throw new Exception("No tienes permisos para realizar esta acción.");
+    }
+
     try {
             validate_request_csrf();
             $pdo->beginTransaction();
@@ -285,14 +301,6 @@ if (isset($_GET['status'])) {
     $status_message = '<div class="status-message success">' . htmlspecialchars($_GET['status']) . '</div>';
 }
 
-// Registrar acceso en log
-try {
-    $stmt = $pdo->prepare("INSERT INTO dc_access_log (action, entity_type, entity_id, ip_address) VALUES ('view', 'infrastructure', 0, ?)");
-    $stmt->execute([IP_ADDRESS]);
-} catch (Exception $e) {
-    error_log('Error logging access: ' . $e->getMessage());
-}
-
 // ============================================================================
 // CARGAR DATOS
 // ============================================================================
@@ -300,24 +308,55 @@ $locations = [];
 $search = $_GET['search'] ?? '';
 $servers = [];
 
+// Registrar acceso en log (movido aquí para asegurar que todo esté inicializado)
+try {
+    $log_stmt = $pdo->prepare("INSERT INTO dc_access_log (user_id, action, entity_type, entity_id, ip_address) VALUES (?, 'view', 'infrastructure', 0, ?)");
+    $log_stmt->execute([$user_id, IP_ADDRESS]);
+} catch (Exception $e) {
+    // No es un error crítico, solo lo registramos
+    error_log('Error al registrar acceso a datacenter_view: ' . $e->getMessage());
+}
+
+
 try {
     // Obtener ubicaciones
     $stmt_locations = $pdo->query("SELECT id, name FROM dc_locations ORDER BY name");
     $locations = $stmt_locations->fetchAll(PDO::FETCH_ASSOC);
 
-    // Obtener servidores
-    $base_query = "
+    // --- CONSULTA DE SERVIDORES CON FILTRO DE LOCACIONES ---
+    // Construir la consulta base
+    $sql = "
         SELECT s.id, s.server_id, s.label, s.type, s.location_id, s.status, s.hw_model, s.hw_cpu, s.hw_ram, 
                s.hw_disk, s.net_ip_lan, s.net_ip_wan, s.net_host_external, s.net_gateway, s.net_dns, s.notes, 
                s.username, s.password, l.name as location_name 
         FROM dc_servers s 
         LEFT JOIN dc_locations l ON s.location_id = l.id
+        WHERE 1=1
     ";
+
+    // NUEVO: Aplicar filtro de locaciones si el usuario no es admin
+    $params = [];
+    if ($allowed_locations !== null) { // null significa admin (todas las locaciones)
+        if (empty($allowed_locations)) {
+            // Si no tiene locaciones asignadas, no mostrar nada
+            $servers_raw = [];
+        } else {
+            $filter = get_location_filter_sql($allowed_locations, 's.location_id');
+            $sql .= $filter['sql'];
+            $params = $filter['params'];
+        }
+    }
 
     if (!empty($search)) {
         // Búsqueda inteligente con relevancia, adaptada de tu sugerencia.
         $search_param = "%{$search}%";
-        $query = "
+        $sql .= " AND (
+            s.label LIKE :search OR s.net_ip_lan LIKE :search OR s.net_ip_wan LIKE :search OR s.net_host_external LIKE :search OR s.hw_model LIKE :search OR s.notes LIKE :search OR s.type LIKE :search OR l.name LIKE :search
+        )";
+        $params[':search'] = $search_param;
+        /*
+        // La lógica de búsqueda compleja se simplifica para compatibilidad con los nuevos filtros
+        $query = " 
             SELECT s.id, s.server_id, s.label, s.type, s.location_id, s.status, s.hw_model, s.hw_cpu, s.hw_ram, 
                    s.hw_disk, s.net_ip_lan, s.net_ip_wan, s.net_host_external, s.net_gateway, s.net_dns, s.notes, 
                    s.username, s.password, l.name as location_name,
@@ -339,27 +378,16 @@ try {
                 OR s.type LIKE :search10 
                 OR l.name LIKE :search11
             )
-            ORDER BY 
-                relevance ASC, 
-                CASE s.status 
-                    WHEN 'active' THEN 1 
-                    WHEN 'maintenance' THEN 2 
-                    ELSE 3 
-                END, 
-                l.name, s.label ASC
         ";
-        $stmt = $pdo->prepare($query);
-        
-        // Vincular los 11 parámetros
-        for ($i = 1; $i <= 11; $i++) {
-            $stmt->bindValue(":search{$i}", $search_param);
-        }
-        $stmt->execute();
+        */
+        $sql .= " ORDER BY l.name, s.label ASC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
         $servers_raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+        
     } else {
         // Cargar todos, ordenando por ubicación y luego por etiqueta
-        $stmt = $pdo->query($base_query . " ORDER BY 
+        $sql .= " ORDER BY 
             CASE s.status 
                 WHEN 'active' THEN 1 
                 WHEN 'maintenance' THEN 2 
@@ -367,8 +395,13 @@ try {
             END, 
             l.name, 
             s.label
-        ");
-        $servers_raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        ";
+        // Ejecutar la consulta solo si hay servidores potenciales a mostrar
+        if (!isset($servers_raw)) {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            $servers_raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
     }
 
     // OPTIMIZACIÓN: Evitar consultas N+1
@@ -469,19 +502,32 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
     <title>Gestión de Infraestructura</title>
     <link rel="stylesheet" href="./assets/css/main.css">
     <link rel="stylesheet" href="./assets/css/datacenter.css">
+    <style nonce="<?= htmlspecialchars($nonce) ?>">
+        .header-subtitle {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin: 0; /* Ajustado para que no agregue margen vertical extra */
+            flex-basis: 100%; /* Opcional: para que ocupe toda la línea si es necesario */
+        }
+    </style>
 </head>
 <body class="page-manage">
     <div class="admin-container admin-container-full-width">
         <!-- Header Compacto -->
         <div class="compact-header">
             <div class="header-left">
-                <h1>🏢 Gestión de Infraestructura</h1>
-                <span class="stats-compact">
-                    <span class="stat-badge">📍 <?= $total_locations ?> Ubicaciones</span>
-                    <span class="stat-badge">📦 <?= $total_servers ?> Servidores</span>
-                    <span class="stat-badge">⚙️ <?= $total_services ?> Servicios</span>
-                    <span class="stat-badge">🔓 <?= $total_credentials ?> Credenciales</span>
-                </span>
+                <div class="header-title-group"> <!-- Contenedor para agrupar título y estadísticas -->
+                    <h1>
+                        🏢 Gestión de Infraestructura
+                        <?php if ($is_readonly): ?><span class="readonly-badge">👁️ Solo Lectura</span><?php endif; ?>
+                    </h1>
+                    <span class="stats-compact">
+                        <span class="stat-badge">📍 <?= $total_locations ?> Ubicaciones</span>
+                        <span class="stat-badge">📦 <?= $total_servers ?> Servidores</span>
+                        <span class="stat-badge">⚙️ <?= $total_services ?> Servicios</span>
+                        <span class="stat-badge">🔓 <?= $total_credentials ?> Credenciales</span>
+                    </span>
+                </div>
             </div>
             <div class="header-actions">
                 <form method="GET" action="" class="compact-search">
@@ -492,16 +538,23 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
                            placeholder="🔍 Buscar..."
                            autocomplete="off">
                 </form>
-                <a href="locations_manager.php" class="btn-action btn-warning">📍 Ubicaciones</a>
-                <button type="button" id="addServerBtn" class="btn-action btn-primary">+ Servidor</button>
+                <?php if (!$is_readonly): ?>
+                    <a href="locations_manager.php" class="btn-action btn-warning">📍 Ubicaciones</a>
+                    <button type="button" id="addServerBtn" class="btn-action btn-primary">+ Servidor</button>
+                <?php endif; ?>
             </div>
         </div>
 
         <?= $status_message ?>
 
-        <?= csrf_field() ?>
+        <?php if (!$is_readonly) echo csrf_field(); ?>
 
-        <?php if (empty($servers)): ?>
+        <?php if (empty($grouped_servers) && $is_readonly): ?>
+            <div class="no-data">
+                <h2>⚠️ Sin Acceso a Locaciones</h2>
+                <p>No tienes locaciones asignadas. Contacta a un administrador para obtener acceso.</p>
+            </div>
+        <?php elseif (empty($servers)): ?>
             <div class="no-data">
                 <h2><?= empty($search) ? 'No hay servidores configurados' : 'No se encontraron resultados' ?></h2>
                 <p><?= empty($search) ? 'Comience agregando infraestructura' : 'Intente con otro término de búsqueda' ?></p>
@@ -565,14 +618,16 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
                                 <?php
                                     $external_url = $server['net_host_external'];
                                     // Añadir http:// si no tiene un protocolo
-                                    if (!preg_match("~^(?:f|ht)tps?://~i", $external_url)) {
+                                    if (!preg_match("~^(?:f|ht)tps?://~i", $external_url) && !empty($external_url)) {
                                         $external_url = "http://" . $external_url;
                                     }
                                 ?>
                                 <button class="server-quick-action" title="Abrir en nueva pestaña" data-action="open-external" data-url="<?= htmlspecialchars($external_url) ?>">🔗</button>
                                 <?php endif; ?>
-                                <button class="server-quick-action" title="Editar servidor" data-action="edit" data-server-id="<?= $server['id'] ?>">✏️</button>
-                                <button class="server-quick-action" title="Eliminar servidor" data-action="delete" data-server-id="<?= $server['id'] ?>" data-server-name="<?= htmlspecialchars($server['label']) ?>">🗑️</button>
+                                <?php if (!$is_readonly): ?>
+                                    <button class="server-quick-action" title="Editar servidor" data-action="edit" data-server-id="<?= $server['id'] ?>">✏️</button>
+                                    <button class="server-quick-action" title="Eliminar servidor" data-action="delete" data-server-id="<?= $server['id'] ?>" data-server-name="<?= htmlspecialchars($server['label']) ?>">🗑️</button>
+                                <?php endif; ?>
                                 <button class="toggle-server-btn" title="Expandir/Colapsar">▶</button>
                             </div>
                         </div>
@@ -742,7 +797,7 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
     <?php $tab_notes = ob_get_clean();
 
     ?>
-    <form id="serverForm" method="POST" action="datacenter_view.php">
+    <form id="serverForm" method="POST" action="datacenter_view.php" style="<?= $is_readonly ? 'display:none;' : '' ?>">
         <input type="hidden" name="action" value="save_server">
         <?= csrf_field() ?>
         <input type="hidden" name="server[id]" id="serverId">
@@ -766,5 +821,9 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
 
     <script src="assets/js/modal-system.js" nonce="<?= htmlspecialchars($nonce) ?>"></script>
     <script src="assets/js/datacenter_view.js" nonce="<?= htmlspecialchars($nonce) ?>"></script>
+    <script nonce="<?= htmlspecialchars($nonce) ?>">
+        // Pasar el estado de solo lectura a JavaScript
+        const IS_READONLY = <?= json_encode($is_readonly) ?>;
+    </script>
 </body>
 </html>

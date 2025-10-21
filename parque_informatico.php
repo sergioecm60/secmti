@@ -7,22 +7,33 @@
  */
 
 require_once 'bootstrap.php';
+require_once 'include/permissions_helper.php'; // <-- CORREGIDO
 
 // Generar nonce para CSP
 $nonce = base64_encode(random_bytes(16));
 header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;");
 
-// Verificar autenticación y rol de administrador
-if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? 'user') !== 'admin') {
+// Verificar autenticación
+if (empty($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
 
 $pdo = get_database_connection($config, true);
+
+// NUEVO: Obtener permisos
+$user_id = $_SESSION['user_id'];
+$user_role = $_SESSION['user_role'];
+$allowed_locations = get_user_allowed_locations($pdo, $user_id, $user_role);
+$is_readonly = is_regular_user();
+
 $status_message = '';
 
 // --- MANEJO DE ACCIONES POST (GUARDAR, ELIMINAR) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($is_readonly) {
+        throw new Exception("No tienes permisos para realizar esta acción.");
+    }
     try {
         validate_request_csrf();
         $pdo->beginTransaction();
@@ -83,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $log_action = $is_new ? 'create' : 'edit';
             $entity_id = $is_new ? $pdo->lastInsertId() : $pc_data['id'];
             $log_stmt = $pdo->prepare("INSERT INTO dc_access_log (user_id, action, entity_type, entity_id, ip_address, details) VALUES (?, ?, ?, ?, ?, ?)");
-            $log_stmt->execute([$_SESSION['user_id'], $log_action, 'pc_equipment', $entity_id, IP_ADDRESS, $details]);
+            $log_stmt->execute([$user_id, $log_action, 'pc_equipment', $entity_id, IP_ADDRESS, $details]);
 
         } elseif ($action === 'delete_pc') {
             $pc_id = $_POST['pc_id'] ?? 0;
@@ -104,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Logging
             if ($pc_id > 0) {
                 $log_stmt = $pdo->prepare("INSERT INTO dc_access_log (user_id, action, entity_type, entity_id, ip_address, details) VALUES (?, ?, ?, ?, ?, ?)");
-                $log_stmt->execute([$_SESSION['user_id'], 'delete', 'pc_equipment', $pc_id, IP_ADDRESS, $details]);
+                $log_stmt->execute([$user_id, 'delete', 'pc_equipment', $pc_id, IP_ADDRESS, $details]);
             }
         }
         $pdo->commit();
@@ -138,6 +149,17 @@ try {
     ";
     $params = [];
     
+    // NUEVO: Aplicar filtro de locación por permisos
+    if ($allowed_locations !== null) {
+        if (empty($allowed_locations)) {
+            $pcs = []; // No mostrar nada si no tiene locaciones
+        } else {
+            $filter = get_location_filter_sql($allowed_locations, 'p.location_id');
+            $query .= $filter['sql'];
+            $params = array_merge($params, $filter['params']);
+        }
+    }
+
     // Aplicar filtro de búsqueda
     if (!empty($search)) {
         $query .= " AND (
@@ -164,10 +186,12 @@ try {
     
     $query .= " ORDER BY l.name, p.department, p.assigned_to";
     
-    $stmt_pcs = $pdo->prepare($query);
-    $stmt_pcs->execute($params);
-    $pcs = $stmt_pcs->fetchAll(PDO::FETCH_ASSOC);
-
+    // Solo ejecutar si no hemos vaciado ya el array de PCs
+    if (empty($pcs)) {
+        $stmt_pcs = $pdo->prepare($query);
+        $stmt_pcs->execute($params);
+        $pcs = $stmt_pcs->fetchAll(PDO::FETCH_ASSOC);
+    }
     // 3. Agrupar las PCs por ubicación
     foreach ($pcs as $pc) {
         $location_id = $pc['location_id'] ?? 0;
@@ -333,6 +357,9 @@ $status_classes = [
         .pc-detail-item-full-width {
             grid-column: 1 / -1;
         }
+        .readonly-badge-align-center {
+            align-self: center;
+        }
     </style>
 </head>
 <body class="page-manage">
@@ -359,7 +386,11 @@ $status_classes = [
                            placeholder="🔍 Buscar por usuario, equipo, sector..."
                            autocomplete="off">
                 </form>
-                <button type="button" id="addPcBtn" class="btn-action btn-primary">+ Agregar PC</button>
+                <?php if (!$is_readonly): ?>
+                    <button type="button" id="addPcBtn" class="btn-action btn-primary">+ Agregar PC</button>
+                <?php else: ?>
+                    <span class="readonly-badge readonly-badge-align-center">👁️ Solo Lectura</span>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -402,9 +433,15 @@ $status_classes = [
         <?= $status_message ?>
         <?= csrf_field() ?>
 
-        <?php if (empty($grouped_pcs)): ?>
+        <?php if (empty($grouped_pcs) && $is_readonly): ?>
+             <div class="empty-state">
+                <div class="empty-state-icon">⚠️</div>
+                <h2>Sin Acceso a Locaciones</h2>
+                <p>No tienes locaciones asignadas. Contacta a un administrador para obtener acceso.</p>
+            </div>
+        <?php elseif (empty($grouped_pcs)): ?>
             <div class="empty-state">
-                <div class="empty-state-icon">💻</div>
+                <div class="empty-state-icon"><?= (!empty($search) || !empty($filter_status) || !empty($filter_location)) ? '🧐' : '💻' ?></div>
                 <h2>No hay PCs registradas</h2>
                 <p>Comience agregando un equipo con el botón "+ Agregar PC" o importando desde un archivo.</p>
                 <?php if (!empty($search) || !empty($filter_status) || !empty($filter_location)): ?>
@@ -454,8 +491,10 @@ $status_classes = [
                                     </div>
                                 </div>
                                 <div class="server-header-actions">
-                                    <button class="server-quick-action" title="Editar PC" data-action="edit" data-pc-id="<?= $pc['id'] ?>">✏️</button>
-                                    <button class="server-quick-action" title="Eliminar PC" data-action="delete" data-pc-id="<?= $pc['id'] ?>" data-pc-name="<?= htmlspecialchars($pc['assigned_to'] ?: 'Equipo Libre') ?>">🗑️</button>
+                                    <?php if (!$is_readonly): ?>
+                                        <button class="server-quick-action" title="Editar PC" data-action="edit" data-pc-id="<?= $pc['id'] ?>">✏️</button>
+                                        <button class="server-quick-action" title="Eliminar PC" data-action="delete" data-pc-id="<?= $pc['id'] ?>" data-pc-name="<?= htmlspecialchars($pc['assigned_to'] ?: 'Equipo Libre') ?>">🗑️</button>
+                                    <?php endif; ?>
                                     <button class="toggle-server-btn" title="Ver detalles">▶</button>
                                 </div>
                             </div>
@@ -579,7 +618,7 @@ $status_classes = [
     <?php
     $pc_form_content = ob_get_clean();
     ?>
-    <form id="pcForm" method="POST" action="parque_informatico.php">
+    <form id="pcForm" method="POST" action="parque_informatico.php" style="<?= $is_readonly ? 'display:none;' : '' ?>">
         <input type="hidden" name="action" value="save_pc">
         <?= csrf_field() ?>
         <?php
@@ -599,6 +638,7 @@ $status_classes = [
     <script nonce="<?= htmlspecialchars($nonce) ?>">
     document.addEventListener('DOMContentLoaded', function() {
         console.log('💻 Parque Informático cargado - Total PCs:', <?= $total_pcs ?>);
+        const IS_READONLY = <?= json_encode($is_readonly) ?>;
         const allPcsData = <?= json_encode($pcs, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
         
         // Lógica para expandir/colapsar tarjetas
@@ -611,6 +651,7 @@ $status_classes = [
                 const deleteBtn = e.target.closest('[data-action="delete"]');
                 
                 if (editBtn) {
+                    if (IS_READONLY) return;
                     const pcId = editBtn.getAttribute('data-pc-id');
                     const pcData = allPcsData.find(p => p.id == pcId);
                     openPcModal(pcData);
@@ -618,6 +659,7 @@ $status_classes = [
                 }
 
                 if (deleteBtn) {
+                    if (IS_READONLY) return;
                     const pcId = deleteBtn.getAttribute('data-pc-id');
                     const pcName = deleteBtn.getAttribute('data-pc-name');
                     if (confirm(`¿Estás seguro de que quieres eliminar la PC asignada a "${pcName}"?`)) {

@@ -72,6 +72,9 @@ if (!is_array($config) || empty($config)) {
     die('Error de configuración del servidor. Revisa el archivo .env.');
 }
 
+// Incluir el gestor de base de datos al principio, para que esté disponible para todos los scripts.
+require_once __DIR__ . '/database.php';
+
 // Validar claves críticas
 $required_keys = ['session', 'database', 'security'];
 foreach ($required_keys as $key) {
@@ -81,10 +84,6 @@ foreach ($required_keys as $key) {
         die('Error de configuración del servidor.');
     }
 }
-
-// ============================================================================
-// 4. FUNCIONES DE SEGURIDAD
-// ============================================================================
 
 /**
  * Obtiene la IP real del cliente de forma segura
@@ -120,6 +119,21 @@ function get_client_ip(array $config): string {
     
     return filter_var($ip, FILTER_VALIDATE_IP) ?: 'unknown';
 }
+
+// ============================================================================
+// 8. CONSTANTES GLOBALES (MOVIMOS ESTO ARRIBA PARA DISPONIBILIDAD TEMPRANA)
+// ============================================================================
+
+// IP del cliente (validada y segura)
+define('IP_ADDRESS', get_client_ip($config));
+
+// ============================================================================
+// 4. FUNCIONES DE SEGURIDAD
+// ============================================================================
+
+/**
+ * Obtiene la IP real del cliente de forma segura
+ * Solo confía en proxies configurados explícitamente
 
 /**
  * Genera un fingerprint de la sesión para detectar hijacking
@@ -384,13 +398,6 @@ header('X-Content-Type-Options: nosniff');
 // y se sigue gestionando en cada página individualmente para mayor control
 // (ej: index.php, index2.php, diag_x9k2.php, etc.).
 
-// ============================================================================
-// 8. CONSTANTES GLOBALES
-// ============================================================================
-
-// IP del cliente (validada y segura)
-define('IP_ADDRESS', get_client_ip($config));
-
 // Información del usuario agente
 define('USER_AGENT', $_SERVER['HTTP_USER_AGENT'] ?? 'unknown');
 
@@ -435,9 +442,6 @@ function log_security_event(string $event, string $details = ''): void {
 if (IS_DEVELOPMENT) {
     error_log('Bootstrap completado exitosamente');
 }
-
-// Incluir el gestor de base de datos al final, para que esté disponible para todos los scripts.
-require_once __DIR__ . '/database.php';
 
 // ============================================================================
 // 10. HELPERS DE CIFRADO (Agregado en Mejora #1)

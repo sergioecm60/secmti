@@ -4,7 +4,7 @@
 require_once 'bootstrap.php';
 
 $nonce = base64_encode(random_bytes(16));
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self';");
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self' 'nonce-{$nonce}';");
 
 // Verificar autenticación (cualquier usuario logueado puede ver).
 if (empty($_SESSION['user_id'])) {
@@ -65,102 +65,249 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vista de Hosting</title>
+    <title>🌐 Hosting - Portal SECMTI</title>
     <link rel="stylesheet" href="assets/css/main.css">
     <link rel="stylesheet" href="assets/css/datacenter.css">
+    <style nonce="<?= htmlspecialchars($nonce) ?>">
+        .header-subtitle {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin: 0.5rem 0;
+        }
+        .stats-compact {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+        }
+        .stat-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #666;
+        }
+        .empty-state-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+        .servers-container {
+            display: grid;
+            gap: 1.5rem;
+        }
+        .hosting-card {
+            background: var(--container-background);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .hosting-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .hosting-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .hosting-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .hosting-hostname {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+        .toggle-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .hosting-card.expanded .toggle-btn {
+            transform: rotate(90deg);
+        }
+        .hosting-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .hosting-card.expanded .hosting-body {
+            max-height: 5000px;
+        }
+        .section-group {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .section-group:last-child {
+            border-bottom: none;
+        }
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .count-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+        .items-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        }
+        .item-card {
+            background: rgba(0,0,0,0.02);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .item-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .item-info {
+            font-size: 0.875rem;
+            color: #666;
+            margin: 0.25rem 0;
+        }
+        .item-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        .btn-copy {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: opacity 0.2s;
+        }
+        .btn-copy:hover {
+            opacity: 0.8;
+        }
+        .btn-link {
+            background: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+        .btn-link:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        .sub-search {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        .scrollable-emails {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
 </head>
 <body class="page-manage">
     <div class="admin-container admin-container-full-width">
-        <header class="admin-header">
-            <h1>🌐 Vista de Hosting</h1>
-            <p>Consulta la información de tus servidores de hosting, cPanel, FTP y cuentas de correo.</p>
-        </header>
+        <!-- Header Compacto Moderno -->
+        <div class="compact-header">
+            <div class="header-left">
+                <h1>🌐 Hosting</h1>
+                <p class="header-subtitle">Servidores, cPanel, FTP y cuentas de correo</p>
+                <?php if (!empty($hosting_servers)): ?>
+                <span class="stats-compact">
+                    <span class="stat-badge">🖥️ <?= count($hosting_servers) ?> Servidores</span>
+                    <span class="stat-badge">👤 <?= array_sum(array_map(fn($s) => count($s['accounts']), $hosting_servers)) ?> Cuentas</span>
+                    <span class="stat-badge">✉️ <?= array_sum(array_map(fn($s) => count($s['emails']), $hosting_servers)) ?> Emails</span>
+                    <span class="stat-badge">🔒 <?= array_sum(array_map(fn($s) => count($s['ftp_accounts']), $hosting_servers)) ?> FTP</span>
+                </span>
+                <?php endif; ?>
+            </div>
+            <div class="header-actions">
+                <form method="GET" action="" class="compact-search">
+                    <input type="search" 
+                           id="mainSearch" 
+                           placeholder="🔍 Buscar en hosting..."
+                           autocomplete="off">
+                </form>
+                <?php if (($_SESSION['user_role'] ?? 'user') === 'admin'): ?>
+                    <a href="hosting_manager.php" class="btn-action btn-primary">⚙️ Administrar</a>
+                <?php endif; ?>
+            </div>
+        </div>
 
         <div class="content">
-            <div class="search-box">
-                <input type="search" id="mainSearch" placeholder="🔍 Buscar en todos los servidores de hosting...">
-            </div>
-
             <?php if (empty($hosting_servers)): ?>
-                <div class="no-data">
-                    <h2>No hay servidores de hosting configurados.</h2>
+                <div class="empty-state">
+                    <div class="empty-state-icon">🌐</div>
+                    <h2>No hay servidores de hosting configurados</h2>
+                    <p>Contacte al administrador para configurar los servidores de hosting.</p>
                     <?php if (($_SESSION['user_role'] ?? 'user') === 'admin'): ?>
-                        <a href="hosting_manager.php" class="quick-link quick-link-standalone">⚙️ Ir a Gestión de Hosting</a>
+                        <a href="hosting_manager.php" class="btn-action btn-primary" style="margin-top: 1rem;">⚙️ Configurar Hosting</a>
                     <?php endif; ?>
                 </div>
             <?php else: ?>
-                <div class="servers-grid">
+                <div class="servers-container">
                     <?php foreach ($hosting_servers as $server): ?>
-                    <div class="server-card collapsed" id="host-<?= $server['id'] ?>">
-                        <div class="server-header">
+                    <div class="hosting-card" id="host-<?= $server['id'] ?>">
+                        <div class="hosting-header">
                             <div>
-                                🌐 <strong><?= htmlspecialchars($server['label']) ?></strong>
-                                <small>(<?= htmlspecialchars($server['hostname']) ?>)</small>
+                                <h2 class="hosting-title">🌐 <?= htmlspecialchars($server['label']) ?></h2>
+                                <div class="hosting-hostname"><?= htmlspecialchars($server['hostname']) ?></div>
                             </div>
-                            <div class="server-header-actions">
-                                <?php if (($_SESSION['user_role'] ?? 'user') === 'admin'): ?>
-                                    <a href="hosting_manager.php?edit=<?= $server['id'] ?>" class="quick-link" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">✏️ Editar</a>
-                                <?php endif; ?>
-                                <button type="button" class="view-toggle-btn" aria-expanded="false" aria-label="Expandir/Contraer servidor <?= htmlspecialchars($server['label']) ?>">▶</button>
-                            </div>
+                            <button type="button" class="toggle-btn" aria-label="Expandir/Contraer">▶</button>
                         </div>
-                        <div class="server-body">
+                        
+                        <div class="hosting-body">
                             <!-- cPanel Accounts -->
                             <?php if (!empty($server['accounts'])): ?>
-                            <div class="info-row">
-                                <div class="info-label">
-                                    👤 Cuentas cPanel <span class="count-badge"><?= count($server['accounts']) ?></span>
+                            <div class="section-group">
+                                <div class="section-title">
+                                    👤 Cuentas cPanel 
+                                    <span class="count-badge"><?= count($server['accounts']) ?></span>
                                 </div>
-                                <?php foreach ($server['accounts'] as $acc): ?>
-                                <div class="service-card">
-                                    <div class="service-title"><?= htmlspecialchars($acc['label'] ?: $acc['username']) ?></div>
-                                    <div class="cred-row">
-                                        <span><strong>Usuario:</strong> <?= htmlspecialchars($acc['username']) ?> | <strong>Dominio:</strong> <?= htmlspecialchars($acc['domain'] ?: 'N/A') ?></span>
-                                        <button type="button" class="copy-cred-btn" data-type="hosting_account" data-id="<?= $acc['id'] ?>">📋 Copiar Pass</button>
-                                    </div>
-                                    <div class="quick-links">
-                                        <a href="https://<?= htmlspecialchars($server['hostname']) ?>:<?= htmlspecialchars($server['cpanel_port']) ?>" target="_blank" class="quick-link">Acceder a cPanel</a>
-                                    </div>
-                                </div>
-                                <?php endforeach; ?>
-                            </div>
-                            <?php endif; ?>
-
-                            <!-- FTP Accounts -->
-                            <?php if (!empty($server['ftp_accounts'])): ?>
-                            <div class="info-row">
-                                <div class="info-label">
-                                    🔒 Cuentas FTP <span class="count-badge"><?= count($server['ftp_accounts']) ?></span>
-                                </div>
-                                <?php foreach ($server['ftp_accounts'] as $ftp): ?>
-                                <div class="service-card">
-                                    <div class="cred-row">
-                                        <span><strong>Usuario:</strong> <?= htmlspecialchars($ftp['username']) ?></span>
-                                        <button type="button" class="copy-cred-btn" data-type="hosting_ftp" data-id="<?= $ftp['id'] ?>">📋 Copiar Pass</button>
-                                    </div>
-                                    <?php if(!empty($ftp['notes'])): ?><small>Nota: <?= htmlspecialchars($ftp['notes']) ?></small><?php endif; ?>
-                                </div>
-                                <?php endforeach; ?>
-                            </div>
-                            <?php endif; ?>
-
-                            <!-- Email Accounts -->
-                            <?php if (!empty($server['emails'])): ?>
-                            <div class="info-row">
-                                <div class="info-label">
-                                    ✉️ Cuentas de Email <span class="count-badge"><?= count($server['emails']) ?></span>
-                                </div>
-                                <input type="search" class="sub-search-input" placeholder="Buscar en emails de este servidor..." data-target-list="email-list-<?= $server['id'] ?>">
-                                <div class="scrollable-list" id="email-list-<?= $server['id'] ?>">
-                                    <?php foreach ($server['emails'] as $email): ?>
-                                    <div class="service-card email-item">
-                                        <div class="cred-row">
-                                            <span><strong>Email:</strong> <?= htmlspecialchars($email['email_address']) ?></span>
-                                            <button type="button" class="copy-cred-btn" data-type="hosting_email" data-id="<?= $email['id'] ?>">📋 Copiar Pass</button>
-                                        </div>
-                                        <?php if(!empty($email['notes'])): ?><small>Nota: <?= htmlspecialchars($email['notes']) ?></small><?php endif; ?>
-                                        <div class="quick-links">
-                                            <a href="https://<?= htmlspecialchars($server['hostname']) ?>:<?= htmlspecialchars($server['webmail_port']) ?>" target="_blank" class="quick-link">Acceder a Webmail</a>
+                                <div class="items-grid">
+                                    <?php foreach ($server['accounts'] as $acc): ?>
+                                    <div class="item-card">
+                                        <div class="item-title"><?= htmlspecialchars($acc['label'] ?: $acc['username']) ?></div>
+                                        <div class="item-info">👤 Usuario: <strong><?= htmlspecialchars($acc['username']) ?></strong></div>
+                                        <div class="item-info">🌐 Dominio: <strong><?= htmlspecialchars($acc['domain'] ?: 'N/A') ?></strong></div>
+                                        <div class="item-actions">
+                                            <button type="button" class="btn-copy" data-type="hosting_account" data-id="<?= $acc['id'] ?>">📋 Copiar Pass</button>
+                                            <a href="https://<?= htmlspecialchars($server['hostname']) ?>:<?= htmlspecialchars($server['cpanel_port']) ?>" target="_blank" class="btn-link">🔗 Abrir cPanel</a>
                                         </div>
                                     </div>
                                     <?php endforeach; ?>
@@ -168,11 +315,61 @@ try {
                             </div>
                             <?php endif; ?>
 
+                            <!-- FTP Accounts -->
+                            <?php if (!empty($server['ftp_accounts'])): ?>
+                            <div class="section-group">
+                                <div class="section-title">
+                                    🔒 Cuentas FTP 
+                                    <span class="count-badge"><?= count($server['ftp_accounts']) ?></span>
+                                </div>
+                                <div class="items-grid">
+                                    <?php foreach ($server['ftp_accounts'] as $ftp): ?>
+                                    <div class="item-card">
+                                        <div class="item-title">🔒 <?= htmlspecialchars($ftp['username']) ?></div>
+                                        <?php if(!empty($ftp['notes'])): ?>
+                                            <div class="item-info">📝 <?= htmlspecialchars($ftp['notes']) ?></div>
+                                        <?php endif; ?>
+                                        <div class="item-actions">
+                                            <button type="button" class="btn-copy" data-type="hosting_ftp" data-id="<?= $ftp['id'] ?>">📋 Copiar Pass</button>
+                                        </div>
+                                    </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- Email Accounts -->
+                            <?php if (!empty($server['emails'])): ?>
+                            <div class="section-group">
+                                <div class="section-title">
+                                    ✉️ Cuentas de Email 
+                                    <span class="count-badge"><?= count($server['emails']) ?></span>
+                                </div>
+                                <input type="search" class="sub-search" placeholder="🔍 Buscar email..." data-target="email-list-<?= $server['id'] ?>">
+                                <div class="scrollable-emails" id="email-list-<?= $server['id'] ?>">
+                                    <div class="items-grid">
+                                        <?php foreach ($server['emails'] as $email): ?>
+                                        <div class="item-card email-item">
+                                            <div class="item-title">✉️ <?= htmlspecialchars($email['email_address']) ?></div>
+                                            <?php if(!empty($email['notes'])): ?>
+                                                <div class="item-info">📝 <?= htmlspecialchars($email['notes']) ?></div>
+                                            <?php endif; ?>
+                                            <div class="item-actions">
+                                                <button type="button" class="btn-copy" data-type="hosting_email" data-id="<?= $email['id'] ?>">📋 Copiar Pass</button>
+                                                <a href="https://<?= htmlspecialchars($server['hostname']) ?>:<?= htmlspecialchars($server['webmail_port']) ?>" target="_blank" class="btn-link">🔗 Webmail</a>
+                                            </div>
+                                        </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
                             <!-- Notes -->
                             <?php if (!empty($server['notes'])): ?>
-                            <div class="info-row">
-                                <div class="info-label">📝 Notas del Servidor</div>
-                                <small class="server-notes"><?= nl2br(htmlspecialchars($server['notes'])) ?></small>
+                            <div class="section-group">
+                                <div class="section-title">📝 Notas del Servidor</div>
+                                <div class="item-info"><?= nl2br(htmlspecialchars($server['notes'])) ?></div>
                             </div>
                             <?php endif; ?>
                         </div>
@@ -189,7 +386,7 @@ try {
     document.addEventListener('DOMContentLoaded', function() {
         // Búsqueda principal
         const mainSearch = document.getElementById('mainSearch');
-        const serverCards = document.querySelectorAll('.server-card');
+        const serverCards = document.querySelectorAll('.hosting-card');
 
         mainSearch.addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase();
@@ -199,82 +396,58 @@ try {
             });
         });
 
-        // Búsqueda secundaria (dentro de cada card)
-        const subSearchInputs = document.querySelectorAll('.sub-search-input');
-        subSearchInputs.forEach(input => {
+        // Búsqueda de emails dentro de cada servidor
+        document.querySelectorAll('.sub-search').forEach(input => {
             input.addEventListener('input', function() {
                 const searchTerm = this.value.toLowerCase();
-                const targetListId = this.dataset.targetList;
-                const listItems = document.querySelectorAll(`#${targetListId} .email-item`);
-
-                listItems.forEach(item => {
-                    const itemText = item.textContent.toLowerCase();
-                    item.style.display = itemText.includes(searchTerm) ? '' : 'none';
+                const targetId = this.dataset.target;
+                const items = document.querySelectorAll(`#${targetId} .email-item`);
+                
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    item.style.display = text.includes(searchTerm) ? '' : 'none';
                 });
             });
         });
 
-        // --- Lógica para paneles colapsables (acordeón) ---
-        const serversGrid = document.querySelector('.servers-grid');
-        if (serversGrid) {
-            serversGrid.addEventListener('click', function (e) {
-                const header = e.target.closest('.server-header');
-                if (!header) return;
-
-                const card = header.closest('.server-card');
-                const body = card.querySelector('.server-body');
-                const toggleBtn = header.querySelector('.view-toggle-btn');
-
-                if (card && body && toggleBtn) {
-                    toggleCard(card, body, toggleBtn);
-                }
+        // Toggle expand/collapse
+        document.querySelectorAll('.hosting-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const card = this.closest('.hosting-card');
+                card.classList.toggle('expanded');
             });
-        }
+        });
 
-        function toggleCard(card, body, toggleBtn) {
-            const isCollapsed = card.classList.contains('collapsed');
-            if (isCollapsed) {
-                card.classList.remove('collapsed');
-                body.style.maxHeight = body.scrollHeight + 'px';
-                toggleBtn.setAttribute('aria-expanded', 'true');
-            } else {
-                body.style.maxHeight = null;
-                card.classList.add('collapsed');
-                toggleBtn.setAttribute('aria-expanded', 'false');
-            }
-        }
+        // Copiar contraseñas
+        document.querySelectorAll('.btn-copy').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const credType = this.dataset.type;
+                const credId = this.dataset.id;
+                const originalText = this.textContent;
 
-        // --- Lógica para copiar contraseñas ---
-        serversGrid?.addEventListener('click', function (e) {
-            const copyBtn = e.target.closest('.copy-cred-btn');
-            if (!copyBtn) return;
-
-            const credType = copyBtn.dataset.type;
-            const credId = copyBtn.dataset.id;
-            const originalText = copyBtn.textContent;
-
-            fetch(`api/hosting.php?action=get_password&type=${credType}&id=${credId}`)
-                .then(response => {
-                    if (!response.ok) throw new Error('No se pudo obtener la contraseña.');
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success && data.password) {
-                        return navigator.clipboard.writeText(data.password);
-                    } else {
-                        throw new Error(data.message || 'Error desconocido.');
-                    }
-                })
-                .then(() => {
-                    copyBtn.textContent = '✅ Copiado';
-                })
-                .catch(error => {
-                    console.error('Error al copiar:', error);
-                    copyBtn.textContent = '❌ Error';
-                })
-                .finally(() => {
-                    setTimeout(() => { copyBtn.textContent = originalText; }, 2000);
-                });
+                fetch(`api/hosting.php?action=get_password&type=${credType}&id=${credId}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('No se pudo obtener la contraseña.');
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success && data.password) {
+                            return navigator.clipboard.writeText(data.password);
+                        } else {
+                            throw new Error(data.message || 'Error desconocido.');
+                        }
+                    })
+                    .then(() => {
+                        this.textContent = '✅ Copiado';
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        this.textContent = '❌ Error';
+                    })
+                    .finally(() => {
+                        setTimeout(() => { this.textContent = originalText; }, 2000);
+                    });
+            });
         });
     });
     </script>
