@@ -59,7 +59,7 @@ try {
             // CORRECCIÓN: Usar el nombre de columna correcto.
             // Las tablas de hosting usan 'pass_hash' como las de usuarios,
             // mientras que las de datacenter usan 'password'.
-            $password_column = ($type === 'server_main' || $type === 'dc_credential') ? 'password' : 'pass_hash';
+            $password_column = 'password'; // Todas las tablas de credenciales usan 'password'
 
             $encrypted_password = null;
 
@@ -149,8 +149,10 @@ try {
 
 } catch (Exception $e) {
     // Capturar cualquier excepción para devolver una respuesta JSON controlada.
-    $code = $e->getCode();
-    if ($code < 400 || $code >= 600) {
+    $code = $e->getCode(); 
+    // CORRECCIÓN: Asegurarse de que el código sea un entero válido para http_response_code.
+    // Los errores de PDO pueden devolver un string (SQLSTATE) como código.
+    if (!is_int($code) || $code < 400 || $code >= 600) {
         $code = 500; // Default a error interno del servidor
     }
     http_response_code($code);
