@@ -72,13 +72,13 @@ try {
                 throw new Exception('Contraseña no disponible', 404);
             }
 
-            // --- INICIO DE BLOQUE DE DEPURACIÓN ---
-            error_log("DEBUG: Intentando descifrar contraseña para tipo '{$type}', ID '{$id}'. Contraseña cifrada: '{$encrypted_password}'");
-            // --- FIN DE BLOQUE DE DEPURACIÓN ---
-
             // Descifrar la contraseña
             $decrypted_password = decrypt_password($encrypted_password);
-            if ($decrypted_password === false) { throw new Exception('Error al descifrar contraseña', 500); }
+            if ($decrypted_password === false) {
+                // Este es el error que ves. Ocurre si la clave .env es incorrecta o el dato en la BD está corrupto/vacío.
+                error_log("API Error: Falla al descifrar. Tipo: {$type}, ID: {$id}. ¿Clave de cifrado correcta? ¿Dato válido en BD?");
+                throw new Exception('No se pudo procesar la credencial. Verifique que la clave de cifrado no haya cambiado y que la contraseña se guardó correctamente.', 500);
+            }
             echo json_encode(['success' => true, 'password' => $decrypted_password]);
             break;
 
