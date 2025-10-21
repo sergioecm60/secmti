@@ -9,7 +9,7 @@
  * 4. Una vez terminado, ELIMINA este archivo del servidor por seguridad.
  */
 
-require_once 'bootstrap.php';
+require_once __DIR__ . '/bootstrap.php';
 
 // --- Medidas de Seguridad ---
 if (session_status() === PHP_SESSION_NONE) session_start();
