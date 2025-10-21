@@ -432,7 +432,25 @@ try {
                     })
                     .then(data => {
                         if (data.success && data.password) {
-                            return navigator.clipboard.writeText(data.password);
+                            // Usar la API del portapapeles si está disponible (contexto seguro: HTTPS o localhost)
+                            if (navigator.clipboard && window.isSecureContext) {
+                                return navigator.clipboard.writeText(data.password);
+                            } else {
+                                // Fallback para contextos no seguros (HTTP)
+                                const textArea = document.createElement('textarea');
+                                textArea.value = data.password;
+                                textArea.style.position = 'absolute';
+                                textArea.style.left = '-9999px';
+                                document.body.appendChild(textArea);
+                                textArea.select();
+                                try {
+                                    document.execCommand('copy');
+                                } catch (err) {
+                                    throw new Error('No se pudo copiar la contraseña con el método de respaldo.');
+                                } finally {
+                                    document.body.removeChild(textArea);
+                                }
+                            }
                         } else {
                             throw new Error(data.message || 'Error desconocido.');
                         }

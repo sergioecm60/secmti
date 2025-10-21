@@ -56,15 +56,8 @@ try {
 
             $table_name = $table_map[$type];
             
-            // CORRECCIÓN: Usar el nombre de columna correcto.
-            // Las tablas de hosting usan 'pass_hash' como las de usuarios,
-            // mientras que las de datacenter usan 'password'.
-            $password_column = 'password'; // Todas las tablas de credenciales usan 'password'
-
-            $encrypted_password = null;
-
-            // Usar la columna correcta en la consulta
-            $stmt = $pdo->prepare("SELECT `{$password_column}` FROM `{$table_name}` WHERE id = ?");
+            // Simplificación: Todas las tablas de credenciales usan la columna 'password'.
+            $stmt = $pdo->prepare("SELECT `password` FROM `{$table_name}` WHERE id = ?");
             $stmt->execute([$id]);
             $encrypted_password = $stmt->fetchColumn();
             
