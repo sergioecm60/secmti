@@ -425,7 +425,7 @@ try {
                 const credId = this.dataset.id;
                 const originalText = this.textContent;
 
-                fetch(`api/hosting.php?action=get_password&type=${credType}&id=${credId}`)
+                fetch(`api/datacenter.php?action=get_password&type=${credType}&id=${credId}`)
                     .then(response => {
                         if (!response.ok) throw new Error('No se pudo obtener la contraseña.');
                         return response.json();

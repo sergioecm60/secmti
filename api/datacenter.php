@@ -47,6 +47,7 @@ try {
                 'hosting_account'   => 'dc_hosting_accounts',
                 'hosting_ftp'       => 'dc_hosting_ftp_accounts',
                 'hosting_email'     => 'dc_hosting_emails',
+                'pc_equipment'      => 'pc_equipment' // Añadido para futuras implementaciones
             ];
 
             if (!isset($table_map[$type])) {
