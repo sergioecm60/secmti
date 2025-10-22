@@ -21,14 +21,15 @@ $action = $_GET['action'] ?? null;
 $type = $_GET['type'] ?? null;
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-if ($action === 'get_password' && $id > 0 && in_array($type, ['hosting_account', 'hosting_ftp', 'hosting_email'])) {
+if ($action === 'get_password' && $id > 0 && in_array($type, ['hosting_account', 'hosting_ftp', 'hosting_email', 'hosting_terminal_server'])) {
     $pdo = get_database_connection($config, false); // La función ya está disponible desde bootstrap.php
 
     $table_map = [
-        'hosting_account'   => 'dc_hosting_accounts',
-        'hosting_ftp'       => 'dc_hosting_ftp_accounts',
-        'hosting_email'     => 'dc_hosting_emails',
-        'dc_credential'     => 'dc_credentials' // Añadimos la tabla de credenciales del datacenter
+        'hosting_account'         => 'dc_hosting_accounts',
+        'hosting_ftp'             => 'dc_hosting_ftp_accounts',
+        'hosting_email'           => 'dc_hosting_emails',
+        'hosting_terminal_server' => 'dc_hosting_terminal_server_accounts',
+        'dc_credential'           => 'dc_credentials' // Añadimos la tabla de credenciales del datacenter
     ];
 
     if (!isset($table_map[$type]) || !$pdo) {

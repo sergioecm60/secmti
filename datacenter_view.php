@@ -585,7 +585,7 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
                         <div class="server-header">
                             <div class="server-main-info">
                                 <?php
-                                    $icons = ['physical' => '🖥️', 'virtual' => '🐳', 'container' => '📦', 'cloud' => '☁️', 'isp' => '🌐', 'switch' => '🔀', 'router' => '🧱', 'dvr' => '📼', 'alarmas' => '🚨'];
+                                    $icons = ['physical' => '🖥️', 'virtual' => '🐳', 'container' => '📦', 'cloud' => '☁️', 'isp' => '🌐', 'switch' => '🔀', 'router' => '🧱', 'dvr' => '📼', 'alarmas' => '🚨', 'antena' => '📡'];
                                     $icon = $icons[strtolower($server['type'] ?? 'physical')] ?? '⚙️';
                                 ?>
                                 <div class="server-icon server-type-<?= strtolower($server['type'] ?? 'physical') ?>">
@@ -750,6 +750,7 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
                 <option value="Router">Router</option>
                 <option value="Dvr">DVR</option>
                 <option value="Alarmas">Alarmas</option>
+                <option value="Antena">Antena</option>
             </select>
         </div>
         <div class="form-group">

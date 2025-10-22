@@ -150,12 +150,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
+                // --- Guardar Cuentas de Terminal Server ---
+                $terminal_server_accounts = $_POST['terminal_server_accounts'] ?? [];
+                $submitted_terminal_server_ids = [];
+                foreach ($terminal_server_accounts as $ts_id_key => $ts_data) {
+                    if (empty($ts_data['host']) || empty($ts_data['username'])) continue;
+
+                    if (strpos($ts_id_key, 'new_') === 0) {
+                        if (empty($ts_data['password'])) continue;
+                        $stmt_ts = $pdo->prepare("INSERT INTO dc_hosting_terminal_server_accounts (server_id, host, port, username, password, notes) VALUES (?, ?, ?, ?, ?, ?)");
+                        $stmt_ts->execute([$host_id, $ts_data['host'], $ts_data['port'], $ts_data['username'], encrypt_password($ts_data['password']), $ts_data['notes'] ?? '']);
+                        $submitted_terminal_server_ids[] = $pdo->lastInsertId();
+                    } else {
+                        $stmt_ts = $pdo->prepare("UPDATE dc_hosting_terminal_server_accounts SET host=?, port=?, username=?, notes=? WHERE id=?");
+                        $stmt_ts->execute([$ts_data['host'], $ts_data['port'], $ts_data['username'], $ts_data['notes'] ?? '', $ts_id_key]);
+                        if (!empty($ts_data['password'])) {
+                            $stmt_pass = $pdo->prepare("UPDATE dc_hosting_terminal_server_accounts SET password=? WHERE id=?");
+                            $stmt_pass->execute([encrypt_password($ts_data['password']), $ts_id_key]);
+                        }
+                        $submitted_terminal_server_ids[] = $ts_id_key;
+                    }
+                }
+
+                if (!empty($host_id) && strpos($host_id, 'new_') !== 0) {
+                    $stmt_current_ids = $pdo->prepare("SELECT id FROM dc_hosting_terminal_server_accounts WHERE server_id = ?");
+                    $stmt_current_ids->execute([$host_id]);
+                    $current_ids = $stmt_current_ids->fetchAll(PDO::FETCH_COLUMN);
+                    $ids_to_delete = array_diff($current_ids, $submitted_terminal_server_ids);
+
+                    if (!empty($ids_to_delete)) {
+                        $placeholders = implode(',', array_fill(0, count($ids_to_delete), '?'));
+                        $stmt_del = $pdo->prepare("DELETE FROM dc_hosting_terminal_server_accounts WHERE id IN ($placeholders)");
+                        $stmt_del->execute($ids_to_delete);
+                    }
+                }
+
             } elseif ($action === 'delete_host') {
                 $host_id = $_POST['host_id'] ?? 0;
                 
                 $pdo->prepare("DELETE FROM dc_hosting_emails WHERE server_id = ?")->execute([$host_id]);
                 $pdo->prepare("DELETE FROM dc_hosting_ftp_accounts WHERE server_id = ?")->execute([$host_id]);
                 $pdo->prepare("DELETE FROM dc_hosting_accounts WHERE server_id = ?")->execute([$host_id]);
+                $pdo->prepare("DELETE FROM dc_hosting_terminal_server_accounts WHERE server_id = ?")->execute([$host_id]);
                 $pdo->prepare("DELETE FROM dc_hosting_servers WHERE id = ?")->execute([$host_id]);
                 
                 $status_message = '<div class="status-message success">Servidor de hosting eliminado.</div>';
@@ -178,6 +214,7 @@ try {
     $all_accounts = [];
     $all_emails = [];
     $all_ftp = [];
+    $all_terminal_server = [];
 
     if (!empty($server_ids)) {
         $in_sql = implode(',', array_fill(0, count($server_ids), '?'));
@@ -199,12 +236,19 @@ try {
         foreach ($stmt_ftp->fetchAll(PDO::FETCH_ASSOC) as $ftp) {
             $all_ftp[$ftp['server_id']][] = $ftp;
         }
+
+        $stmt_terminal_server = $pdo->prepare("SELECT * FROM dc_hosting_terminal_server_accounts WHERE server_id IN ($in_sql) ORDER BY host");
+        $stmt_terminal_server->execute($server_ids);
+        foreach ($stmt_terminal_server->fetchAll(PDO::FETCH_ASSOC) as $ts) {
+            $all_terminal_server[$ts['server_id']][] = $ts;
+        }
     }
 
     foreach ($servers_raw as $server) {
         $server['accounts'] = $all_accounts[$server['id']] ?? [];
         $server['emails'] = $all_emails[$server['id']] ?? [];
         $server['ftp_accounts'] = $all_ftp[$server['id']] ?? [];
+        $server['terminal_server_accounts'] = $all_terminal_server[$server['id']] ?? [];
         $hosting_servers[] = $server;
     }
 
@@ -217,6 +261,7 @@ $total_servers = count($hosting_servers);
 $total_accounts = array_sum(array_map(fn($s) => count($s['accounts']), $hosting_servers));
 $total_emails = array_sum(array_map(fn($s) => count($s['emails']), $hosting_servers));
 $total_ftp = array_sum(array_map(fn($s) => count($s['ftp_accounts']), $hosting_servers));
+$total_terminal_server = array_sum(array_map(fn($s) => count($s['terminal_server_accounts']), $hosting_servers));
 
 ?>
 <!DOCTYPE html>
@@ -224,7 +269,7 @@ $total_ftp = array_sum(array_map(fn($s) => count($s['ftp_accounts']), $hosting_s
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚙️ Gestión de Hosting - Portal SECMTI</title>
+    <title>⚙️ Gestión de Cuentas - Portal SECMTI</title>
     <link rel="stylesheet" href="./assets/css/main.css">
     <link rel="stylesheet" href="./assets/css/datacenter.css">
     <link rel="stylesheet" href="./assets/css/hosting.css">
@@ -478,13 +523,14 @@ $total_ftp = array_sum(array_map(fn($s) => count($s['ftp_accounts']), $hosting_s
         <!-- Header Compacto Moderno -->
         <div class="compact-header">
             <div class="header-left">
-                <h1>⚙️ Gestión de Hosting</h1>
+                <h1>⚙️ Gestión de Cuentas</h1>
                 <p class="header-subtitle">Administración de servidores cPanel/WHM</p>
                 <span class="stats-compact">
                     <span class="stat-badge">🖥️ <?= $total_servers ?> Servidores</span>
                     <span class="stat-badge">👤 <?= $total_accounts ?> Cuentas</span>
                     <span class="stat-badge">✉️ <?= $total_emails ?> Emails</span>
                     <span class="stat-badge">🔒 <?= $total_ftp ?> FTP</span>
+                    <span class="stat-badge">💻 <?= $total_terminal_server ?> Terminal Server</span>
                 </span>
             </div>
             <div class="header-actions">
@@ -524,6 +570,10 @@ $total_ftp = array_sum(array_map(fn($s) => count($s['ftp_accounts']), $hosting_s
                             <div class="stat-item">
                                 <span class="stat-number"><?= count($server['emails']) ?></span>
                                 <span class="stat-label">Email</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number"><?= count($server['terminal_server_accounts']) ?></span>
+                                <span class="stat-label">Terminal Server</span>
                             </div>
                         </div>
 

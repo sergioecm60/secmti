@@ -27,7 +27,7 @@ $main_nav_links = [
         'roles' => ['admin', 'user']
     ],
     'hosting_manage' => [
-        'label' => '🌐 Gestión de Hosting',
+        'label' => '🌐 Gestión de Cuentas',
         'url' => ($user_role === 'admin') ? 'hosting_manager.php' : 'hosting_view.php',
         'roles' => ['admin', 'user']
     ],

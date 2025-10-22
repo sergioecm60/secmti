@@ -66,6 +66,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div id="emailAccountsContainer"></div>
                             <button type="button" class="btn-add" id="addEmailBtn">+ Agregar Cuenta Email</button>
                         </fieldset>
+
+                        <!-- Cuentas de Terminal Server -->
+                        <fieldset class="modal-fieldset">
+                            <legend>💻 Cuentas de Terminal Server</legend>
+                            <div id="terminalServerAccountsContainer"></div>
+                            <button type="button" class="btn-add" id="addTerminalServerBtn">+ Agregar Cuenta Terminal Server</button>
+                        </fieldset>
                     </div>
 
                     <div class="modal-footer">
@@ -88,6 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const cpanelContainer = document.getElementById('cpanelAccountsContainer');
     const ftpContainer = document.getElementById('ftpAccountsContainer');
     const emailContainer = document.getElementById('emailAccountsContainer');
+    const terminalServerContainer = document.getElementById('terminalServerAccountsContainer');
 
     // Funciones para abrir/cerrar modal
     function openModal() {
@@ -192,10 +200,49 @@ document.addEventListener('DOMContentLoaded', function() {
         emailContainer.appendChild(div);
     }
 
+    // Función para crear campo de cuenta de Terminal Server
+    function createTerminalServerField(account = null) {
+        const id = account ? account.id : 'new_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const div = document.createElement('div');
+        div.className = 'dynamic-item';
+        div.innerHTML = `
+            <div class="dynamic-item-header">
+                <strong>Cuenta de Terminal Server</strong>
+                <button type="button" class="btn-remove remove-terminal-server">🗑️ Eliminar</button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="ts_host_${id}">Host *</label>
+                    <input type="text" id="ts_host_${id}" name="terminal_server_accounts[${id}][host]" value="${account ? account.host : ''}" required>
+                </div>
+                <div class="form-group">
+                    <label for="ts_port_${id}">Puerto</label>
+                    <input type="number" id="ts_port_${id}" name="terminal_server_accounts[${id}][port]" value="${account ? account.port : '3389'}">
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="ts_user_${id}">Usuario *</label>
+                    <input type="text" id="ts_user_${id}" name="terminal_server_accounts[${id}][username]" value="${account ? account.username : ''}" required>
+                </div>
+                <div class="form-group">
+                    <label for="ts_pass_${id}">Contraseña ${account ? '(dejar vacío para no cambiar)' : '*'}</label>
+                    <input type="password" id="ts_pass_${id}" name="terminal_server_accounts[${id}][password]" ${account ? '' : 'required'}>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ts_notes_${id}">Notas</label>
+                <textarea id="ts_notes_${id}" name="terminal_server_accounts[${id}][notes]" rows="2">${account ? account.notes || '' : ''}</textarea>
+            </div>
+        `;
+        terminalServerContainer.appendChild(div);
+    }
+
     // Botones para agregar cuentas
     document.getElementById('addCpanelBtn').addEventListener('click', () => createCpanelField());
     document.getElementById('addFtpBtn').addEventListener('click', () => createFtpField());
     document.getElementById('addEmailBtn').addEventListener('click', () => createEmailField());
+    document.getElementById('addTerminalServerBtn').addEventListener('click', () => createTerminalServerField());
 
     // Delegación de eventos para eliminar
     document.addEventListener('click', function(e) {
@@ -214,6 +261,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.target.closest('.dynamic-item').remove();
             }
         }
+        if (e.target.classList.contains('remove-terminal-server') || e.target.closest('.remove-terminal-server')) {
+            if (confirm('¿Eliminar esta cuenta de Terminal Server?')) {
+                e.target.closest('.dynamic-item').remove();
+            }
+        }
     });
 
     // Botón agregar nuevo servidor
@@ -223,6 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cpanelContainer.innerHTML = '';
         ftpContainer.innerHTML = '';
         emailContainer.innerHTML = '';
+        terminalServerContainer.innerHTML = '';
         document.querySelector('#hostModal .modal-title').textContent = 'Agregar Servidor de Hosting';
         openModal();
     });
@@ -244,6 +297,7 @@ document.addEventListener('DOMContentLoaded', function() {
             cpanelContainer.innerHTML = '';
             ftpContainer.innerHTML = '';
             emailContainer.innerHTML = '';
+            terminalServerContainer.innerHTML = '';
 
             // Cargar cuentas existentes
             if (hostData.accounts && hostData.accounts.length > 0) {
@@ -254,6 +308,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (hostData.emails && hostData.emails.length > 0) {
                 hostData.emails.forEach(acc => createEmailField(acc));
+            }
+            if (hostData.terminal_server_accounts && hostData.terminal_server_accounts.length > 0) {
+                hostData.terminal_server_accounts.forEach(acc => createTerminalServerField(acc));
             }
 
             document.querySelector('#hostModal .modal-title').textContent = 'Editar Servidor: ' + hostData.label;
