@@ -91,6 +91,20 @@ CREATE TABLE `dc_hosting_servers` (
 
 -- --------------------------------------------------------
 
+CREATE TABLE `dc_hosting_terminal_server_accounts` (
+  `id` int(11) NOT NULL,
+  `server_id` int(11) NOT NULL,
+  `host` varchar(255) COLLATE utf8mb4_spanish_ci NOT NULL,
+  `port` int(11) NOT NULL DEFAULT 3389,
+  `username` varchar(255) COLLATE utf8mb4_spanish_ci NOT NULL,
+  `password` text COLLATE utf8mb4_spanish_ci NOT NULL,
+  `notes` text COLLATE utf8mb4_spanish_ci,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
+
+-- --------------------------------------------------------
+
 CREATE TABLE `dc_locations` (
   `id` int(11) NOT NULL,
   `name` varchar(255) COLLATE utf8mb4_spanish_ci NOT NULL,
@@ -214,6 +228,10 @@ ALTER TABLE `dc_hosting_servers`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `hostname` (`hostname`);
 
+ALTER TABLE `dc_hosting_terminal_server_accounts`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `server_id` (`server_id`);
+
 ALTER TABLE `dc_locations`
   ADD PRIMARY KEY (`id`);
 
@@ -250,6 +268,7 @@ ALTER TABLE `dc_hosting_accounts` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `dc_hosting_emails` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `dc_hosting_ftp_accounts` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `dc_hosting_servers` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `dc_hosting_terminal_server_accounts` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `dc_locations` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 ALTER TABLE `dc_servers` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `dc_services` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
@@ -276,6 +295,9 @@ ALTER TABLE `dc_hosting_emails`
 
 ALTER TABLE `dc_hosting_ftp_accounts`
   ADD CONSTRAINT `dc_hosting_ftp_accounts_ibfk_1` FOREIGN KEY (`server_id`) REFERENCES `dc_hosting_servers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE `dc_hosting_terminal_server_accounts`
+  ADD CONSTRAINT `dc_hosting_terminal_server_accounts_ibfk_1` FOREIGN KEY (`server_id`) REFERENCES `dc_hosting_servers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE `dc_servers`
   ADD CONSTRAINT `dc_servers_ibfk_1` FOREIGN KEY (`location_id`) REFERENCES `dc_locations` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,

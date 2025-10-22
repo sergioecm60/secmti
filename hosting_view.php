@@ -24,6 +24,7 @@ try {
     $all_accounts = [];
     $all_emails = [];
     $all_ftp = [];
+    $all_terminal_servers = [];
 
     if (!empty($server_ids)) {
         $in_sql = implode(',', array_fill(0, count($server_ids), '?'));
@@ -45,12 +46,19 @@ try {
         foreach ($stmt_ftp->fetchAll(PDO::FETCH_ASSOC) as $ftp) {
             $all_ftp[$ftp['server_id']][] = $ftp;
         }
+
+        $stmt_ts = $pdo->prepare("SELECT * FROM dc_hosting_terminal_server_accounts WHERE server_id IN ($in_sql) ORDER BY host, username");
+        $stmt_ts->execute($server_ids);
+        foreach ($stmt_ts->fetchAll(PDO::FETCH_ASSOC) as $ts) {
+            $all_terminal_servers[$ts['server_id']][] = $ts;
+        }
     }
 
     foreach ($servers_raw as $server) {
         $server['accounts'] = $all_accounts[$server['id']] ?? [];
         $server['emails'] = $all_emails[$server['id']] ?? [];
         $server['ftp_accounts'] = $all_ftp[$server['id']] ?? [];
+        $server['terminal_server_accounts'] = $all_terminal_servers[$server['id']] ?? [];
         $hosting_servers[] = $server;
     }
 
@@ -253,6 +261,7 @@ try {
                     <span class="stat-badge">👤 <?= array_sum(array_map(fn($s) => count($s['accounts']), $hosting_servers)) ?> Cuentas</span>
                     <span class="stat-badge">✉️ <?= array_sum(array_map(fn($s) => count($s['emails']), $hosting_servers)) ?> Emails</span>
                     <span class="stat-badge">🔒 <?= array_sum(array_map(fn($s) => count($s['ftp_accounts']), $hosting_servers)) ?> FTP</span>
+                    <span class="stat-badge">💻 <?= array_sum(array_map(fn($s) => count($s['terminal_server_accounts']), $hosting_servers)) ?> Terminal</span>
                 </span>
                 <?php endif; ?>
             </div>
@@ -365,6 +374,31 @@ try {
                             </div>
                             <?php endif; ?>
 
+                            <!-- Terminal Server Accounts -->
+                            <?php if (!empty($server['terminal_server_accounts'])): ?>
+                            <div class="section-group">
+                                <div class="section-title">
+                                    💻 Cuentas de Terminal Server
+                                    <span class="count-badge"><?= count($server['terminal_server_accounts']) ?></span>
+                                </div>
+                                <div class="items-grid">
+                                    <?php foreach ($server['terminal_server_accounts'] as $ts): ?>
+                                    <div class="item-card">
+                                        <div class="item-title">💻 <?= htmlspecialchars($ts['username']) ?>@<?= htmlspecialchars($ts['host']) ?></div>
+                                        <div class="item-info">👤 Usuario: <strong><?= htmlspecialchars($ts['username']) ?></strong></div>
+                                        <div class="item-info">🌐 Host: <strong><?= htmlspecialchars($ts['host']) ?>:<?= htmlspecialchars($ts['port']) ?></strong></div>
+                                        <?php if(!empty($ts['notes'])): ?>
+                                            <div class="item-info">📝 <?= htmlspecialchars($ts['notes']) ?></div>
+                                        <?php endif; ?>
+                                        <div class="item-actions">
+                                            <button type="button" class="btn-copy" data-type="hosting_terminal_server" data-id="<?= $ts['id'] ?>">📋 Copiar Pass</button>
+                                        </div>
+                                    </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
                             <!-- Notes -->
                             <?php if (!empty($server['notes'])): ?>
                             <div class="section-group">
@@ -425,7 +459,7 @@ try {
                 const credId = this.dataset.id;
                 const originalText = this.textContent;
 
-                fetch(`api/datacenter.php?action=get_password&type=${credType}&id=${credId}`)
+                fetch(`api/hosting.php?action=get_password&type=${credType}&id=${credId}`)
                     .then(response => {
                         if (!response.ok) throw new Error('No se pudo obtener la contraseña.');
                         return response.json();
