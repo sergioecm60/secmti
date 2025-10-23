@@ -605,7 +605,7 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
                                         <span class="server-badge status-<?= $current_status ?>">
                                             <?= $status_map[$current_status]['icon'] ?? '❓' ?> <?= $status_map[$current_status]['text'] ?? 'Desconocido' ?>
                                         </span>
-                                        <span class="server-badge">📦 <?= htmlspecialchars(ucfirst($server['type'])) ?></span>
+                                        <span class="server-badge">🎫 <?= htmlspecialchars(ucfirst($server['type'])) ?></span>
                                         <?php if (!empty($server['net_ip_lan'])): ?>
                                         <span class="server-badge">🏠 <?= htmlspecialchars($server['net_ip_lan']) ?></span>
                                         <?php endif; ?>
