@@ -348,38 +348,15 @@ try {
     }
 
     if (!empty($search)) {
-        // Búsqueda inteligente con relevancia, adaptada de tu sugerencia.
+        // Búsqueda inteligente con relevancia, usando parámetros posicionales
         $search_param = "%{$search}%";
         $sql .= " AND (
-            s.label LIKE :search OR s.net_ip_lan LIKE :search OR s.net_ip_wan LIKE :search OR s.net_host_external LIKE :search OR s.hw_model LIKE :search OR s.notes LIKE :search OR s.type LIKE :search OR l.name LIKE :search
+            s.label LIKE ? OR s.net_ip_lan LIKE ? OR s.net_ip_wan LIKE ? OR s.net_host_external LIKE ? OR s.hw_model LIKE ? OR s.notes LIKE ? OR s.type LIKE ? OR l.name LIKE ?
         )";
-        $params[':search'] = $search_param;
-        /*
-        // La lógica de búsqueda compleja se simplifica para compatibilidad con los nuevos filtros
-        $query = " 
-            SELECT s.id, s.server_id, s.label, s.type, s.location_id, s.status, s.hw_model, s.hw_cpu, s.hw_ram, 
-                   s.hw_disk, s.net_ip_lan, s.net_ip_wan, s.net_host_external, s.net_gateway, s.net_dns, s.notes, 
-                   s.username, s.password, l.name as location_name,
-                   CASE 
-                       WHEN s.label LIKE :search1 THEN 1
-                       WHEN s.net_ip_lan LIKE :search2 THEN 2
-                       WHEN s.net_ip_wan LIKE :search3 THEN 3
-                       ELSE 4
-                   END as relevance
-            FROM dc_servers s 
-            LEFT JOIN dc_locations l ON s.location_id = l.id
-            WHERE (
-                s.label LIKE :search4 
-                OR s.net_ip_lan LIKE :search5 
-                OR s.net_ip_wan LIKE :search6 
-                OR s.net_host_external LIKE :search7 
-                OR s.hw_model LIKE :search8 
-                OR s.notes LIKE :search9 
-                OR s.type LIKE :search10 
-                OR l.name LIKE :search11
-            )
-        ";
-        */
+        for ($i = 0; $i < 8; $i++) {
+            $params[] = $search_param;
+        }
+        
         $sql .= " ORDER BY l.name, s.label ASC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
@@ -487,7 +464,7 @@ foreach ($servers as $server) {
 
 // TEMPORAL: Solo para depuración - ELIMINAR en producción
 if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
-    echo '<!-- DEBUG INFO -->';
+    echo '<-- DEBUG INFO -->';
     echo '<script nonce="' . htmlspecialchars($nonce) . '">';
     echo 'console.log("Total servers:", ' . count($servers) . ');';
     echo 'console.log("Servers data:", ' . json_encode($servers, JSON_PRETTY_PRINT) . ');';
