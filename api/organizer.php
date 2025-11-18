@@ -18,7 +18,7 @@ if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? 'user') !== 'admin
 $input = json_decode(file_get_contents('php://input'), true);
 
 // 2. Validar token CSRF
-if (!validate_csrf_token($input['csrf_token'] ?? null, false)) {
+if (!\SecMTI\Core\Registry::get('csrfToken')->validate($input['csrf_token'] ?? null)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Error de validación de seguridad.']);
     exit;

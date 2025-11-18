@@ -28,6 +28,8 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$
 
 $status_message = '';
 
+$pdo = \SecMTI\Core\Registry::get('pdo');
+
 
 
 /**
@@ -305,12 +307,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($validation_errors)) {
 }
 
 ?>
-<?php
-$pdo = get_database_connection($config, true);
-if (!$pdo) {
-    die("Error fatal: No se pudo conectar a la base de datos.");
-}
-?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
