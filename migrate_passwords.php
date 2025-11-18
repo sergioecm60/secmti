@@ -10,14 +10,14 @@
  * 3. Elimine o restrinja el acceso a este archivo después de su uso.
  */
 
+require_once 'bootstrap.php';
+
 // Permitir la ejecución solo desde CLI o si el usuario es admin
 if (php_sapi_name() !== 'cli' && ($_SESSION['user_role'] ?? '') !== 'admin') {
     die('Acceso no autorizado.');
 }
 
 echo "<pre>"; // Formato para salida legible en navegador
-
-require_once 'bootstrap.php';
 
 use SecMTI\Util\Encryption;
 
