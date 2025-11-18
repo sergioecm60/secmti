@@ -12,7 +12,7 @@ if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? 'user') !== 'admin
 }
 
 // Incluir dependencias solo si no se han cargado antes.
-if (!function_exists('get_database_connection')) {
+// if (!function_exists('get_database_connection')) { // Obsolete, using Registry
     require_once __DIR__ . '/../database.php';
 }
 
@@ -22,10 +22,8 @@ $error_message = '';
 
 try {
     // Usar la conexión PDO ya disponible desde bootstrap.php si es posible.
-    // Si este archivo se usa en otro contexto, se crea una nueva conexión.
-    if (!isset($pdo)) {
-        $pdo = get_database_connection($config, false);
-    }
+    // Usar la conexión PDO ya disponible desde el Registry.
+    $pdo = \SecMTI\Core\Registry::get('pdo');
 
     if ($pdo) {
         // 1. Obtener estadísticas usando el procedimiento almacenado.

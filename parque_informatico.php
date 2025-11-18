@@ -19,7 +19,7 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-$pdo = get_database_connection($config, true);
+$pdo = \SecMTI\Core\Registry::get('pdo');
 
 // NUEVO: Obtener permisos
 $user_id = $_SESSION['user_id'];
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         throw new Exception("No tienes permisos para realizar esta acción.");
     }
     try {
-        validate_request_csrf();
+        \SecMTI\Core\Registry::get('csrfToken')->validateRequest();
         $pdo->beginTransaction();
         $action = $_POST['action'] ?? '';
 
@@ -430,8 +430,7 @@ $status_classes = [
         </div>
         <?php endif; ?>
 
-        <?= $status_message ?>
-        <?= csrf_field() ?>
+<?php echo \SecMTI\Core\Registry::get('csrfToken')->field(); ?>
 
         <?php if (empty($grouped_pcs) && $is_readonly): ?>
              <div class="empty-state">
@@ -620,7 +619,7 @@ $status_classes = [
     ?>
     <form id="pcForm" method="POST" action="parque_informatico.php" style="<?= $is_readonly ? 'display:none;' : '' ?>">
         <input type="hidden" name="action" value="save_pc">
-        <?= csrf_field() ?>
+<?php echo \SecMTI\Core\Registry::get('csrfToken')->field(); ?>
         <?php
         echo render_modal([
             'id' => 'pcModal',

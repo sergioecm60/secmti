@@ -24,11 +24,11 @@ try {
 
     // Validar CSRF solo para acciones que no son de lectura (no-GET)
     if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-        validate_request_csrf();
+        \SecMTI\Core\Registry::get('csrfToken')->validateRequest();
     }
     
     // Obtener la conexión a la BD aquí para asegurar su disponibilidad
-    $pdo = get_database_connection($config, false);
+    $pdo = \SecMTI\Core\Registry::get('pdo');
     if (!$pdo) {
         throw new Exception('Error de conexión a base de datos', 500);
     }

@@ -5,18 +5,20 @@
 
 require_once 'bootstrap.php';
 
+use SecMTI\Util\Validator;
+
 // ============================================================================
 // CONTROL DE ACCESO
 // ============================================================================
 
 if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-    log_security_event('unauthorized_manage_access', 'Intento de acceso a manage.php sin permisos');
+    \SecMTI\Core\Registry::get('securityLogger')->log('unauthorized_manage_access', 'Intento de acceso a manage.php sin permisos');
     header('Location: index2.php');
     exit;
 }
 
 // Rate limiting
-if (!check_rate_limit('manage_access', 30, 60)) { // Aumentado a 30 solicitudes por minuto
+if (!\SecMTI\Core\Registry::get('rateLimiter')->check('manage_access', 30, 60)) { // Aumentado a 30 solicitudes por minuto
     http_response_code(429);
     die('Demasiadas solicitudes. Espera un momento.');
 }
@@ -26,90 +28,7 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$
 
 $status_message = '';
 
-// ============================================================================
-// FUNCIONES DE VALIDACIÓN
-// ============================================================================
 
-/**
- * Valida que una cadena tenga una longitud permitida
- */
-function validate_string_length($value, $min, $max, $field_name) {
-    $len = mb_strlen($value);
-    if ($len < $min || $len > $max) {
-        return "El campo '{$field_name}' debe tener entre {$min} y {$max} caracteres (actual: {$len})";
-    }
-    return null;
-}
-
-/**
- * Valida una URL
- */
-function validate_url($url, $field_name, $allow_relative = false) {
-    if (empty($url)) return null;
-    
-    // Bloquear esquemas peligrosos
-    $dangerous_schemes = ['javascript:', 'data:', 'vbscript:', 'file:'];
-    foreach ($dangerous_schemes as $scheme) {
-        if (stripos($url, $scheme) === 0) {
-            return "El campo '{$field_name}' contiene un esquema de URL no permitido";
-        }
-    }
-    
-    // Si es relativa y está permitido, aceptar
-    if ($allow_relative && !preg_match('/^https?:\/\//', $url)) {
-        return null;
-    }
-    
-    // Validar URL completa
-    if (!filter_var($url, FILTER_VALIDATE_URL)) {
-        return "El campo '{$field_name}' no es una URL válida";
-    }
-    
-    return null;
-}
-
-/**
- * Valida un número de teléfono
- */
-function validate_phone($phone, $field_name) {
-    // Remover espacios, guiones, paréntesis
-    $clean = preg_replace('/[\s\-\(\)]/', '', $phone);
-    
-    // Debe tener entre 8 y 15 dígitos (puede incluir +)
-    if (!preg_match('/^\+?\d{8,15}$/', $clean)) {
-        return "El campo '{$field_name}' no es un teléfono válido";
-    }
-    
-    return null;
-}
-
-/**
- * Valida un SVG path
- */
-function validate_svg_path($path, $field_name) {
-    if (empty($path)) return null;
-    
-    // Bloquear eventos JS
-    $dangerous_patterns = [
-        '/on\w+\s*=/i',           // onclick, onload, etc.
-        '/<script/i',             // <script>
-        '/javascript:/i',         // javascript:
-        '/data:text\/html/i',     // data URLs
-    ];
-    
-    foreach ($dangerous_patterns as $pattern) {
-        if (preg_match($pattern, $path)) {
-            return "El campo '{$field_name}' contiene código potencialmente peligroso";
-        }
-    }
-    
-    // Validar que parezca un path SVG válido
-    if (!preg_match('/^[MmLlHhVvCcSsQqTtAaZz0-9\s,\.\-]+$/', $path)) {
-        return "El campo '{$field_name}' no parece un path SVG válido";
-    }
-    
-    return null;
-}
 
 /**
  * Sanitiza una cadena para usar en var_export
@@ -159,8 +78,8 @@ function create_backup($file) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        validate_request_csrf();
-        $pdo = get_database_connection($config, true);
+        \SecMTI\Core\Registry::get('csrfToken')->validateRequest();
+$pdo = \SecMTI\Core\Registry::get('pdo');
         $validation_errors = [];
         
         // ================================================================
@@ -174,18 +93,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Ajustes Generales
         $new_config['landing_page']['company_name'] = trim($_POST['company_name'] ?? '');
+        if ($error = Validator::validateStringLength($new_config['landing_page']['company_name'], 1, 255, 'Nombre de la Compañía')) {
+            $validation_errors[] = $error;
+        }
 
         // Títulos de Página Principal
         $new_config['landing_page']['sales_title'] = trim($_POST['sales_title'] ?? '');
+        if ($error = Validator::validateStringLength($new_config['landing_page']['sales_title'], 0, 255, 'Título de Ventas/Contacto')) {
+            $validation_errors[] = $error;
+        }
         $new_config['landing_page']['locations_title'] = trim($_POST['locations_title'] ?? '');
+        if ($error = Validator::validateStringLength($new_config['landing_page']['locations_title'], 0, 255, 'Título de Sucursales')) {
+            $validation_errors[] = $error;
+        }
         $new_config['landing_page']['social_title'] = trim($_POST['social_title'] ?? '');
+        if ($error = Validator::validateStringLength($new_config['landing_page']['social_title'], 0, 255, 'Título de Redes Sociales')) {
+            $validation_errors[] = $error;
+        }
         $new_config['landing_page']['main_sites_title'] = trim($_POST['main_sites_title'] ?? '');
+        if ($error = Validator::validateStringLength($new_config['landing_page']['main_sites_title'], 0, 255, 'Título de Sitios Principales')) {
+            $validation_errors[] = $error;
+        }
 
         // Teléfonos
         $new_config['landing_page']['phone_numbers'] = [];
         if (isset($_POST['phone_numbers']) && is_array($_POST['phone_numbers'])) {
             foreach ($_POST['phone_numbers'] as $phone) {
-                if (!empty(trim($phone))) $new_config['landing_page']['phone_numbers'][] = trim($phone);
+                $trimmed_phone = trim($phone);
+                if (!empty($trimmed_phone)) {
+                    if ($error = Validator::validatePhone($trimmed_phone, 'Teléfono')) {
+                        $validation_errors[] = $error;
+                    } else {
+                        $new_config['landing_page']['phone_numbers'][] = $trimmed_phone;
+                    }
+                }
             }
         }
 
@@ -193,7 +134,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $new_config['landing_page']['branches'] = [];
         if (isset($_POST['branches']) && is_array($_POST['branches'])) {
             foreach ($_POST['branches'] as $branch) {
-                if (!empty(trim($branch))) $new_config['landing_page']['branches'][] = trim($branch);
+                $trimmed_branch = trim($branch);
+                if (!empty($trimmed_branch)) {
+                    if ($error = Validator::validateStringLength($trimmed_branch, 1, 255, 'Sucursal')) {
+                        $validation_errors[] = $error;
+                    } else {
+                        $new_config['landing_page']['branches'][] = $trimmed_branch;
+                    }
+                }
             }
         }
 
@@ -201,11 +149,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $new_config['landing_page']['social_links'] = [];
         if (isset($_POST['social_links']) && is_array($_POST['social_links'])) {
             foreach ($_POST['social_links'] as $id => $link_data) {
-                if (!empty(trim($id))) {
-                    $new_config['landing_page']['social_links'][trim($id)] = [
-                        'label' => trim($link_data['label'] ?? ''),
-                        'url' => trim($link_data['url'] ?? ''),
-                        'svg_path' => trim($link_data['svg_path'] ?? ''),
+                $trimmed_id = trim($id);
+                if (!empty($trimmed_id)) {
+                    $label = trim($link_data['label'] ?? '');
+                    $url = trim($link_data['url'] ?? '');
+                    $svg_path = trim($link_data['svg_path'] ?? '');
+
+                    if ($error = Validator::validateStringLength($label, 1, 255, "Etiqueta de Red Social ({$trimmed_id})")) {
+                        $validation_errors[] = $error;
+                    }
+                    if ($error = Validator::validateUrl($url, "URL de Red Social ({$trimmed_id})")) {
+                        $validation_errors[] = $error;
+                    }
+                    if ($error = Validator::validateSvgPath($svg_path, "Icono SVG de Red Social ({$trimmed_id})")) {
+                        $validation_errors[] = $error;
+                    }
+
+                    $new_config['landing_page']['social_links'][$trimmed_id] = [
+                        'label' => $label,
+                        'url' => $url,
+                        'svg_path' => $svg_path,
                     ];
                 }
             }
@@ -214,18 +177,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Sitios Principales
         if (isset($_POST['main_sites']) && is_array($_POST['main_sites'])) {
             foreach ($_POST['main_sites'] as $key => $url) {
+                $trimmed_url = trim($url);
                 if (isset($new_config['landing_page']['main_sites'][$key])) {
-                    $new_config['landing_page']['main_sites'][$key]['url'] = trim($url);
+                    if ($error = Validator::validateUrl($trimmed_url, "URL de Sitio Principal ({$key})")) {
+                        $validation_errors[] = $error;
+                    } else {
+                        $new_config['landing_page']['main_sites'][$key]['url'] = $trimmed_url;
+                    }
                 }
             }
         }
 
         // Footer
         $new_config['footer']['line1'] = trim($_POST['footer_line1'] ?? '');
+        if ($error = Validator::validateStringLength($new_config['footer']['line1'], 0, 255, 'Pie de Página - Línea 1')) {
+            $validation_errors[] = $error;
+        }
         $new_config['footer']['line2'] = trim($_POST['footer_line2'] ?? '');
+        if ($error = Validator::validateStringLength($new_config['footer']['line2'], 0, 255, 'Pie de Página - Línea 2')) {
+            $validation_errors[] = $error;
+        }
         $new_config['footer']['license_url'] = trim($_POST['footer_license_url'] ?? '');
+        if ($error = Validator::validateUrl($new_config['footer']['license_url'], 'URL de Licencia/Términos', true)) {
+            $validation_errors[] = $error;
+        }
         $new_config['footer']['whatsapp_number'] = trim($_POST['footer_whatsapp_number'] ?? '');
+        if (!empty($new_config['footer']['whatsapp_number']) && ($error = Validator::validatePhone($new_config['footer']['whatsapp_number'], 'Número de WhatsApp'))) {
+            $validation_errors[] = $error;
+        }
         $new_config['footer']['whatsapp_svg_path'] = trim($_POST['footer_whatsapp_svg_path'] ?? '');
+        if (!empty($new_config['footer']['whatsapp_svg_path']) && ($error = Validator::validateSvgPath($new_config['footer']['whatsapp_svg_path'], 'Icono SVG para WhatsApp'))) {
+            $validation_errors[] = $error;
+        }
 
         // Guardar el archivo config.php
         $config_file = __DIR__ . '/config.php';
@@ -243,7 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Recargar la configuración para la sesión actual
         $config = require $config_file;
-        log_security_event('config_updated', "Usuario {$_SESSION['username']} actualizó la configuración del sitio");
+        \SecMTI\Core\Registry::get('securityLogger')->log('config_updated', "Usuario {$_SESSION['username']} actualizó la configuración del sitio");
 
         // ================================================================
         // PROCESAR SERVICIOS (Base de Datos)
@@ -305,7 +288,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } catch (Exception $e) {
         $status_message = '<div class="status-message error">❌ Error: ' . htmlspecialchars($e->getMessage()) . '</div>';
-        log_security_event('manage_save_failed', 'Error en manage.php: ' . $e->getMessage());
+        \SecMTI\Core\Registry::get('securityLogger')->log('manage_save_failed', 'Error en manage.php: ' . $e->getMessage());
     }
 }
 
@@ -350,7 +333,7 @@ if (!$pdo) {
             <form method="POST" action="manage.php" id="configForm">
                 <!-- Sección de Ajustes Generales -->
                 <div class="section">
-                    <?= csrf_field() ?>
+                    <?php echo \SecMTI\Core\Registry::get('csrfToken')->field(); ?>
                     <div class="section-header">Ajustes Generales</div>
                     <div class="section-body">
                         <div class="section-body-inner">

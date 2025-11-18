@@ -32,7 +32,7 @@ if (empty($config['database']['name']) || empty($config['database']['user'])) {
 
 try {
     echo "<h2>3. Intento de Conexión a la Base de Datos</h2>";
-    $pdo = get_database_connection($config, false);
+    $pdo = \SecMTI\Core\Registry::get('pdo');
     
     if ($pdo) {
         echo "<p class='success'>✅ ¡Conexión exitosa a la base de datos '{$config['database']['name']}'!</p>";
@@ -57,7 +57,7 @@ try {
         }
         
     } else {
-        echo "<p class='error'>❌ No se pudo conectar. La función <code>get_database_connection</code> devolvió un valor nulo. Revisa los logs de PHP para más detalles, pero usualmente esto se debe a una configuración incorrecta en el paso 2.</p>";
+        echo "<p class='error'>❌ No se pudo conectar. La instancia de PDO del Registry devolvió un valor nulo. Revisa los logs de PHP para más detalles, pero usualmente esto se debe a una configuración incorrecta en el paso 2.</p>";
     }
 } catch (Exception $e) {
     echo "<p class='error'>❌ <strong>Excepción Capturada:</strong> " . htmlspecialchars($e->getMessage()) . "</p>";

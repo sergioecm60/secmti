@@ -13,12 +13,12 @@ if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 }
 
 $status_message = '';
-$pdo = get_database_connection($config, true);
+$pdo = \SecMTI\Core\Registry::get('pdo');
 
 // --- MANEJO DEL GUARDADO DE USUARIOS ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-            validate_request_csrf();
+            \SecMTI\Core\Registry::get('csrfToken')->validateRequest();
             $action = $_POST['action'] ?? '';
             $user_id = $_POST['user_id'] ?? null;
             $username = trim($_POST['username'] ?? '');
@@ -143,7 +143,7 @@ ob_start();
 ?>
 <form method="POST" id="userForm">
     <input type="hidden" name="action" value="save">
-    <?= csrf_field() ?>
+    <?php echo \SecMTI\Core\Registry::get('csrfToken')->field(); ?>
     <input type="hidden" name="user_id" id="userId">
     
     <div class="form-group">

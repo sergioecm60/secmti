@@ -22,7 +22,7 @@ $type = $_GET['type'] ?? null;
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($action === 'get_password' && $id > 0 && in_array($type, ['hosting_account', 'hosting_ftp', 'hosting_email', 'hosting_terminal_server'])) {
-    $pdo = get_database_connection($config, false); // La función ya está disponible desde bootstrap.php
+    $pdo = \SecMTI\Core\Registry::get('pdo'); // La función ya está disponible desde bootstrap.php
 
     $table_map = [
         'hosting_account'         => 'dc_hosting_accounts',

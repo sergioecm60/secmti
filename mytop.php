@@ -22,20 +22,20 @@ require_once 'bootstrap.php';
 
 // Verificar autenticación Y rol de administrador
 if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-    log_security_event('unauthorized_access_attempt', 'Intento de acceso a mytop.php sin permisos');
+    \SecMTI\Core\Registry::get('securityLogger')->log('unauthorized_access_attempt', 'Intento de acceso a mytop.php sin permisos');
     header('Location: index2.php');
     exit;
 }
 
 // Rate limiting
-if (!check_rate_limit('mytop_access', 60, 60)) { // 60 accesos por minuto
+if (!\SecMTI\Core\Registry::get('rateLimiter')->check('mytop_access', 60, 60)) { // 60 accesos por minuto
     http_response_code(429);
     die('Demasiadas solicitudes. Por favor, espera un momento.');
 }
 
 // Logging de acceso
 try {
-    $log_stmt = get_database_connection($config, false)->prepare("INSERT INTO dc_access_log (user_id, action, entity_type, entity_id, ip_address) VALUES (?, 'view', 'mytop', 0, ?)");
+    $log_stmt = \SecMTI\Core\Registry::get('pdo')->prepare("INSERT INTO dc_access_log (user_id, action, entity_type, entity_id, ip_address) VALUES (?, 'view', 'mytop', 0, ?)");
     $log_stmt->execute([$_SESSION['user_id'], IP_ADDRESS]);
 } catch (Exception $e) {
     error_log("Error al registrar acceso a mytop: " . $e->getMessage());
@@ -48,7 +48,7 @@ $nonce = base64_encode(random_bytes(16));
 header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;");
 
 // Conexión a BD
-$pdo = get_database_connection($config, true);
+$pdo = \SecMTI\Core\Registry::get('pdo');
 
 // ============================================================================
 // MANEJO DE SOLICITUD AJAX
@@ -101,7 +101,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['kill_process'])) {
     try {
-        validate_request_csrf();
+        \SecMTI\Core\Registry::get('csrfToken')->validateRequest();
         
         // Validar ID de proceso
         $id = filter_input(INPUT_POST, 'process_id', FILTER_VALIDATE_INT);
@@ -119,8 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['kill_process'])) {
         $stmt->execute([$id]);
         
         // Logging detallado
-        log_security_event(
-            'process_killed',
+\SecMTI\Core\Registry::get('securityLogger')->log(
             "Usuario {$_SESSION['username']} mató proceso ID: {$id}. " .
             "Info: User={$process_info['USER']}, Host={$process_info['HOST']}, " .
             "Command={$process_info['COMMAND']}, Time={$process_info['TIME']}s"
@@ -134,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['kill_process'])) {
     } catch (Exception $e) {
         error_log("Error al matar proceso {$id}: " . $e->getMessage());
         
-        log_security_event(
+        \SecMTI\Core\Registry::get('securityLogger')->log(
             'process_kill_failed',
             "Usuario {$_SESSION['username']} intentó matar proceso {$id} pero falló: " . $e->getMessage()
         );
@@ -477,7 +476,7 @@ try {
                             <td data-label="Acción">
                                 <?php if ($p['Command'] !== 'Sleep' && $p['Id'] != $pdo->query("SELECT CONNECTION_ID()")->fetchColumn()): ?>
                                     <form method="POST" style="display:inline;" class="kill-process-form">
-                                        <?= csrf_field() ?>
+                                        <?php echo \SecMTI\Core\Registry::get('csrfToken')->field(); ?>
                                         <input type="hidden" name="process_id" value="<?= htmlspecialchars($p['Id']) ?>">
                                         <button type="submit" name="kill_process" class="kill-btn" title="Terminar proceso">
                                             ✕ Kill

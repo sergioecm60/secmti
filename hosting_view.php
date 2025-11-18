@@ -12,7 +12,7 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-$pdo = get_database_connection($config, true);
+$pdo = \SecMTI\Core\Registry::get('pdo');
 
 // --- CARGA DE DATOS PARA LA VISTA ---
 $hosting_servers = [];

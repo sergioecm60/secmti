@@ -25,7 +25,7 @@ echo "Iniciando script de migración de contraseñas...\n";
 echo "=================================================\n\n";
 
 try {
-    $pdo = get_database_connection($config, true);
+    $pdo = \SecMTI\Core\Registry::get('pdo');
     $encryption = new Encryption(APP_ENCRYPTION_KEY);
 
     $stmt = $pdo->query("SELECT id, username, pass_hash FROM users");

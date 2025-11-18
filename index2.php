@@ -20,7 +20,7 @@ $nonce = base64_encode(random_bytes(16));
 header("Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'nonce-{$nonce}'; style-src 'self' 'nonce-{$nonce}';");
 
 // La conexión a la base de datos se obtiene a través de bootstrap.php
-$pdo = get_database_connection($config, false); // false: no es crítico si falla, la página puede mostrarse parcialmente.
+$pdo = \SecMTI\Core\Registry::get('pdo'); // false: no es crítico si falla, la página puede mostrarse parcialmente.
 
 ?>
 

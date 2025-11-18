@@ -59,7 +59,7 @@ try {
             throw new Exception('Usuario o contraseña incorrectos.', 401);
         }
 
-        $pdo = get_database_connection($config, false); // La función está disponible desde bootstrap.php
+        $pdo = \SecMTI\Core\Registry::get('pdo'); // La función está disponible desde bootstrap.php
 
         if (!$pdo) {
             throw new Exception('Error del servidor al conectar con la base de datos.', 500);

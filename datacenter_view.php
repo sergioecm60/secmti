@@ -16,7 +16,7 @@ if (empty($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $user_role = $_SESSION['user_role'];
 
-$pdo = get_database_connection($config, true); // Mover la conexión aquí para usarla antes
+$pdo = \SecMTI\Core\Registry::get('pdo'); // Mover la conexión aquí para usarla antes
 
 $allowed_locations = get_user_allowed_locations($pdo, $user_id, $user_role);
 
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 
     try {
-            validate_request_csrf();
+            \SecMTI\Core\Registry::get('csrfToken')->validateRequest();
             $encryption = new \SecMTI\Util\Encryption(APP_ENCRYPTION_KEY);
             $pdo->beginTransaction();
             
@@ -525,7 +525,7 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
 
         <?= $status_message ?>
 
-        <?php if (!$is_readonly) echo csrf_field(); ?>
+        <?php if (!$is_readonly) { echo \SecMTI\Core\Registry::get('csrfToken')->field(); } ?>
 
         <?php if (empty($grouped_servers) && $is_readonly): ?>
             <div class="no-data">
@@ -779,7 +779,7 @@ if (isset($_GET['debug']) && $_SESSION['user_role'] === 'admin') {
     ?>
     <form id="serverForm" method="POST" action="datacenter_view.php" style="<?= $is_readonly ? 'display:none;' : '' ?>">
         <input type="hidden" name="action" value="save_server">
-        <?= csrf_field() ?>
+        <?php echo \SecMTI\Core\Registry::get('csrfToken')->field(); ?>
         <input type="hidden" name="server[id]" id="serverId">
         <?php
         echo render_modal([

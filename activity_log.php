@@ -14,7 +14,7 @@ if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     exit;
 }
 
-$pdo = get_database_connection($config, true);
+$pdo = \SecMTI\Core\Registry::get('pdo');
 
 // --- Parámetros de filtrado y paginación ---
 $page = max(1, filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT) ?: 1);

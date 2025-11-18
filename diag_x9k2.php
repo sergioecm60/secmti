@@ -13,18 +13,18 @@ require_once 'bootstrap.php';
 // ============================================================================
 
 if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-    log_security_event('unauthorized_access_attempt', 'Intento de acceso a diag_x9k2.php sin permisos');
+    \SecMTI\Core\Registry::get('securityLogger')->log('unauthorized_access_attempt', 'Intento de acceso a diag_x9k2.php sin permisos');
     header('Location: index2.php');
     exit;
 }
 
-if (!check_rate_limit('server_info_access', 10, 300)) {
-    log_security_event('rate_limit_exceeded', 'Rate limit excedido en diag_x9k2.php');
+if (!\SecMTI\Core\Registry::get('rateLimiter')->check('server_info_access', 10, 300)) {
+    \SecMTI\Core\Registry::get('securityLogger')->log('rate_limit_exceeded', 'Rate limit excedido en diag_x9k2.php');
     http_response_code(429);
     die('Demasiadas solicitudes. Por favor, intente más tarde.');
 }
 
-log_security_event('server_info_access', "Usuario {$_SESSION['username']} accedió a información del servidor");
+\SecMTI\Core\Registry::get('securityLogger')->log('server_info_access', "Usuario {$_SESSION['username']} accedió a información del servidor");
 
 // Generar nonce para CSP
 $nonce = base64_encode(random_bytes(16));
@@ -208,7 +208,7 @@ function get_usage_class(float $percent): string {
 // OBTENER DATOS
 // ============================================================================
 
-$pdo = get_database_connection($config, false);
+$pdo = \SecMTI\Core\Registry::get('pdo');
 
 $os_info = get_os_info();
 $php_version = phpversion();
