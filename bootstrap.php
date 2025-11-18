@@ -450,58 +450,7 @@ if (!defined('APP_ENCRYPTION_KEY')) {
     define('APP_ENCRYPTION_KEY', $_ENV['APP_ENCRYPTION_KEY'] ?? ''); // Ahora solo se toma del .env
 }
 
-/**
- * Cifra una contraseña usando AES-256-CBC.
- * @param string $password La contraseña en texto plano.
- * @return string|false La contraseña cifrada en base64 o false si falla.
- */
-function encrypt_password(string $password): string|false {
-    if (empty(APP_ENCRYPTION_KEY)) {
-        error_log('Error de cifrado: APP_ENCRYPTION_KEY no está definida.');
-        return false;
-    }
-    $key = base64_decode(APP_ENCRYPTION_KEY);
-    if (strlen($key) !== 32) {
-        error_log('Error de cifrado: La clave de cifrado no es válida (debe tener 32 bytes).');
-        return false;
-    }
 
-    $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
-    $encrypted = openssl_encrypt($password, 'aes-256-cbc', $key, 0, $iv);
-
-    if ($encrypted === false) return false;
-
-    return base64_encode($iv . $encrypted);
-}
-
-/**
- * Descifra una contraseña.
- * @param string $encrypted_password La contraseña cifrada en base64.
- * @return string|false El texto plano o false si falla.
- */
-function decrypt_password(string $encrypted_password): string|false {
-    try {
-        if (empty(APP_ENCRYPTION_KEY)) {
-            error_log('Error de descifrado: APP_ENCRYPTION_KEY no está definida.');
-            return false;
-        }
-        $key = base64_decode(APP_ENCRYPTION_KEY);
-        if (strlen($key) !== 32) {
-            error_log('Error de descifrado: La clave de cifrado no es válida.');
-            return false;
-        }
-
-        $data = base64_decode($encrypted_password);
-        $iv_length = openssl_cipher_iv_length('aes-256-cbc');
-        $iv = substr($data, 0, $iv_length);
-        $encrypted = substr($data, $iv_length);
-
-        return openssl_decrypt($encrypted, 'aes-256-cbc', $key, 0, $iv);
-    } catch (Exception $e) {
-        error_log('Error de descifrado: ' . $e->getMessage());
-        return false;
-    }
-}
 
 // ============================================================================
 // 11. HELPERS DE CSRF (Agregado en Mejora #2)

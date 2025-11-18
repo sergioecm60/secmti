@@ -47,7 +47,8 @@ if ($action === 'get_password' && $id > 0 && in_array($type, ['hosting_account',
 
     if ($encrypted_password) {
         // Inicializar el servicio de cifrado para descifrar la contraseña
-        $decrypted_password = decrypt_password($encrypted_password); // La función ya está disponible
+        $encryption = new \SecMTI\Util\Encryption(APP_ENCRYPTION_KEY);
+        $decrypted_password = $encryption->decrypt($encrypted_password);
         if ($decrypted_password === false) {
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Error al descifrar credencial.']);

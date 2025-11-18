@@ -66,7 +66,8 @@ try {
             }
 
             // Descifrar la contraseña
-            $decrypted_password = decrypt_password($encrypted_password);
+            $encryption = new \SecMTI\Util\Encryption(APP_ENCRYPTION_KEY);
+            $decrypted_password = $encryption->decrypt($encrypted_password);
             if ($decrypted_password === false) {
                 // Este es el error que ves. Ocurre si la clave .env es incorrecta o el dato en la BD está corrupto/vacío.
                 error_log("API Error: Falla al descifrar. Tipo: {$type}, ID: {$id}. ¿Clave de cifrado correcta? ¿Dato válido en BD?");

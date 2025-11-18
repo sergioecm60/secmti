@@ -19,6 +19,7 @@ $status_message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         validate_request_csrf();
+        $encryption = new \SecMTI\Util\Encryption(APP_ENCRYPTION_KEY);
         $pdo->beginTransaction();
             $action = $_POST['action'] ?? '';
 
@@ -54,14 +55,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (strpos($ftp_id_key, 'new_') === 0) {
                         if (empty($ftp_data['password'])) continue;
                         $stmt_ftp = $pdo->prepare("INSERT INTO dc_hosting_ftp_accounts (server_id, username, password, notes) VALUES (?, ?, ?, ?)");
-                        $stmt_ftp->execute([$host_id, $ftp_data['username'], encrypt_password($ftp_data['password']), $ftp_data['notes'] ?? '']);
+                        $stmt_ftp->execute([$host_id, $ftp_data['username'], $encryption->encrypt($ftp_data['password']), $ftp_data['notes'] ?? '']);
                         $submitted_ftp_ids[] = $pdo->lastInsertId();
                     } else {
                         $stmt_ftp = $pdo->prepare("UPDATE dc_hosting_ftp_accounts SET username=?, notes=? WHERE id=?");
                         $stmt_ftp->execute([$ftp_data['username'], $ftp_data['notes'] ?? '', $ftp_id_key]);
                         if (!empty($ftp_data['password'])) {
                             $stmt_pass = $pdo->prepare("UPDATE dc_hosting_ftp_accounts SET password=? WHERE id=?");
-                            $stmt_pass->execute([encrypt_password($ftp_data['password']), $ftp_id_key]);
+                            $stmt_pass->execute([$encryption->encrypt($ftp_data['password']), $ftp_id_key]);
                         }
                         $submitted_ftp_ids[] = $ftp_id_key;
                     }
@@ -89,14 +90,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (strpos($cpanel_id_key, 'new_') === 0) {
                         if (empty($cpanel_data['password'])) continue;
                         $stmt_cpanel = $pdo->prepare("INSERT INTO dc_hosting_accounts (server_id, username, password, domain, label, notes) VALUES (?, ?, ?, ?, ?, ?)");
-                        $stmt_cpanel->execute([$host_id, $cpanel_data['username'], encrypt_password($cpanel_data['password']), $cpanel_data['domain'] ?? '', $cpanel_data['label'] ?? '', $cpanel_data['notes'] ?? '']);
+                        $stmt_cpanel->execute([$host_id, $cpanel_data['username'], $encryption->encrypt($cpanel_data['password']), $cpanel_data['domain'] ?? '', $cpanel_data['label'] ?? '', $cpanel_data['notes'] ?? '']);
                         $submitted_cpanel_ids[] = $pdo->lastInsertId();
                     } else {
                         $stmt_cpanel = $pdo->prepare("UPDATE dc_hosting_accounts SET username=?, domain=?, label=?, notes=? WHERE id=?");
                         $stmt_cpanel->execute([$cpanel_data['username'], $cpanel_data['domain'] ?? '', $cpanel_data['label'] ?? '', $cpanel_data['notes'] ?? '', $cpanel_id_key]);
                         if (!empty($cpanel_data['password'])) {
                             $stmt_pass = $pdo->prepare("UPDATE dc_hosting_accounts SET password=? WHERE id=?");
-                            $stmt_pass->execute([encrypt_password($cpanel_data['password']), $cpanel_id_key]);
+                            $stmt_pass->execute([$encryption->encrypt($cpanel_data['password']), $cpanel_id_key]);
                         }
                         $submitted_cpanel_ids[] = $cpanel_id_key;
                     }
@@ -124,14 +125,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (strpos($email_id_key, 'new_') === 0) {
                         if (empty($email_data['password'])) continue;
                         $stmt_email = $pdo->prepare("INSERT INTO dc_hosting_emails (server_id, email_address, password, notes) VALUES (?, ?, ?, ?)");
-                        $stmt_email->execute([$host_id, $email_data['email_address'], encrypt_password($email_data['password']), $email_data['notes'] ?? '']);
+                        $stmt_email->execute([$host_id, $email_data['email_address'], $encryption->encrypt($email_data['password']), $email_data['notes'] ?? '']);
                         $submitted_email_ids[] = $pdo->lastInsertId();
                     } else {
                         $stmt_email = $pdo->prepare("UPDATE dc_hosting_emails SET email_address=?, notes=? WHERE id=?");
                         $stmt_email->execute([$email_data['email_address'], $email_data['notes'] ?? '', $email_id_key]);
                         if (!empty($email_data['password'])) {
                             $stmt_pass = $pdo->prepare("UPDATE dc_hosting_emails SET password=? WHERE id=?");
-                            $stmt_pass->execute([encrypt_password($email_data['password']), $email_id_key]);
+                            $stmt_pass->execute([$encryption->encrypt($email_data['password']), $email_id_key]);
                         }
                         $submitted_email_ids[] = $email_id_key;
                     }
@@ -159,14 +160,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (strpos($ts_id_key, 'new_') === 0) {
                         if (empty($ts_data['password'])) continue;
                         $stmt_ts = $pdo->prepare("INSERT INTO dc_hosting_terminal_server_accounts (server_id, host, port, username, password, notes) VALUES (?, ?, ?, ?, ?, ?)");
-                        $stmt_ts->execute([$host_id, $ts_data['host'], $ts_data['port'], $ts_data['username'], encrypt_password($ts_data['password']), $ts_data['notes'] ?? '']);
+                        $stmt_ts->execute([$host_id, $ts_data['host'], $ts_data['port'], $ts_data['username'], $encryption->encrypt($ts_data['password']), $ts_data['notes'] ?? '']);
                         $submitted_terminal_server_ids[] = $pdo->lastInsertId();
                     } else {
                         $stmt_ts = $pdo->prepare("UPDATE dc_hosting_terminal_server_accounts SET host=?, port=?, username=?, notes=? WHERE id=?");
                         $stmt_ts->execute([$ts_data['host'], $ts_data['port'], $ts_data['username'], $ts_data['notes'] ?? '', $ts_id_key]);
                         if (!empty($ts_data['password'])) {
                             $stmt_pass = $pdo->prepare("UPDATE dc_hosting_terminal_server_accounts SET password=? WHERE id=?");
-                            $stmt_pass->execute([encrypt_password($ts_data['password']), $ts_id_key]);
+                            $stmt_pass->execute([$encryption->encrypt($ts_data['password']), $ts_id_key]);
                         }
                         $submitted_terminal_server_ids[] = $ts_id_key;
                     }
