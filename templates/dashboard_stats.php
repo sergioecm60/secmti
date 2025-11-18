@@ -11,10 +11,7 @@ if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? 'user') !== 'admin
     return; // No mostrar nada si no es admin.
 }
 
-// Incluir dependencias solo si no se han cargado antes.
-// if (!function_exists('get_database_connection')) { // Obsolete, using Registry
-    require_once __DIR__ . '/../database.php';
-}
+
 
 $stats = [];
 $recent_activity = [];
