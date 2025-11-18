@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!empty($ids_to_delete)) {
                         $placeholders = implode(',', array_fill(0, count($ids_to_delete), '?'));
                         $stmt_del = $pdo->prepare("DELETE FROM dc_hosting_ftp_accounts WHERE id IN ($placeholders)");
-                        $stmt_del->execute($ids_to_delete);
+                        $stmt_del->execute(array_values($ids_to_delete));
                     }
                 }
 
@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!empty($ids_to_delete)) {
                         $placeholders = implode(',', array_fill(0, count($ids_to_delete), '?'));
                         $stmt_del = $pdo->prepare("DELETE FROM dc_hosting_accounts WHERE id IN ($placeholders)");
-                        $stmt_del->execute($ids_to_delete);
+                        $stmt_del->execute(array_values($ids_to_delete));
                     }
                 }
 
@@ -146,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!empty($ids_to_delete)) {
                         $placeholders = implode(',', array_fill(0, count($ids_to_delete), '?'));
                         $stmt_del = $pdo->prepare("DELETE FROM dc_hosting_emails WHERE id IN ($placeholders)");
-                        $stmt_del->execute($ids_to_delete);
+                        $stmt_del->execute(array_values($ids_to_delete));
                     }
                 }
 
@@ -181,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!empty($ids_to_delete)) {
                         $placeholders = implode(',', array_fill(0, count($ids_to_delete), '?'));
                         $stmt_del = $pdo->prepare("DELETE FROM dc_hosting_terminal_server_accounts WHERE id IN ($placeholders)");
-                        $stmt_del->execute($ids_to_delete);
+                        $stmt_del->execute(array_values($ids_to_delete));
                     }
                 }
 
