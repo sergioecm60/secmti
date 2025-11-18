@@ -248,7 +248,7 @@ $pdo = \SecMTI\Core\Registry::get('pdo');
                 $is_new = strpos($service_id, 'new_') === 0;
 
                 if ($is_new) {
-                    $stmt = $pdo->prepare("INSERT INTO services (service_key, label, url, category, requires_login, redirect) VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmt = $pdo->prepare("INSERT INTO services (service_key, label, url, category, requires_login, redirect, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)");
                     $stmt->execute([
                         'svc_' . uniqid(),
                         $label,
