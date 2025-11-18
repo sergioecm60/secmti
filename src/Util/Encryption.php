@@ -16,12 +16,13 @@ class Encryption
      * Constructor.
      * @param string $key La clave de cifrado secreta. Debe ser de 32 bytes.
      */
-    public function __construct(string $key)
+    public function __construct(string $base64_key)
     {
-        if (mb_strlen($key, '8bit') !== 32) {
-            throw new \InvalidArgumentException('La clave de cifrado debe tener exactamente 32 bytes.');
+        $decoded_key = base64_decode($base64_key, true);
+        if ($decoded_key === false || mb_strlen($decoded_key, '8bit') !== 32) {
+            throw new \InvalidArgumentException('La clave de cifrado debe ser una cadena base64 que decodifique a 32 bytes.');
         }
-        $this->key = $key;
+        $this->key = $decoded_key;
     }
 
     /**
